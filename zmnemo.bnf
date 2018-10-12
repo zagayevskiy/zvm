@@ -1,0 +1,11 @@
+program ::= command {EOL{EOL} command}
+command ::= (fun | label | instruction)
+fun ::= ".fun" identifier
+label ::= "->" identifier
+instruction ::= opcode [operand {"," operand}]
+opcode ::= identifier
+identifier ::= identifier_begin | {identifier_rest}
+identifier_begin ::= LETTER | "_"
+identifier_rest ::= identifier_begin | DIGIT
+operand ::= identifier | number
+number ::= ["-"]DIGIT{DIGIT}
