@@ -90,7 +90,7 @@ internal class SequenceLexerTest(private val test: com.zagayevskiy.zvm.common.Te
                 sequence = test.text.asSequence(),
                 symbols = symbols,
                 keywords = keywords,
-                whitespace = {isWhitespace() || this == '#'},
+                whitespace = { isWhitespace() || this == '#' },
                 idStart = { isLetter() },
                 idPart = { isLetterOrDigit() || this == '-' })
         val actual = lexer.toSequence().toList()
