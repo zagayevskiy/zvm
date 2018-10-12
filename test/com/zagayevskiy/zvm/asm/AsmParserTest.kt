@@ -19,7 +19,13 @@ class AsmParserTest(val test: String) {
                     ->lbl
                     ret
 
-                    .fun some_test
+                    .fun with_args: args = 2
+                    ret
+
+                    .fun with_locals: locals = 1
+                    ret
+
+                    .fun with_args_and_locals: args = 35, locals = 1020
                     ret
                 """.trimIndent()
         )
