@@ -12,7 +12,6 @@ internal class TestData(val text: String, val expected: ParseResult)
 
 private infix fun String.expects(expected: List<Command>) = TestData(this, ParseResult.Success(expected))
 private fun String.func(args: Int = 0, locals: Int = 0) = Func(this, args, locals)
-private fun String.instr(vararg operands: Operand) = Instruction(this, listOf(*operands))
 private val Int.op
     get() = Operand.Integer(this)
 private val String.id
@@ -20,6 +19,30 @@ private val String.id
 private val String.label
     get() = Command.Label(this)
 
+private fun Opcode.instr(vararg operands: Operand) = Instruction(this, listOf(*operands))
+
+
+abstract class TestOpcode(override val name: String, override val operandCount: Int = 0) : Opcode {
+    init {
+        @Suppress("LeakingThis")
+        ALL.add(this)
+    }
+
+    companion object {
+        val ALL = mutableListOf<Opcode>()
+    }
+}
+
+object Ret : TestOpcode("ret")
+object ILoad1 : TestOpcode("iload1", 1)
+object ILoad2 : TestOpcode("iload2", 2)
+object Sum : TestOpcode("sum", 1)
+object Call : TestOpcode("call", 1)
+object Jmp : TestOpcode("jmp", 1)
+object Add1 : TestOpcode("add1", 1)
+object Add2 : TestOpcode("add2", 2)
+object Add3 : TestOpcode("add3", 3)
+object Add4 : TestOpcode("add4", 4)
 
 @RunWith(Parameterized::class)
 internal class AsmParserTest(private val test: TestData) {
@@ -33,21 +56,21 @@ internal class AsmParserTest(private val test: TestData) {
                     ret
                 """.trimIndent() expects listOf(
                         "main".func(),
-                        "ret".instr()
+                        Ret.instr()
                 ),
 
                 """
                     .fun f: args = 3
-                    iload 0
-                    iload 1, 2
+                    iload1 0
+                    iload2 1, 2
                     sum 3
                     ret
                 """.trimIndent() expects listOf(
                         "f".func(args = 3),
-                        "iload".instr(0.op),
-                        "iload".instr(1.op, 2.op),
-                        "sum".instr(3.op),
-                        "ret".instr()
+                        ILoad1.instr(0.op),
+                        ILoad2.instr(1.op, 2.op),
+                        Sum.instr(3.op),
+                        Ret.instr()
                 ),
 
                 """
@@ -60,17 +83,17 @@ internal class AsmParserTest(private val test: TestData) {
                     call f
 
                     .fun f
-                    call f, -12345
+                    call -12345
                 """.trimIndent() expects listOf(
                         "main123".func(args = 20, locals = 1000),
-                        "add1".instr((-1).op),
-                        "add2".instr(0.op, (-1).op),
-                        "add3".instr(0.op, (-1).op, 2.op),
-                        "add4".instr(0.op, 1.op, (-2).op, 3.op),
-                        "sum".instr(4.op),
-                        "call".instr("f".id),
+                        Add1.instr((-1).op),
+                        Add2.instr(0.op, (-1).op),
+                        Add3.instr(0.op, (-1).op, 2.op),
+                        Add4.instr(0.op, 1.op, (-2).op, 3.op),
+                        Sum.instr(4.op),
+                        Call.instr("f".id),
                         "f".func(),
-                        "call".instr("f".id, (-12345).op)
+                        Call.instr((-12345).op)
                 ),
 
                 """
@@ -85,7 +108,7 @@ internal class AsmParserTest(private val test: TestData) {
                 """.trimIndent() expects listOf(
                         "f".func(),
                         "g".func(locals = 1),
-                        "jmp".instr("label1".id),
+                        Jmp.instr("label1".id),
                         "k".func(args = 2),
                         "t".func(args = 3, locals = 4),
                         "label1".label,
@@ -99,7 +122,7 @@ internal class AsmParserTest(private val test: TestData) {
     @Test
     fun test() {
         val lexer = AsmSequenceLexer(test.text.asSequence())
-        val parser = AsmParser(lexer)
+        val parser = AsmParser(lexer, TestOpcode.ALL)
 
         val result = parser.program()
         assertEquals(test.expected, result)

@@ -16,7 +16,15 @@ import com.zagayevskiy.zvm.asm.Command.*
 sealed class Command {
     data class Func(val name: String, val args: Int = 0, val locals: Int = 0) : Command()
     data class Label(val label: String) : Command()
-    data class Instruction(val opcode: String, val operands: List<Operand>) : Command() {
+    data class Instruction(val opcode: Opcode, val operands: List<Operand>) : Command() {
+        init {
+            if (opcode.operandCount != operands.size) throw IllegalArgumentException("""
+                operands size must be equals to declared opcode.operandCount
+                opcode: $opcode
+                operands: $operands
+            """.trimIndent())
+        }
+
         sealed class Operand {
             data class Integer(val value: Int) : Operand()
             data class Id(val name: String) : Operand()
@@ -29,7 +37,15 @@ sealed class ParseResult {
     data class Failure(val line: Int, val message: String, val commands: List<Command>, val exception: ParseException) : ParseResult()
 }
 
-class AsmParser(private val lexer: Lexer) {
+interface Opcode {
+    val name: String
+    val operandCount: Int
+}
+
+class AsmParser(private val lexer: Lexer, supportedOpcodes: List<Opcode>) {
+
+    private val opcodes = supportedOpcodes.map { it.name to it }.toMap()
+            .also { map -> if (map.size != supportedOpcodes.size) throw IllegalArgumentException("Opcodes names must be different") }
 
     private lateinit var token: Token
 
@@ -109,11 +125,12 @@ class AsmParser(private val lexer: Lexer) {
     }
 
     private fun instruction(): Instruction? {
-        val opcode = (token as? Identifier)?.name ?: return null
+        val opcodeName = (token as? Identifier)?.name ?: return null
+        val opcode = opcodes[opcodeName] ?: error("Unsupported opcode $opcodeName")
         nextToken()
 
         val operands = instructionArgs()
-
+        if (operands.size != opcode.operandCount) error("Opcode $opcodeName must have ${opcode.operandCount} operand. Has $operands")
         return Instruction(opcode, operands)
     }
 
