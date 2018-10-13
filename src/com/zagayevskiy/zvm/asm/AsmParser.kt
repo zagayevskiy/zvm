@@ -11,7 +11,14 @@ import com.zagayevskiy.zvm.common.Lexer
 import com.zagayevskiy.zvm.common.Token
 import com.zagayevskiy.zvm.common.Token.*
 
-data class Function(val name: String, val address: Int, val args: Int = 0, val locals: Int = 0)
+sealed class Command
+
+data class Function(val name: String, val address: Int, val args: Int = 0, val locals: Int = 0) : Command()
+
+sealed class ParseResult {
+    data class Success(val commands: List<Command>) : ParseResult()
+    data class Failure(val line: Int, val message: String) : ParseResult()
+}
 
 class AsmParser(private val lexer: Lexer) {
 
@@ -19,14 +26,22 @@ class AsmParser(private val lexer: Lexer) {
 
     private val ip = 0
 
-    fun program() {
-        nextToken()
-        command()
-        while (token != Eof) {
-            if (token != Eol) error()
-            while (token == Eol) nextToken()
+    private val commands = mutableListOf<Command>()
+
+    fun program(): ParseResult {
+        try {
+            nextToken()
             command()
+            while (token != Eof) {
+                if (token != Eol) error()
+                while (token == Eol) nextToken()
+                command()
+            }
+        } catch (e: ParseException) {
+            return ParseResult.Failure(lexer.currentLine, e.message)
         }
+
+        return ParseResult.Success(commands)
     }
 
     private fun command() = func() || label() || instruction()
@@ -34,41 +49,45 @@ class AsmParser(private val lexer: Lexer) {
     private fun func(): Boolean {
         if (token != Fun) return false
         nextToken()
-        val name = (token as? Identifier)?.name ?: return error()
+        val name = (token as? Identifier)?.name ?: error()
         nextToken()
+        var argsCount: Int? = null
+        var localsCount: Int? = null
         if (token == AsmToken.Colon) {
             nextToken()
-            if (args()) {
+            argsCount = args()
+            if (argsCount != null) {
                 if (token == Comma) {
                     nextToken()
-                    if (!locals()) error()
+                    localsCount = locals() ?: error()
                 }
-            } else if (!locals()) {
-                error()
+            } else {
+                localsCount = locals() ?: error()
             }
         }
+        commands.add(Function(name, ip, argsCount ?: 0, localsCount ?: 0))
         return true
     }
 
-    private fun args(): Boolean {
-        if (token != Args) return false
+    private fun args(): Int? {
+        if (token != Args) return null
         nextToken()
         if (token != Assign) error()
         nextToken()
-        if (token !is Integer) error()
+        val count = (token as? Integer) ?: error()
         nextToken()
-        return true
+        return count.value
 
     }
 
-    private fun locals(): Boolean {
-        if (token != Locals) return false
+    private fun locals(): Int? {
+        if (token != Locals) return null
         nextToken()
         if (token != Assign) error()
         nextToken()
-        if (token !is Integer) error()
+        val count = (token as? Integer) ?: error()
         nextToken()
-        return true
+        return count.value
     }
 
     private fun label(): Boolean {
@@ -115,10 +134,14 @@ class AsmParser(private val lexer: Lexer) {
 
 
     private fun nextToken() {
-        token = lexer.nextToken()
+        token = lexer.nextToken().also { currentToken ->
+            if (currentToken is Token.Error) {
+                error("Lexical error at sequence ${currentToken.sequence}")
+            }
+        }
     }
 
-    private fun error(): Nothing {
-        throw IllegalStateException()
-    }
+    private fun error(message: String = "Syntax error at token $token"): Nothing = throw ParseException(message)
 }
+
+private class ParseException(override val message: String) : Exception()

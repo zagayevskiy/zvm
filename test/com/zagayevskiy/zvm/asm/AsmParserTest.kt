@@ -1,8 +1,10 @@
 package com.zagayevskiy.zvm.asm
 
+import org.junit.Assert.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import kotlin.test.assertTrue
 
 @RunWith(Parameterized::class)
 class AsmParserTest(val test: String) {
@@ -37,6 +39,7 @@ class AsmParserTest(val test: String) {
         val lexer = AsmSequenceLexer(test.asSequence())
         val parser = AsmParser(lexer)
 
-        parser.program()
+        val result = parser.program()
+        assertTrue (result is ParseResult.Success, result.toString())
     }
 }

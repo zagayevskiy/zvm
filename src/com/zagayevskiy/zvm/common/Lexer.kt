@@ -12,6 +12,8 @@ interface Token {
 
 interface Lexer {
     fun nextToken(): Token
+
+    val currentLine: Int
 }
 
 class SequenceLexer(private val sequence: Sequence<Char>,
@@ -21,11 +23,12 @@ class SequenceLexer(private val sequence: Sequence<Char>,
                     private val idStart: Char.() -> Boolean = { isJavaIdentifierStart() },
                     private val idPart: Char.() -> Boolean = { isJavaIdentifierPart() }) : Lexer {
 
+    override var currentLine = 0
+
     private val sortedSymbols = symbols.keys.sorted()
 
     private val iterator by lazy { sequence.iterator() }
     private var currentChar: Char? = null
-    private var linesCount = 0
     private var parsingStarted = false
 
 
@@ -63,7 +66,7 @@ class SequenceLexer(private val sequence: Sequence<Char>,
         }
 
 
-        return Token.Error(linesCount, current.toString())
+        return Token.Error(currentLine, current.toString())
     }
 
     private fun keywordOrId(buffer: String) = keywords[buffer] ?: Token.Identifier(buffer)
@@ -85,12 +88,12 @@ class SequenceLexer(private val sequence: Sequence<Char>,
             return symbols[mayBeFound]!!
         }
 
-        return Token.Error(linesCount, builder.toString())
+        return Token.Error(currentLine, builder.toString())
     }
 
     private fun symbolOrError(buffer: String, possibleSymbol: String) = when {
         (buffer == possibleSymbol) -> symbols[possibleSymbol]!!
-        else -> Token.Error(linesCount, buffer)
+        else -> Token.Error(currentLine, buffer)
     }
 
     private fun consumeEol(): Token {
@@ -99,7 +102,7 @@ class SequenceLexer(private val sequence: Sequence<Char>,
         if ((currentChar == '\n' && prev == '\r') || (currentChar == '\r' && prev == '\r')) {
             nextChar()
         }
-        ++linesCount
+        ++currentLine
 
         return Token.Eol
     }
