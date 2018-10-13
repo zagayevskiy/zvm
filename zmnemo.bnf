@@ -1,14 +1,19 @@
 program ::= command {EOL{EOL} command}
 command ::= (fun | label | instruction)
-fun ::= ".fun" identifier [":" (args["," locals])|locals]
-args ::= "args" "=" natural
-locals ::= "locals" "=" natural
+
+fun ::= ".fun" identifier [":" (fun_args["," fun_locals])|fun_locals]
+fun_args ::= "args" "=" natural
+fun_locals ::= "locals" "=" natural
+
 label ::= "->" identifier
-instruction ::= opcode [operand {"," operand}]
+
+instruction ::= opcode instruction_args
 opcode ::= identifier
+operand ::= identifier | number
+instruction_args ::= [operand {"," operand}]
+
 identifier ::= identifier_begin | {identifier_rest}
 identifier_begin ::= LETTER | "_"
 identifier_rest ::= identifier_begin | DIGIT
-operand ::= identifier | number
 number ::= ["-"]natural
 natural ::= DIGIT{DIGIT}

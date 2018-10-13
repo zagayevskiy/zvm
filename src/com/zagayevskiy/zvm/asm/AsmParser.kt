@@ -10,21 +10,28 @@ import com.zagayevskiy.zvm.asm.AsmToken.Minus
 import com.zagayevskiy.zvm.common.Lexer
 import com.zagayevskiy.zvm.common.Token
 import com.zagayevskiy.zvm.common.Token.*
+import com.zagayevskiy.zvm.asm.Command.Instruction.Operand
+import com.zagayevskiy.zvm.asm.Command.*
 
-sealed class Command
-
-data class Function(val name: String, val address: Int, val args: Int = 0, val locals: Int = 0) : Command()
+sealed class Command {
+    data class Func(val name: String, val args: Int = 0, val locals: Int = 0) : Command()
+    data class Label(val label: String) : Command()
+    data class Instruction(val opcode: String, val operands: List<Operand>) : Command() {
+        sealed class Operand {
+            data class Integer(val value: Int) : Operand()
+            data class Id(val name: String) : Operand()
+        }
+    }
+}
 
 sealed class ParseResult {
     data class Success(val commands: List<Command>) : ParseResult()
-    data class Failure(val line: Int, val message: String) : ParseResult()
+    data class Failure(val line: Int, val message: String, val commands: List<Command>, val exception: ParseException) : ParseResult()
 }
 
 class AsmParser(private val lexer: Lexer) {
 
     private lateinit var token: Token
-
-    private val ip = 0
 
     private val commands = mutableListOf<Command>()
 
@@ -38,16 +45,18 @@ class AsmParser(private val lexer: Lexer) {
                 command()
             }
         } catch (e: ParseException) {
-            return ParseResult.Failure(lexer.currentLine, e.message)
+            return ParseResult.Failure(lexer.currentLine, e.message, commands, e)
         }
 
         return ParseResult.Success(commands)
     }
 
-    private fun command() = func() || label() || instruction()
+    private fun command() = (func() ?: label() ?: instruction())?.also { command ->
+        commands.add(command)
+    }
 
-    private fun func(): Boolean {
-        if (token != Fun) return false
+    private fun func(): Func? {
+        if (token != Fun) return null
         nextToken()
         val name = (token as? Identifier)?.name ?: error()
         nextToken()
@@ -55,21 +64,21 @@ class AsmParser(private val lexer: Lexer) {
         var localsCount: Int? = null
         if (token == AsmToken.Colon) {
             nextToken()
-            argsCount = args()
+            argsCount = funcArgs()
             if (argsCount != null) {
                 if (token == Comma) {
                     nextToken()
-                    localsCount = locals() ?: error()
+                    localsCount = funcLocals() ?: error()
                 }
             } else {
-                localsCount = locals() ?: error()
+                localsCount = funcLocals() ?: error()
             }
         }
-        commands.add(Function(name, ip, argsCount ?: 0, localsCount ?: 0))
-        return true
+
+        return Func(name, argsCount ?: 0, localsCount ?: 0)
     }
 
-    private fun args(): Int? {
+    private fun funcArgs(): Int? {
         if (token != Args) return null
         nextToken()
         if (token != Assign) error()
@@ -80,7 +89,7 @@ class AsmParser(private val lexer: Lexer) {
 
     }
 
-    private fun locals(): Int? {
+    private fun funcLocals(): Int? {
         if (token != Locals) return null
         nextToken()
         if (token != Assign) error()
@@ -90,47 +99,43 @@ class AsmParser(private val lexer: Lexer) {
         return count.value
     }
 
-    private fun label(): Boolean {
-        if (token != Arrow) return false
+    private fun label(): Label? {
+        if (token != Arrow) return null
         nextToken()
-        if (token !is Identifier) error()
+        val label = (token as? Identifier)?.name ?: error()
         nextToken()
 
-        return true
+        return Label(label)
     }
 
-    private fun instruction(): Boolean {
-        if (token !is Identifier) return false
+    private fun instruction(): Instruction? {
+        val opcode = (token as? Identifier)?.name ?: return null
         nextToken()
-        if (operand()) {
-            while (token == Comma) {
-                nextToken()
-                if (!operand()) error()
-            }
+
+        val operands = instructionArgs()
+
+        return Instruction(opcode, operands)
+    }
+
+    private fun instructionArgs(): List<Operand> = mutableListOf<Operand>().apply {
+        add(operand() ?: return@apply)
+        while (token == Comma) {
+            nextToken()
+            add(operand() ?: error())
         }
-
-        return true
     }
 
-    private fun operand(): Boolean {
-        return when (token) {
-            is Identifier -> {
-                nextToken()
-                true
-            }
-            is Integer -> {
-                nextToken()
-                true
-            }
+    private fun operand(): Operand? = token.run {
+        when (this) {
+            is Identifier -> Operand.Id(name)
+            is Integer -> Operand.Integer(value)
             is Minus -> {
                 nextToken()
-                if (token !is Integer) error()
-                nextToken()
-                true
+                Operand.Integer(-((token as? Integer)?.value ?: error()))
             }
-            else -> false
+            else -> null
         }
-    }
+    }?.also { nextToken() }
 
 
     private fun nextToken() {
@@ -144,4 +149,4 @@ class AsmParser(private val lexer: Lexer) {
     private fun error(message: String = "Syntax error at token $token"): Nothing = throw ParseException(message)
 }
 
-private class ParseException(override val message: String) : Exception()
+class ParseException(override val message: String) : Exception()

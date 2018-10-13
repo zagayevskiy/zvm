@@ -34,5 +34,5 @@ class AsmSequenceLexer(sequence: Sequence<Char>) : Lexer by SequenceLexer(
         symbols = symbolsMap,
         keywords = keywordsMap,
         idStart = { isLetter() || this == '.' },
-        idPart = { isLetter() || this == '_' }
+        idPart = { isLetterOrDigit() || this == '_' }
 )

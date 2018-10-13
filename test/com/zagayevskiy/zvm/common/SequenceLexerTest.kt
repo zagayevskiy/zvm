@@ -1,5 +1,6 @@
 package com.zagayevskiy.zvm.common
 
+import com.zagayevskiy.zvm.assertEquals
 import com.zagayevskiy.zvm.common.Token.*
 import com.zagayevskiy.zvm.util.extensions.toSequence
 import com.zagayevskiy.zvm.util.extensions.toToken
@@ -97,10 +98,6 @@ internal class SequenceLexerTest(private val test: com.zagayevskiy.zvm.common.Te
         assertEquals(actual, test.expected)
     }
 
-
-    private fun <T> assertEquals(actual: List<T>, expected: List<T>) {
-        assertThat(actual, `is`(expected))
-    }
 }
 
 val String.id
