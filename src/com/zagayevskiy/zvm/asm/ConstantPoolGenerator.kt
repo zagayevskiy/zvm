@@ -49,7 +49,7 @@ class ConstantPoolGenerator {
         return pool.size - 1
     }
 
-    fun obtainFunctionOffset(name: String): Int {
+    fun obtainFunctionIndex(name: String): Int {
         return indexOf<ConstantPoolFunction> { it.name == name } ?: return appendFunction(name)
     }
 

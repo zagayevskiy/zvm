@@ -23,10 +23,31 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodeM
             when (command) {
                 is Func -> defineFunction(command)
                 is Label -> defineLabel(command)
+                is Instruction -> addInstruction(command)
             }
         }
 
         error("TODO")
+    }
+
+    private fun addInstruction(command: Instruction) = command.run {
+        if (opcode !is ByteOpcode) error("Unknown opcode at $command")
+
+        write(opcode.bytecode)
+        operands.forEach { operand ->
+            when (operand) {
+                is Instruction.Operand.Integer -> write(operand.value)
+                is Instruction.Operand.Id -> when (opcode) {
+                    Call -> write(constantPool.obtainFunctionIndex(operand.name))
+                    Jmp -> write(obtainLabel(operand.name))
+                    else -> error("opcode ${opcode.name} can't operate with $operand")
+                }
+            }
+        }
+    }
+
+    private fun obtainLabel(label: String): Address {
+        return 0 //todo
     }
 
     private fun defineLabel(label: Label) {
@@ -47,8 +68,19 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodeM
         if (!defined) error("Function ${func.name} already defined!")
     }
 
-    private fun moveIp(bytes: Int) {
-        ip += bytes
+    private fun write(value: Byte) {
+        bytecode[ip] = value
+        incIp(1)
+    }
+
+    private fun write(value: Int) {
+        ensureBytecodeCapacity(ip + 4)
+        value.copyToByteArray(bytecode, ip)
+        incIp(4)
+    }
+
+    private fun incIp(inc: Int) {
+        ip += inc
         ensureBytecodeCapacity(ip)
     }
 
