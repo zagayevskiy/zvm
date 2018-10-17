@@ -5,7 +5,9 @@ import com.zagayevskiy.zvm.util.extensions.copyTo
 import com.zagayevskiy.zvm.util.extensions.copyToByteArray
 import kotlin.math.max
 
-private data class LabelDefinition(val name: String, val defined: Boolean = false, val address: Int = 0)
+private data class LabelDefinition(val name: String, val defined: Boolean = false, val address: Int = 0, val deferredUsages: MutableList<Address> = mutableListOf())
+
+private data class FunctionDefinition(val index: Int, val defined: Boolean = false, val address: Int = 0, val args: Int = 0, val locals: Int = 0)
 
 typealias Address = Int
 
@@ -13,8 +15,12 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodeM
 
     private val constantPool = ConstantPoolGenerator()
     private var bytecode = ByteArray(1024)
+
+
     private val labelDefinitions = mutableMapOf<String, LabelDefinition>()
-    private val deferredLabelUsages = mutableMapOf<LabelDefinition, List<Address>>()
+
+    private val functionDefinitionsIndices = mutableMapOf<String, Int>()
+    private val functions = mutableListOf<FunctionDefinition>()
 
     private var ip = 0
 
@@ -46,17 +52,24 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodeM
         }
     }
 
-    private fun obtainLabel(label: String): Address {
-        return 0 //todo
+    private fun obtainLabel(name: String): Address {
+        val label = labelDefinitions[name] ?: (LabelDefinition(name).also { labelDefinitions[name] = it })
+
+        if (label.defined) return label.address
+
+        label.deferredUsages.add(ip)
+
+        return 0
     }
 
     private fun defineLabel(label: Label) {
         val labelAddress = ip
         labelDefinitions[label.label]?.let { oldDefinition ->
             if (oldDefinition.defined) error("Label ${label.label} already defined")
-            deferredLabelUsages.remove(oldDefinition)?.forEach { address ->
+            oldDefinition.deferredUsages.forEach { address ->
                 labelAddress.copyToByteArray(bytecode, address)
             }
+            oldDefinition.deferredUsages.clear()
         }
 
         labelDefinitions[label.label] = LabelDefinition(label.label, true, labelAddress)
@@ -64,8 +77,22 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodeM
 
 
     private fun defineFunction(func: Func) {
-        val defined = func.run { constantPool.defineFunction(name = name, address = ip, args = args, locals = locals) }
-        if (!defined) error("Function ${func.name} already defined!")
+        val index = functionIndex(func.name)
+        val existed = functions[index]
+        if (existed.defined) error("Function ${func.name} already defined!")
+        checkThatAllLabelsDefined()
+        functions[index] = existed.copy(defined = true, address = ip, args = func.args, locals = func.locals)
+    }
+
+    private fun functionIndex(name: String): Int {
+        val existedIndex = functionDefinitionsIndices[name]
+        if (existedIndex == null) {
+            val index = functions.size
+            functions.add(FunctionDefinition(index))
+            return index
+        }
+
+        return existedIndex
     }
 
     private fun write(value: Byte) {
@@ -89,6 +116,10 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodeM
         val old = bytecode
         bytecode = ByteArray(max(old.size * 2, capacity + 1))
         old.copyTo(bytecode)
+    }
+
+    private fun checkThatAllLabelsDefined() {
+        labelDefinitions.values.firstOrNull { !it.defined }?.let { error("Label ${it.name} used but not defined") }
     }
 
     private fun error(message: String): Nothing = throw GenerationException(message)
