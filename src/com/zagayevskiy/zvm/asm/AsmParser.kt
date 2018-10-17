@@ -42,10 +42,10 @@ interface Opcode {
     val operandCount: Int
 }
 
-class AsmParser(private val lexer: Lexer, supportedOpcodes: List<Opcode>) {
+class AsmParser(private val lexer: Lexer, supportedOpcodes: Iterable<Opcode>) {
 
     private val opcodes = supportedOpcodes.map { it.name to it }.toMap()
-            .also { map -> if (map.size != supportedOpcodes.size) throw IllegalArgumentException("Opcodes names must be different") }
+            .also { map -> if (map.size != supportedOpcodes.count()) throw IllegalArgumentException("OpcodesMapping names must be different") }
 
     private lateinit var token: Token
 

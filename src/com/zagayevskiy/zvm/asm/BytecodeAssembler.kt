@@ -13,7 +13,7 @@ typealias Address = Int
 
 class GenerationInfo(val functions: List<FunctionDefinition>, val bytecode: ByteArray)
 
-class BytecodeAssembler(private val commands: List<Command>) {
+class BytecodeAssembler(private val commands: List<Command>, private val opcodesMapping: Map<Opcode, Byte>) {
 
     private var bytecode = ByteArray(1024)
 
@@ -34,21 +34,21 @@ class BytecodeAssembler(private val commands: List<Command>) {
         }
         checkThatAllLabelsDefined()
 
-        val resultBytecode = ByteArray(ip + 1)
+        val resultBytecode = ByteArray(ip)
         bytecode.copyTo(destination = resultBytecode, count = ip)
         return GenerationInfo(functions, resultBytecode)
     }
 
     private fun addInstruction(command: Instruction) = command.run {
-        if (opcode !is ByteOpcode123) error("Unknown opcode at $command")
+        val byte = opcodesMapping[opcode] ?: error("Unknown opcode at $command")
 
-        write(opcode.bytecode)
+        write(byte)
         operands.forEach { operand ->
             when (operand) {
                 is Instruction.Operand.Integer -> write(operand.value)
                 is Instruction.Operand.Id -> when (opcode) {
-                    MyCall -> write(functionIndex(operand.name))
-                    MyJmp -> write(obtainLabel(operand.name))
+                    Call -> write(functionIndex(operand.name))
+                    Jmp -> write(obtainLabel(operand.name))
                     else -> error("opcode ${opcode.name} can't operate with $operand")
                 }
             }

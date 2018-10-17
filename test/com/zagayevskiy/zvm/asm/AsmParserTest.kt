@@ -33,16 +33,16 @@ abstract class TestOpcode(override val name: String, override val operandCount: 
     }
 }
 
-object Ret : TestOpcode("ret")
-object ILoad1 : TestOpcode("iload1", 1)
-object ILoad2 : TestOpcode("iload2", 2)
-object Sum : TestOpcode("sum", 1)
-object Call : TestOpcode("call", 1)
-object Jmp : TestOpcode("jmp", 1)
-object Add1 : TestOpcode("add1", 1)
-object Add2 : TestOpcode("add2", 2)
-object Add3 : TestOpcode("add3", 3)
-object Add4 : TestOpcode("add4", 4)
+private object RetT : TestOpcode("ret")
+private object ILoad1T : TestOpcode("iload1", 1)
+private object ILoad2T : TestOpcode("iload2", 2)
+private object SumT : TestOpcode("sum", 1)
+private object CallT : TestOpcode("call", 1)
+private object JmpT : TestOpcode("jmp", 1)
+private object Add1 : TestOpcode("add1", 1)
+private object Add2 : TestOpcode("add2", 2)
+private object Add3 : TestOpcode("add3", 3)
+private object Add4 : TestOpcode("add4", 4)
 
 @RunWith(Parameterized::class)
 internal class AsmParserTest(private val test: TestData) {
@@ -56,7 +56,7 @@ internal class AsmParserTest(private val test: TestData) {
                     ret
                 """.trimIndent() expects listOf(
                         "main".func(),
-                        Ret.instr()
+                        RetT.instr()
                 ),
 
                 """
@@ -67,10 +67,10 @@ internal class AsmParserTest(private val test: TestData) {
                     ret
                 """.trimIndent() expects listOf(
                         "f".func(args = 3),
-                        ILoad1.instr(0.op),
-                        ILoad2.instr(1.op, 2.op),
-                        Sum.instr(3.op),
-                        Ret.instr()
+                        ILoad1T.instr(0.op),
+                        ILoad2T.instr(1.op, 2.op),
+                        SumT.instr(3.op),
+                        RetT.instr()
                 ),
 
                 """
@@ -90,10 +90,10 @@ internal class AsmParserTest(private val test: TestData) {
                         Add2.instr(0.op, (-1).op),
                         Add3.instr(0.op, (-1).op, 2.op),
                         Add4.instr(0.op, 1.op, (-2).op, 3.op),
-                        Sum.instr(4.op),
-                        Call.instr("f".id),
+                        SumT.instr(4.op),
+                        CallT.instr("f".id),
                         "f".func(),
-                        Call.instr((-12345).op)
+                        CallT.instr((-12345).op)
                 ),
 
                 """
@@ -108,7 +108,7 @@ internal class AsmParserTest(private val test: TestData) {
                 """.trimIndent() expects listOf(
                         "f".func(),
                         "g".func(locals = 1),
-                        Jmp.instr("label1".id),
+                        JmpT.instr("label1".id),
                         "k".func(args = 2),
                         "t".func(args = 3, locals = 4),
                         "label1".label,
