@@ -7,15 +7,15 @@ import kotlin.math.max
 
 private data class LabelDefinition(val name: String, val defined: Boolean = false, val address: Int = 0, val deferredUsages: MutableList<Address> = mutableListOf())
 
-private data class FunctionDefinition(val index: Int, val defined: Boolean = false, val address: Int = 0, val args: Int = 0, val locals: Int = 0)
+data class FunctionDefinition(val name: String, val index: Int, val defined: Boolean = false, val address: Int = 0, val args: Int = 0, val locals: Int = 0)
 
 typealias Address = Int
 
-class BytecodeAssembler(private val commands: List<Command>, private val opcodeMapping: Map<String, Byte>) {
+class GenerationInfo(val functions: List<FunctionDefinition>, val bytecode: ByteArray)
 
-    private val constantPool = ConstantPoolGenerator()
+class BytecodeAssembler(private val commands: List<Command>) {
+
     private var bytecode = ByteArray(1024)
-
 
     private val labelDefinitions = mutableMapOf<String, LabelDefinition>()
 
@@ -24,7 +24,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodeM
 
     private var ip = 0
 
-    fun generate(): ByteArray {
+    fun generate(): GenerationInfo {
         commands.forEach { command ->
             when (command) {
                 is Func -> defineFunction(command)
@@ -32,20 +32,23 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodeM
                 is Instruction -> addInstruction(command)
             }
         }
+        checkThatAllLabelsDefined()
 
-        error("TODO")
+        val resultBytecode = ByteArray(ip + 1)
+        bytecode.copyTo(destination = resultBytecode, count = ip)
+        return GenerationInfo(functions, resultBytecode)
     }
 
     private fun addInstruction(command: Instruction) = command.run {
-        if (opcode !is ByteOpcode) error("Unknown opcode at $command")
+        if (opcode !is ByteOpcode123) error("Unknown opcode at $command")
 
         write(opcode.bytecode)
         operands.forEach { operand ->
             when (operand) {
                 is Instruction.Operand.Integer -> write(operand.value)
                 is Instruction.Operand.Id -> when (opcode) {
-                    Call -> write(constantPool.obtainFunctionIndex(operand.name))
-                    Jmp -> write(obtainLabel(operand.name))
+                    MyCall -> write(functionIndex(operand.name))
+                    MyJmp -> write(obtainLabel(operand.name))
                     else -> error("opcode ${opcode.name} can't operate with $operand")
                 }
             }
@@ -81,6 +84,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodeM
         val existed = functions[index]
         if (existed.defined) error("Function ${func.name} already defined!")
         checkThatAllLabelsDefined()
+        labelDefinitions.clear()
         functions[index] = existed.copy(defined = true, address = ip, args = func.args, locals = func.locals)
     }
 
@@ -88,7 +92,8 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodeM
         val existedIndex = functionDefinitionsIndices[name]
         if (existedIndex == null) {
             val index = functions.size
-            functions.add(FunctionDefinition(index))
+            functions.add(FunctionDefinition(name = name, index = index))
+            functionDefinitionsIndices[name] = index
             return index
         }
 
