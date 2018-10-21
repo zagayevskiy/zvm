@@ -1,5 +1,6 @@
-package com.zagayevskiy.zvm.asm
+package com.zagayevskiy.zvm.asm.test
 
+import com.zagayevskiy.zvm.asm.*
 import com.zagayevskiy.zvm.asm.Command.Func
 import com.zagayevskiy.zvm.asm.Command.Instruction
 import com.zagayevskiy.zvm.asm.Command.Instruction.Operand

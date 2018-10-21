@@ -11,7 +11,7 @@ data class FunctionDefinition(val name: String, val index: Int, val defined: Boo
 
 typealias Address = Int
 
-class GenerationInfo(val functions: List<FunctionDefinition>, val bytecode: ByteArray)
+data class GenerationInfo(val functions: List<FunctionDefinition>, val bytecode: ByteArray)
 
 class BytecodeAssembler(private val commands: List<Command>, private val opcodesMapping: Map<Opcode, Byte>) {
 

@@ -11,10 +11,10 @@ fun Int.copyToByteArray(destination: ByteArray, startIndex: Int = 0) {
     destination[startIndex + 3] = (this and 0xff).toByte()
 }
 
-fun String.copyToByteArray(destination: ByteArray, startIndex: Int = 0) {
+fun String.copyToByteArray(destination: ByteArray, destIndex: Int = 0) {
     val bytes = toByteArray()
-    require(startIndex + bytes.size < destination.size)
-    bytes.copyTo(destination, startIndex)
+    require(destIndex + bytes.size < destination.size)
+    bytes.copyTo(destination, destIndex)
 }
 
 fun ByteArray.copyToInt(startIndex: Int = 0): Int {
@@ -26,4 +26,4 @@ fun ByteArray.copyToInt(startIndex: Int = 0): Int {
             (this[startIndex + 3].toInt() and 0x000000ff)
 }
 
-fun ByteArray.copyTo(destination: ByteArray, startIndex: Int = 0, count: Int = size) = System.arraycopy(this, 0, destination, startIndex, count)
+fun ByteArray.copyTo(destination: ByteArray, destIndex: Int = 0, count: Int = size) = System.arraycopy(this, 0, destination, destIndex, count)
