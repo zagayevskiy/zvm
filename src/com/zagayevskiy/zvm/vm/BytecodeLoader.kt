@@ -12,7 +12,7 @@ class LoadedInfo(val functions: List<RuntimeFunction>, val mainIndex: Int, val b
 
 class BytecodeLoader(private val rawBytecode: ByteArray) {
 
-    private fun load(): LoadingResult {
+    fun load(): LoadingResult {
         val serviceInfoSize = 8 //FIXME hardcode
         val functionRowSize = 12 //FIXME hardcode
         val rawBytecodeSize = rawBytecode.size
@@ -45,7 +45,7 @@ class BytecodeLoader(private val rawBytecode: ByteArray) {
         if (checked != null) return LoadingResult.Failure(checked)
 
         val bytecode = ByteArray(bytecodeSize)
-        rawBytecode.copyTo(destination = bytecode, sourceIndex = bytecodeStart, count = bytecode.size)
+        rawBytecode.copyTo(destination = bytecode, sourceIndex = bytecodeStart, count = bytecodeSize)
 
         return LoadingResult.Success(LoadedInfo(functions, mainIndex, bytecode))
     }

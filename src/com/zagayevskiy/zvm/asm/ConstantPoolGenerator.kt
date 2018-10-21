@@ -1,5 +1,6 @@
 package com.zagayevskiy.zvm.asm
 
+import com.zagayevskiy.zvm.common.Address
 import com.zagayevskiy.zvm.util.extensions.copyToByteArray
 
 

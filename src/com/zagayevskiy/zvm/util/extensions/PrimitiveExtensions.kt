@@ -18,7 +18,7 @@ fun String.copyToByteArray(destination: ByteArray, destIndex: Int = 0) {
 }
 
 fun ByteArray.copyToInt(startIndex: Int = 0): Int {
-    require(startIndex + 3 < size)
+    require(startIndex + 3 < size) { "startIndex=$startIndex, size=$size" }
 
     return ((this[startIndex + 0].toInt() shl 24) and -0x1000000) or
             ((this[startIndex + 1].toInt() shl 16) and 0x00ff0000) or

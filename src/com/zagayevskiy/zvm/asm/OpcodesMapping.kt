@@ -1,21 +1,24 @@
 package com.zagayevskiy.zvm.asm
 
+import com.zagayevskiy.zvm.common.Opcodes
+
 abstract class OpcodeImpl(override val name: String, override val operandCount: Int = 0) : Opcode
 
 object OpcodesMapping {
 
     val mapping = mapOf<Opcode, Byte>(
-            Jmp to 0x0,
+            Jmp to Opcodes.Jmp,
 
-            Call to 0x10,
-            Ret to 0x11,
+            Call to Opcodes.Call,
+            Ret to Opcodes.Ret,
 
-            Push to 0x20,
-            Pop to 0x21
+            Push to Opcodes.Push,
+            Pop to Opcodes.Pop
     )
 
     val opcodes = mapping.keys
 }
+
 
 object Jmp : OpcodeImpl(name = "jmp", operandCount = 1)
 
@@ -24,4 +27,3 @@ object Call : OpcodeImpl(name = "call", operandCount = 1)
 
 object Push : OpcodeImpl(name = "push", operandCount = 1)
 object Pop : OpcodeImpl(name = "pop")
-
