@@ -2,6 +2,7 @@ package com.zagayevskiy.zvm.asm
 
 import com.zagayevskiy.zvm.util.extensions.copyTo
 import com.zagayevskiy.zvm.util.extensions.copyToByteArray
+import com.zagayevskiy.zvm.vm.RuntimeFunction
 
 class BytecodeGenerator {
 
@@ -26,7 +27,7 @@ class BytecodeGenerator {
 
         val bytecodeStart = functionsTableStart + functionsTableRowSize * functions.size
 
-        bytecode.copyTo(result, bytecodeStart)
+        bytecode.copyTo(destination = result, destIndex = bytecodeStart)
 
         return result
     }

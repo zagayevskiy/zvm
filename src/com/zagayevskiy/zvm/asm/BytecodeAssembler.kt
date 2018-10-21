@@ -1,6 +1,7 @@
 package com.zagayevskiy.zvm.asm
 
 import com.zagayevskiy.zvm.asm.Command.*
+import com.zagayevskiy.zvm.common.Address
 import com.zagayevskiy.zvm.util.extensions.copyTo
 import com.zagayevskiy.zvm.util.extensions.copyToByteArray
 import kotlin.math.max
@@ -8,8 +9,6 @@ import kotlin.math.max
 private data class LabelDefinition(val name: String, val defined: Boolean = false, val address: Int = 0, val deferredUsages: MutableList<Address> = mutableListOf())
 
 data class FunctionDefinition(val name: String, val index: Int, val defined: Boolean = false, val address: Int = 0, val args: Int = 0, val locals: Int = 0)
-
-typealias Address = Int
 
 data class GenerationInfo(val functions: List<FunctionDefinition>, val bytecode: ByteArray)
 
@@ -120,7 +119,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
         if (bytecode.size > capacity) return
         val old = bytecode
         bytecode = ByteArray(max(old.size * 2, capacity + 1))
-        old.copyTo(bytecode)
+        old.copyTo(destination = bytecode)
     }
 
     private fun checkThatAllLabelsDefined() {

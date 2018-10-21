@@ -1,12 +1,11 @@
 package com.zagayevskiy.zvm
 
+import com.zagayevskiy.zvm.common.Address
 import com.zagayevskiy.zvm.util.BitTable
 import com.zagayevskiy.zvm.util.extensions.checkInterval
 import com.zagayevskiy.zvm.util.extensions.copyToByteArray
 import com.zagayevskiy.zvm.util.extensions.copyToInt
 import com.zagayevskiy.zvm.util.extensions.fill
-
-typealias Address = Int
 
 interface Memory {
     fun allocate(size: Int): Address
@@ -81,7 +80,7 @@ class MemoryBitTable(desirableSize: Int, private val blockSize: Int = 64) : Memo
         value.copyToByteArray(memory, startIndex = address)
     }
 
-    
+
     private fun writeServiceInfo(address: Address, blockCount: Int) {
         writeInt(address = address, value = blockCount)
     }
