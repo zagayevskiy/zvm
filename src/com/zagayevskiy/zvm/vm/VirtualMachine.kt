@@ -1,16 +1,16 @@
 package com.zagayevskiy.zvm.vm
 
 import com.zagayevskiy.zvm.common.Address
+import com.zagayevskiy.zvm.common.Opcodes.ALOAD
 import com.zagayevskiy.zvm.common.Opcodes.CALL
 import com.zagayevskiy.zvm.common.Opcodes.IADD
 import com.zagayevskiy.zvm.common.Opcodes.ICONST
 import com.zagayevskiy.zvm.common.Opcodes.JMP
+import com.zagayevskiy.zvm.common.Opcodes.LLOAD
+import com.zagayevskiy.zvm.common.Opcodes.LSTORE
 import com.zagayevskiy.zvm.common.Opcodes.OUT
 import com.zagayevskiy.zvm.common.Opcodes.RET
-import com.zagayevskiy.zvm.util.extensions.copyToInt
-import com.zagayevskiy.zvm.util.extensions.pop
-import com.zagayevskiy.zvm.util.extensions.push
-import com.zagayevskiy.zvm.util.extensions.stack
+import com.zagayevskiy.zvm.util.extensions.*
 
 
 data class RuntimeFunction(val address: Address, val args: Int, val locals: Int)
@@ -65,11 +65,34 @@ class VirtualMachine(info: LoadedInfo) {
                 JMP -> ip = decodeNextInt()
                 IADD -> add()
                 ICONST -> push(decodeNextInt().toStackEntry())
+                ALOAD -> argLoad()
+                LLOAD -> localLoad()
+                LSTORE -> localStore()
+
+
                 OUT -> out()
 
                 else -> error("Unknown bytecode $code")
             }
         }
+    }
+
+    private fun argLoad() = callStack.peek().apply {
+        val index = decodeNextInt()
+        checkArgIndex(index)
+        push(args[index])
+    }
+
+    private fun localLoad() = callStack.peek().apply {
+        val index = decodeNextInt()
+        checkLocalIndex(index)
+        push(locals[index])
+    }
+
+    private fun localStore() = callStack.peek().apply {
+        val index = decodeNextInt()
+        checkLocalIndex(index)
+        locals[index] = pop()
     }
 
     private fun decodeNextInt(): Int = bytecode.copyToInt(startIndex = ip).also { ip += 4 }
@@ -107,6 +130,14 @@ class VirtualMachine(info: LoadedInfo) {
             is StackEntry.Integer -> print(entry.recycle())
             is StackEntry.Null -> print("null")
         }
+    }
+
+    private fun StackFrame.checkArgIndex(index: Int) {
+        if (index < 0 || index >= args.size) error("Invalid argument index: $index. Has ${args.size} args.")
+    }
+
+    private fun StackFrame.checkLocalIndex(index: Int) {
+        if (index < 0 || index >= locals.size) error("Invalid variable index: $index. Has ${locals.size} locals.")
     }
 
     private fun log(message: String) = println(message)

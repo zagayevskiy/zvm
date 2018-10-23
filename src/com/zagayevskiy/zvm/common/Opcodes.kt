@@ -8,6 +8,9 @@ object Opcodes {
 
     val PUSH = 0x20.byte
     val POP = 0x21.byte
+    val ALOAD = 0x22.byte
+    val LSTORE = 0x23.byte
+    val LLOAD = 0x24.byte
 
     val ICONST = 0x30.byte
 

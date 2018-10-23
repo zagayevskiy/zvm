@@ -47,17 +47,26 @@ class VirtualMachineTest {
     @Test
     fun test2() {
         val asm = """
-            .fun sum3
+            .fun sum3: args = 3
+            aload 0
+            aload 1
             iadd
+            aload 2
             iadd
             ret
-            .fun main
-            iconst 10000
-            iconst 100000
-            iconst 1000000
-            jmp end
+            .fun main: args = 3, locals = 2
+            iconst 10
+            iconst 20
+            lstore 0
+            lstore 1
+            lload 1
+            lload 0
+            out
+            out
+            aload 0
+            aload 1
+            aload 2
             call sum3
-            ->end
             out
         """.trimIndent()
         val parser = AsmParser(AsmSequenceLexer(asm.asSequence()), OpcodesMapping.opcodes)
@@ -71,6 +80,6 @@ class VirtualMachineTest {
         val loaded = loader.load() as LoadingResult.Success
 
         vm = VirtualMachine(loaded.info)
-        vm.run(emptyList())
+        vm.run(listOf(1.toStackEntry(), 2.toStackEntry(), 10000.toStackEntry()))
     }
 }

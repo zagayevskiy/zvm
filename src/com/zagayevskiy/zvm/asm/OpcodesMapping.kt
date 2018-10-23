@@ -14,6 +14,9 @@ object OpcodesMapping {
 
             Push to Opcodes.PUSH,
             Pop to Opcodes.POP,
+            ALoad to Opcodes.ALOAD,
+            LStore to Opcodes.LSTORE,
+            LLoad to Opcodes.LLOAD,
 
             IntConst to Opcodes.ICONST,
 
@@ -32,9 +35,12 @@ object Ret : OpcodeImpl(name = "ret")
 object Call : OpcodeImpl(name = "call", operandCount = 1)
 
 object Push : OpcodeImpl(name = "push", operandCount = 1)
-object Pop : OpcodeImpl(name = "POP")
+object Pop : OpcodeImpl(name = "pop")
+object ALoad : OpcodeImpl(name = "aload", operandCount = 1)
+object LStore : OpcodeImpl(name = "lstore", operandCount = 1)
+object LLoad : OpcodeImpl(name = "lload", operandCount = 1)
 
 object IntConst : OpcodeImpl(name = "iconst", operandCount = 1)
 object IntAdd : OpcodeImpl(name = "iadd")
 
-object Out: OpcodeImpl(name = "out")
+object Out : OpcodeImpl(name = "out")
