@@ -12,6 +12,8 @@ import com.zagayevskiy.zvm.common.Opcodes.ICONST
 import com.zagayevskiy.zvm.common.Opcodes.JMP
 import com.zagayevskiy.zvm.common.Opcodes.LLOAD
 import com.zagayevskiy.zvm.common.Opcodes.LSTORE
+import com.zagayevskiy.zvm.common.Opcodes.MLOAD
+import com.zagayevskiy.zvm.common.Opcodes.MSTORE
 import com.zagayevskiy.zvm.common.Opcodes.OUT
 import com.zagayevskiy.zvm.common.Opcodes.RET
 import com.zagayevskiy.zvm.util.extensions.*
@@ -74,6 +76,8 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                 ALOAD -> argLoad()
                 LLOAD -> localLoad()
                 LSTORE -> localStore()
+                MSTORE -> memoryStore()
+                MLOAD -> memoryLoad()
 
                 OUT -> out()
 
@@ -84,6 +88,24 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
             }
         }
     }
+
+
+    private fun memoryStore() {
+        //TODO add checks
+        val address = (pop() as StackEntry.Integer).recycle()
+        val offset = (pop() as StackEntry.Integer).recycle()
+        val argument = (pop() as StackEntry.Integer).recycle()
+
+        heap.writeInt(address + offset, argument)
+    }
+
+    private fun memoryLoad() {
+        //TODO add checks
+        val address = (pop() as StackEntry.Integer).recycle()
+        val offset = (pop() as StackEntry.Integer).recycle()
+        push(heap.readInt(address + offset).toStackEntry())
+    }
+
 
     private fun alloc() {
         val argument = (pop() as? StackEntry.Integer) ?: error("alloc argument must be integer")

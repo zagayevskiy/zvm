@@ -42,6 +42,8 @@ object Pop : OpcodeImpl(name = "pop")
 object ALoad : OpcodeImpl(name = "aload", operandCount = 1)
 object LStore : OpcodeImpl(name = "lstore", operandCount = 1)
 object LLoad : OpcodeImpl(name = "lload", operandCount = 1)
+object MStore : OpcodeImpl(name = "mstore")
+object MLoad : OpcodeImpl(name = "mload")
 
 object IntConst : OpcodeImpl(name = "iconst", operandCount = 1)
 object IntAdd : OpcodeImpl(name = "iadd")

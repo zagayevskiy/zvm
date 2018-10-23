@@ -11,6 +11,8 @@ object Opcodes {
     val ALOAD = 0x22.byte
     val LSTORE = 0x23.byte
     val LLOAD = 0x24.byte
+    val MSTORE = 0x25.byte
+    val MLOAD = 0x26.byte
 
     val ICONST = 0x30.byte
 
