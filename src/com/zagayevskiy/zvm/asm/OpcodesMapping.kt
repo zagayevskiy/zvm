@@ -22,7 +22,10 @@ object OpcodesMapping {
 
             IntAdd to Opcodes.IADD,
 
-            Out to Opcodes.OUT
+            Out to Opcodes.OUT,
+
+            Alloc to Opcodes.ALLOC,
+            Free to Opcodes.FREE
     )
 
     val opcodes = mapping.keys
@@ -44,3 +47,6 @@ object IntConst : OpcodeImpl(name = "iconst", operandCount = 1)
 object IntAdd : OpcodeImpl(name = "iadd")
 
 object Out : OpcodeImpl(name = "out")
+
+object Alloc: OpcodeImpl(name = "alloc")
+object Free: OpcodeImpl(name = "free")

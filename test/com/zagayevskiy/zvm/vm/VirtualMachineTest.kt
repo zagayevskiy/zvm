@@ -56,18 +56,18 @@ class VirtualMachineTest {
             ret
             .fun main: args = 3, locals = 2
             iconst 10
-            iconst 20
-            lstore 0
-            lstore 1
-            lload 1
-            lload 0
+            alloc
             out
+            iconst 10
+            alloc
             out
-            aload 0
-            aload 1
-            aload 2
-            call sum3
+            iconst 10
+            alloc
             out
+            iconst 10
+            alloc
+            out
+
         """.trimIndent()
         val parser = AsmParser(AsmSequenceLexer(asm.asSequence()), OpcodesMapping.opcodes)
         val result = parser.program()
@@ -79,7 +79,7 @@ class VirtualMachineTest {
         val loader = BytecodeLoader(bytecode)
         val loaded = loader.load() as LoadingResult.Success
 
-        vm = VirtualMachine(loaded.info)
+        vm = VirtualMachine(loaded.info, 1000)
         vm.run(listOf(1.toStackEntry(), 2.toStackEntry(), 10000.toStackEntry()))
     }
 }

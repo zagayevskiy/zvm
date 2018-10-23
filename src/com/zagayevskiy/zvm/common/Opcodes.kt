@@ -17,6 +17,9 @@ object Opcodes {
     val IADD = 0x40.byte
 
     val OUT = 0x70.byte
+
+    val ALLOC = 0x80.byte
+    val FREE = 0x81.byte
 }
 
 private val Int.byte

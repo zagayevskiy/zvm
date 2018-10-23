@@ -1,8 +1,12 @@
 package com.zagayevskiy.zvm.vm
 
+import com.zagayevskiy.zvm.Memory
+import com.zagayevskiy.zvm.MemoryBitTable
 import com.zagayevskiy.zvm.common.Address
+import com.zagayevskiy.zvm.common.Opcodes.ALLOC
 import com.zagayevskiy.zvm.common.Opcodes.ALOAD
 import com.zagayevskiy.zvm.common.Opcodes.CALL
+import com.zagayevskiy.zvm.common.Opcodes.FREE
 import com.zagayevskiy.zvm.common.Opcodes.IADD
 import com.zagayevskiy.zvm.common.Opcodes.ICONST
 import com.zagayevskiy.zvm.common.Opcodes.JMP
@@ -33,7 +37,7 @@ sealed class StackEntry {
 
 fun Int.toStackEntry() = StackEntry.Integer.obtain(this)
 
-class VirtualMachine(info: LoadedInfo) {
+class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
     private val functions = info.functions
     private val mainIndex = info.mainIndex
     private val bytecode = info.bytecode
@@ -42,6 +46,8 @@ class VirtualMachine(info: LoadedInfo) {
 
     private val callStack = stack<StackFrame>()
     private val operandsStack = stack<StackEntry>()
+
+    private val heap: Memory = MemoryBitTable(heapSize)
 
     fun run(args: List<StackEntry>) {
         args.forEach { push(it) }
@@ -69,12 +75,28 @@ class VirtualMachine(info: LoadedInfo) {
                 LLOAD -> localLoad()
                 LSTORE -> localStore()
 
-
                 OUT -> out()
+
+                ALLOC -> alloc()
+                FREE -> free()
 
                 else -> error("Unknown bytecode $code")
             }
         }
+    }
+
+    private fun alloc() {
+        val argument = (pop() as? StackEntry.Integer) ?: error("alloc argument must be integer")
+        val size = (argument).recycle()
+        if (size <= 0) error("alloc argument must be positive integer. Has $size.")
+
+        push(heap.allocate(size).toStackEntry())
+    }
+
+    private fun free() {
+        val argument = (pop() as? StackEntry.Integer) ?: error("free argument must be integer")
+        val address = (argument).recycle()
+        heap.free(address)
     }
 
     private fun argLoad() = callStack.peek().apply {
@@ -127,8 +149,8 @@ class VirtualMachine(info: LoadedInfo) {
 
     private fun out() = pop().let { entry ->
         return@let when (entry) {
-            is StackEntry.Integer -> print(entry.recycle())
-            is StackEntry.Null -> print("null")
+            is StackEntry.Integer -> println(entry.recycle())
+            is StackEntry.Null -> println("null")
         }
     }
 
