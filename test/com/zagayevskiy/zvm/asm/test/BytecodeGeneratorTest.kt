@@ -41,7 +41,7 @@ class BytecodeGeneratorTest {
 
     @Before
     fun setup() {
-        val parser = AsmParser(AsmSequenceLexer(text.asSequence()), listOf(Ret)) //Accept only Ret instruction
+        val parser = AsmParser(AsmSequenceLexer(text.asSequence()), listOf(Ret)) //Accept only ret instruction
         val result = parser.program()
         assertTrue(result.toString(), result is ParseResult.Success)
 
@@ -52,7 +52,7 @@ class BytecodeGeneratorTest {
 
     @Test
     fun generatedByteCodeSizeCorrect() {
-        assertEquals(generator.serviceInfoSize + expectedFuncs.size * generator.functionsTableRowSize + 9, //9 Ret-s
+        assertEquals(generator.serviceInfoSize + expectedFuncs.size * generator.functionsTableRowSize + 9, //9 ret-s
                 bytecode.size)
     }
 

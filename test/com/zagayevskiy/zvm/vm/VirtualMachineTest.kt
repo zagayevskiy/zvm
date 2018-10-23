@@ -43,4 +43,34 @@ class VirtualMachineTest {
         vm.run(emptyList())
     }
 
+
+    @Test
+    fun test2() {
+        val asm = """
+            .fun sum3
+            iadd
+            iadd
+            ret
+            .fun main
+            iconst 10000
+            iconst 100000
+            iconst 1000000
+            jmp end
+            call sum3
+            ->end
+            out
+        """.trimIndent()
+        val parser = AsmParser(AsmSequenceLexer(asm.asSequence()), OpcodesMapping.opcodes)
+        val result = parser.program()
+        assertTrue(result.toString(), result is ParseResult.Success)
+        val assembler = BytecodeAssembler((result as ParseResult.Success).commands, OpcodesMapping.mapping)
+        val generator = BytecodeGenerator()
+        val bytecode = generator.generate(assembler.generate())
+
+        val loader = BytecodeLoader(bytecode)
+        val loaded = loader.load() as LoadingResult.Success
+
+        vm = VirtualMachine(loaded.info)
+        vm.run(emptyList())
+    }
 }

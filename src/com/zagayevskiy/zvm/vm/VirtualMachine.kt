@@ -1,20 +1,37 @@
 package com.zagayevskiy.zvm.vm
 
 import com.zagayevskiy.zvm.common.Address
-import com.zagayevskiy.zvm.common.Opcodes.Call
-import com.zagayevskiy.zvm.common.Opcodes.Ret
+import com.zagayevskiy.zvm.common.Opcodes.CALL
+import com.zagayevskiy.zvm.common.Opcodes.IADD
+import com.zagayevskiy.zvm.common.Opcodes.ICONST
+import com.zagayevskiy.zvm.common.Opcodes.JMP
+import com.zagayevskiy.zvm.common.Opcodes.OUT
+import com.zagayevskiy.zvm.common.Opcodes.RET
 import com.zagayevskiy.zvm.util.extensions.copyToInt
+import com.zagayevskiy.zvm.util.extensions.pop
+import com.zagayevskiy.zvm.util.extensions.push
+import com.zagayevskiy.zvm.util.extensions.stack
 
 
 data class RuntimeFunction(val address: Address, val args: Int, val locals: Int)
 
-private class StackFrame(val args: List<Entry>, val locals: MutableList<Entry>, val returnAddress: Address)
+private class StackFrame(val args: List<StackEntry>, val locals: MutableList<StackEntry>, val returnAddress: Address)
 
-sealed class Entry {
-    data class Int(val value: Int) : Entry()
+sealed class StackEntry {
 
-    object Null : Entry()
+    class Integer(defaultValue: Int) : StackEntry() {
+        private var value: Int = defaultValue
+        private fun mutate(newValue: Int) = this.run { value = newValue }
+
+        companion object Pool : RuntimePool<Integer, Int> by RuntimePoolImpl(10, ::Integer, Integer::mutate)
+
+        fun recycle(): Int = value.also { recycle(this) }
+    }
+
+    object Null : StackEntry()
 }
+
+fun Int.toStackEntry() = StackEntry.Integer.obtain(this)
 
 class VirtualMachine(info: LoadedInfo) {
     private val functions = info.functions
@@ -24,9 +41,9 @@ class VirtualMachine(info: LoadedInfo) {
     private var ip: Int = functions[mainIndex].address
 
     private val callStack = stack<StackFrame>()
-    private val operandsStack = stack<Entry>()
+    private val operandsStack = stack<StackEntry>()
 
-    fun run(args: List<Entry>) {
+    fun run(args: List<StackEntry>) {
         args.forEach { push(it) }
         call(mainIndex)
         loop()
@@ -34,17 +51,23 @@ class VirtualMachine(info: LoadedInfo) {
     }
 
     private fun loop() {
-        while (true) {
+        while (ip < bytecode.size) {
             val code = bytecode[ip]
+            ++ip
             when (code) {
-                Call -> {
-                    ++ip
+                CALL -> {
                     call(functionIndex = decodeNextInt())
                 }
-                Ret -> {
+                RET -> {
                     if (callStack.size == 1) return
                     ret()
                 }
+                JMP -> ip = decodeNextInt()
+                IADD -> add()
+                ICONST -> push(decodeNextInt().toStackEntry())
+                OUT -> out()
+
+                else -> error("Unknown bytecode $code")
             }
         }
     }
@@ -53,9 +76,9 @@ class VirtualMachine(info: LoadedInfo) {
 
     private fun call(functionIndex: Int) {
         val function = functions[functionIndex]
-        log("Call from $ip function #$functionIndex: $function")
+        log("call from $ip function #$functionIndex: $function")
         val args = (0 until function.args).map { pop() }
-        val locals = (0 until function.locals).map { Entry.Null }.toMutableList<Entry>()
+        val locals = (0 until function.locals).map { StackEntry.Null }.toMutableList<StackEntry>()
         callStack.push(StackFrame(args, locals, ip))
         ip = function.address
         log("args = $args")
@@ -65,21 +88,27 @@ class VirtualMachine(info: LoadedInfo) {
     private fun ret() {
         val frame = callStack.pop()
         ip = frame.returnAddress
-        log("Ret to $ip")
+        log("ret to $ip")
     }
 
     private fun pop() = operandsStack.pop()
 
-    private fun push(entry: Entry) = operandsStack.push(entry)
+    private fun push(entry: StackEntry) = operandsStack.push(entry)
+
+    private fun add() {
+        val first = pop()
+        val second = pop()
+        if (first !is StackEntry.Integer || second !is StackEntry.Integer) error("Can't add $first to $second")
+        push((first.recycle() + second.recycle()).toStackEntry())
+    }
+
+    private fun out() = pop().let { entry ->
+        return@let when (entry) {
+            is StackEntry.Integer -> print(entry.recycle())
+            is StackEntry.Null -> print("null")
+        }
+    }
 
     private fun log(message: String) = println(message)
 }
 
-
-private typealias Stack<T> = MutableList<T>
-
-private fun <T> Stack<T>.push(value: T) = add(value)
-private fun <T> Stack<T>.pop(): T = removeAt(size - 1)
-private fun <T> Stack<T>.peek(): T = get(size - 1)
-
-private fun <T> stack(): Stack<T> = mutableListOf()
