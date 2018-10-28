@@ -27,3 +27,10 @@ fun ByteArray.copyToInt(startIndex: Int = 0): Int {
 }
 
 fun ByteArray.copyTo(destination: ByteArray, destIndex: Int = 0, sourceIndex: Int = 0, count: Int = size) = System.arraycopy(this, sourceIndex, destination, destIndex, count)
+
+
+infix fun Byte.xor(right: Byte): Int = toInt() xor right.toInt()
+
+infix fun Byte.and(right: Byte): Int = toInt() and right.toInt()
+
+infix fun Byte.or(right: Byte): Int = toInt() or right.toInt()

@@ -14,13 +14,39 @@ object OpcodesMapping {
 
             Push to Opcodes.PUSH,
             Pop to Opcodes.POP,
+
+
             ArgLoadInt to Opcodes.ALOADI,
             LocalStoreInt to Opcodes.LSTORI,
             LocalLoadInt to Opcodes.LLOADI,
+            MemoryStoreInt to Opcodes.MSTORI,
+            MemeryLoadInt to Opcodes.MLOADI,
 
             IntConst to Opcodes.CONSTI,
-
             IntAdd to Opcodes.ADDI,
+            IntMul to Opcodes.MULI,
+            IntDiv to Opcodes.DIVI,
+            IntMod to Opcodes.MODI,
+            IntXor to Opcodes.XORI,
+            IntAnd to Opcodes.ANDI,
+            IntOr to Opcodes.ORI,
+            IntNot to Opcodes.NOTI,
+
+            ArgLoadByte to Opcodes.ALOADB,
+            LocalStoreByte to Opcodes.LSTORB,
+            LocalLoadByte to Opcodes.LLOADB,
+            MemoryStoreByte to Opcodes.MSTORB,
+            MemeryLoadByte to Opcodes.MLOADB,
+
+            ByteConst to Opcodes.CONSTB,
+            ByteAdd to Opcodes.ADDB,
+            ByteMul to Opcodes.MULB,
+            ByteDiv to Opcodes.DIVB,
+            ByteMod to Opcodes.MODB,
+            ByteXor to Opcodes.XORB,
+            ByteAnd to Opcodes.ANDB,
+            ByteOr to Opcodes.ORB,
+            ByteNot to Opcodes.NOTB,
 
             Out to Opcodes.OUT,
 
@@ -73,5 +99,5 @@ object ByteNot : OpcodeImpl(name = "notb")
 
 object Out : OpcodeImpl(name = "out")
 
-object Alloc: OpcodeImpl(name = "alloc")
-object Free: OpcodeImpl(name = "free")
+object Alloc : OpcodeImpl(name = "alloc")
+object Free : OpcodeImpl(name = "free")
