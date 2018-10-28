@@ -48,23 +48,23 @@ class VirtualMachineTest {
     fun test2() {
         val asm = """
             .fun sum3: args = 3
-            aload 0
-            aload 1
-            iadd
-            aload 2
-            iadd
+            aloadi 0
+            aloadi 1
+            addi
+            aloadi 2
+            addi
             ret
             .fun main: args = 3, locals = 2
-            iconst 10
+            consti 10
             alloc
             out
-            iconst 10
+            consti 10
             alloc
             out
-            iconst 10
+            consti 10
             alloc
             out
-            iconst 10
+            consti 10
             alloc
             out
 

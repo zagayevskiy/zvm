@@ -8,15 +8,40 @@ object Opcodes {
 
     val PUSH = 0x20.byte
     val POP = 0x21.byte
-    val ALOAD = 0x22.byte
-    val LSTORE = 0x23.byte
-    val LLOAD = 0x24.byte
-    val MSTORE = 0x25.byte
-    val MLOAD = 0x26.byte
 
-    val ICONST = 0x30.byte
+    //region int opcodes
+    val ALOADI = 0x40.byte
+    val LSTORI = 0x41.byte
+    val LLOADI = 0x42.byte
+    val MSTORI = 0x43.byte
+    val MLOADI = 0x44.byte
+    val CONSTI = 0x45.byte
+    val ADDI = 0x46.byte
+    val MULI = 0x47.byte
+    val DIVI = 0x48.byte
+    val MODI = 0x49.byte
+    val XORI = 0x4A.byte
+    val ANDI = 0x4B.byte
+    val ORI = 0x4C.byte
+    val NOTI = 0x4D.byte
+    //endregion
 
-    val IADD = 0x40.byte
+    //region byte opcodes
+    val ALOADB = 0x60.byte
+    val LSTORB = 0x61.byte
+    val LLOADB = 0x62.byte
+    val MSTORB = 0x63.byte
+    val MLOADB = 0x64.byte
+    val CONSTB = 0x65.byte
+    val ADDB = 0x66.byte
+    val MULB = 0x67.byte
+    val DIVB = 0x68.byte
+    val MODB = 0x69.byte
+    val XORB = 0x6A.byte
+    val ANDB = 0x6B.byte
+    val ORB = 0x6C.byte
+    val NOTB = 0x6D.byte
+    //endregion
 
     val OUT = 0x70.byte
 

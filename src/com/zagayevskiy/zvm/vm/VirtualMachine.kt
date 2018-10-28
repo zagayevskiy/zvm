@@ -4,16 +4,16 @@ import com.zagayevskiy.zvm.Memory
 import com.zagayevskiy.zvm.MemoryBitTable
 import com.zagayevskiy.zvm.common.Address
 import com.zagayevskiy.zvm.common.Opcodes.ALLOC
-import com.zagayevskiy.zvm.common.Opcodes.ALOAD
+import com.zagayevskiy.zvm.common.Opcodes.ALOADI
 import com.zagayevskiy.zvm.common.Opcodes.CALL
 import com.zagayevskiy.zvm.common.Opcodes.FREE
-import com.zagayevskiy.zvm.common.Opcodes.IADD
-import com.zagayevskiy.zvm.common.Opcodes.ICONST
+import com.zagayevskiy.zvm.common.Opcodes.ADDI
+import com.zagayevskiy.zvm.common.Opcodes.CONSTI
 import com.zagayevskiy.zvm.common.Opcodes.JMP
-import com.zagayevskiy.zvm.common.Opcodes.LLOAD
-import com.zagayevskiy.zvm.common.Opcodes.LSTORE
-import com.zagayevskiy.zvm.common.Opcodes.MLOAD
-import com.zagayevskiy.zvm.common.Opcodes.MSTORE
+import com.zagayevskiy.zvm.common.Opcodes.LLOADI
+import com.zagayevskiy.zvm.common.Opcodes.LSTORI
+import com.zagayevskiy.zvm.common.Opcodes.MLOADI
+import com.zagayevskiy.zvm.common.Opcodes.MSTORI
 import com.zagayevskiy.zvm.common.Opcodes.OUT
 import com.zagayevskiy.zvm.common.Opcodes.RET
 import com.zagayevskiy.zvm.util.extensions.*
@@ -25,19 +25,13 @@ private class StackFrame(val args: List<StackEntry>, val locals: MutableList<Sta
 
 sealed class StackEntry {
 
-    class Integer(defaultValue: Int) : StackEntry() {
-        private var value: Int = defaultValue
-        private fun mutate(newValue: Int) = this.run { value = newValue }
-
-        companion object Pool : RuntimePool<Integer, Int> by RuntimePoolImpl(10, ::Integer, Integer::mutate)
-
-        fun recycle(): Int = value.also { recycle(this) }
-    }
+    class VMInteger(val intValue: Int) : StackEntry()
+    class VMByte(val byteValue: Byte)
 
     object Null : StackEntry()
 }
 
-fun Int.toStackEntry() = StackEntry.Integer.obtain(this)
+fun Int.toStackEntry() = StackEntry.VMInteger(this)
 
 class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
     private val functions = info.functions
@@ -71,13 +65,13 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                     ret()
                 }
                 JMP -> ip = decodeNextInt()
-                IADD -> add()
-                ICONST -> push(decodeNextInt().toStackEntry())
-                ALOAD -> argLoad()
-                LLOAD -> localLoad()
-                LSTORE -> localStore()
-                MSTORE -> memoryStore()
-                MLOAD -> memoryLoad()
+                ADDI -> add()
+                CONSTI -> push(decodeNextInt().toStackEntry())
+                ALOADI -> argLoad()
+                LLOADI -> localLoad()
+                LSTORI -> localStore()
+                MSTORI -> memoryStore()
+                MLOADI -> memoryLoad()
 
                 OUT -> out()
 
@@ -92,32 +86,32 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
 
     private fun memoryStore() {
         //TODO add checks
-        val address = (pop() as StackEntry.Integer).recycle()
-        val offset = (pop() as StackEntry.Integer).recycle()
-        val argument = (pop() as StackEntry.Integer).recycle()
+        val address = (pop() as StackEntry.VMInteger).intValue
+        val offset = (pop() as StackEntry.VMInteger).intValue
+        val argument = (pop() as StackEntry.VMInteger).intValue
 
         heap.writeInt(address + offset, argument)
     }
 
     private fun memoryLoad() {
         //TODO add checks
-        val address = (pop() as StackEntry.Integer).recycle()
-        val offset = (pop() as StackEntry.Integer).recycle()
+        val address = (pop() as StackEntry.VMInteger).intValue
+        val offset = (pop() as StackEntry.VMInteger).intValue
         push(heap.readInt(address + offset).toStackEntry())
     }
 
 
     private fun alloc() {
-        val argument = (pop() as? StackEntry.Integer) ?: error("alloc argument must be integer")
-        val size = (argument).recycle()
+        val argument = (pop() as? StackEntry.VMInteger) ?: error("alloc argument must be integer")
+        val size = (argument).intValue
         if (size <= 0) error("alloc argument must be positive integer. Has $size.")
 
         push(heap.allocate(size).toStackEntry())
     }
 
     private fun free() {
-        val argument = (pop() as? StackEntry.Integer) ?: error("free argument must be integer")
-        val address = (argument).recycle()
+        val argument = (pop() as? StackEntry.VMInteger) ?: error("free argument must be integer")
+        val address = argument.intValue
         heap.free(address)
     }
 
@@ -165,13 +159,13 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
     private fun add() {
         val first = pop()
         val second = pop()
-        if (first !is StackEntry.Integer || second !is StackEntry.Integer) error("Can't add $first to $second")
-        push((first.recycle() + second.recycle()).toStackEntry())
+        if (first !is StackEntry.VMInteger || second !is StackEntry.VMInteger) error("Can't add $first to $second")
+        push((first.intValue + second.intValue).toStackEntry())
     }
 
     private fun out() = pop().let { entry ->
         return@let when (entry) {
-            is StackEntry.Integer -> println(entry.recycle())
+            is StackEntry.VMInteger -> println(entry.intValue)
             is StackEntry.Null -> println("null")
         }
     }
