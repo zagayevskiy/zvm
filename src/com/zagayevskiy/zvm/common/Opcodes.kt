@@ -1,53 +1,70 @@
 package com.zagayevskiy.zvm.common
 
 object Opcodes {
-    val JMP = 0x0.byte
+    //region control flow opcodes
+    const val CALL: Byte = 0x10
+    const val RET: Byte = 0x11
+    const val JMP: Byte = 0x12
+    const val JZ: Byte = 0x13
+    const val JNZ: Byte = 0x14
+    const val JPOS: Byte = 0x15
+    const val JNEG: Byte = 0x16
+    //endregion
 
-    val CALL = 0x10.byte
-    val RET = 0x11.byte
+    const val PUSH: Byte = 0x20
+    const val POP: Byte = 0x21
 
-    val PUSH = 0x20.byte
-    val POP = 0x21.byte
+    //region casts opcodes
+    const val ITOB: Byte = 0x30
+    const val BTOI: Byte = 0x31
+    //endregion
 
     //region int opcodes
-    val ALOADI = 0x40.byte
-    val LSTORI = 0x41.byte
-    val LLOADI = 0x42.byte
-    val MSTORI = 0x43.byte
-    val MLOADI = 0x44.byte
-    val CONSTI = 0x45.byte
-    val ADDI = 0x46.byte
-    val MULI = 0x47.byte
-    val DIVI = 0x48.byte
-    val MODI = 0x49.byte
-    val XORI = 0x4A.byte
-    val ANDI = 0x4B.byte
-    val ORI = 0x4C.byte
-    val NOTI = 0x4D.byte
+    const val ALOADI: Byte = 0x40
+    const val LSTORI: Byte = 0x41
+    const val LLOADI: Byte = 0x42
+    const val MSTORI: Byte = 0x43
+    const val MLOADI: Byte = 0x44
+    const val CONSTI: Byte = 0x45
+    const val ADDI: Byte = 0x46
+    const val INCI: Byte = 0x47
+    const val DECI: Byte = 0x48
+    const val MULI: Byte = 0x49
+    const val DIVI: Byte = 0x4A
+    const val MODI: Byte = 0x4B
+    const val XORI: Byte = 0x4C
+    const val ANDI: Byte = 0x4D
+    const val ORI: Byte = 0x4E
+    const val NOTI: Byte = 0x4F
+    const val CMPI: Byte = 0x50
+    const val CMPIC: Byte = 0x51
+    const val RNDI: Byte = 0x52
     //endregion
 
     //region byte opcodes
-    val ALOADB = 0x60.byte
-    val LSTORB = 0x61.byte
-    val LLOADB = 0x62.byte
-    val MSTORB = 0x63.byte
-    val MLOADB = 0x64.byte
-    val CONSTB = 0x65.byte
-    val ADDB = 0x66.byte
-    val MULB = 0x67.byte
-    val DIVB = 0x68.byte
-    val MODB = 0x69.byte
-    val XORB = 0x6A.byte
-    val ANDB = 0x6B.byte
-    val ORB = 0x6C.byte
-    val NOTB = 0x6D.byte
+    const val ALOADB: Byte = 0x60
+    const val LSTORB: Byte = 0x61
+    const val LLOADB: Byte = 0x62
+    const val MSTORB: Byte = 0x63
+    const val MLOADB: Byte = 0x64
+    const val CONSTB: Byte = 0x65
+    const val ADDB: Byte = 0x66
+    const val MULB: Byte = 0x67
+    const val DIVB: Byte = 0x68
+    const val MODB: Byte = 0x69
+    const val XORB: Byte = 0x6A
+    const val ANDB: Byte = 0x6B
+    const val ORB: Byte = 0x6C
+    const val NOTB: Byte = 0x6D
+    const val CMPB: Byte = 0x6E
+    const val CMPBC: Byte = 0x6F
     //endregion
 
-    val OUT = 0x70.byte
+    const val OUT: Byte = 0x70
 
-    val ALLOC = 0x80.byte
-    val FREE = 0x81.byte
+    //region memory opcodes
+    const val ALLOC: Byte = 0x71
+    const val FREE: Byte = 0x72
+    //endregion
+
 }
-
-private val Int.byte
-    get() = toByte()

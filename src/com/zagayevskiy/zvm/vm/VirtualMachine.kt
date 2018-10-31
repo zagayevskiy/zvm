@@ -11,15 +11,29 @@ import com.zagayevskiy.zvm.common.Opcodes.FREE
 import com.zagayevskiy.zvm.common.Opcodes.ADDI
 import com.zagayevskiy.zvm.common.Opcodes.ANDB
 import com.zagayevskiy.zvm.common.Opcodes.ANDI
+import com.zagayevskiy.zvm.common.Opcodes.BTOI
+import com.zagayevskiy.zvm.common.Opcodes.CMPB
+import com.zagayevskiy.zvm.common.Opcodes.CMPBC
+import com.zagayevskiy.zvm.common.Opcodes.CMPI
+import com.zagayevskiy.zvm.common.Opcodes.CMPIC
 import com.zagayevskiy.zvm.common.Opcodes.CONSTI
+import com.zagayevskiy.zvm.common.Opcodes.DECI
 import com.zagayevskiy.zvm.common.Opcodes.DIVB
 import com.zagayevskiy.zvm.common.Opcodes.DIVI
+import com.zagayevskiy.zvm.common.Opcodes.INCI
+import com.zagayevskiy.zvm.common.Opcodes.ITOB
 import com.zagayevskiy.zvm.common.Opcodes.JMP
+import com.zagayevskiy.zvm.common.Opcodes.JNEG
+import com.zagayevskiy.zvm.common.Opcodes.JNZ
+import com.zagayevskiy.zvm.common.Opcodes.JPOS
+import com.zagayevskiy.zvm.common.Opcodes.JZ
 import com.zagayevskiy.zvm.common.Opcodes.LLOADI
 import com.zagayevskiy.zvm.common.Opcodes.LSTORI
+import com.zagayevskiy.zvm.common.Opcodes.MLOADB
 import com.zagayevskiy.zvm.common.Opcodes.MLOADI
 import com.zagayevskiy.zvm.common.Opcodes.MODB
 import com.zagayevskiy.zvm.common.Opcodes.MODI
+import com.zagayevskiy.zvm.common.Opcodes.MSTORB
 import com.zagayevskiy.zvm.common.Opcodes.MSTORI
 import com.zagayevskiy.zvm.common.Opcodes.MULB
 import com.zagayevskiy.zvm.common.Opcodes.MULI
@@ -29,9 +43,13 @@ import com.zagayevskiy.zvm.common.Opcodes.ORB
 import com.zagayevskiy.zvm.common.Opcodes.ORI
 import com.zagayevskiy.zvm.common.Opcodes.OUT
 import com.zagayevskiy.zvm.common.Opcodes.RET
+import com.zagayevskiy.zvm.common.Opcodes.RNDI
 import com.zagayevskiy.zvm.common.Opcodes.XORB
 import com.zagayevskiy.zvm.common.Opcodes.XORI
 import com.zagayevskiy.zvm.util.extensions.*
+import com.zagayevskiy.zvm.vm.StackEntry.VMByte
+import com.zagayevskiy.zvm.vm.StackEntry.VMInteger
+import java.util.*
 
 
 data class RuntimeFunction(val address: Address, val args: Int, val locals: Int)
@@ -40,14 +58,14 @@ private class StackFrame(val args: List<StackEntry>, val locals: MutableList<Sta
 
 sealed class StackEntry {
 
-    class VMInteger(val intValue: Int) : StackEntry()
-    class VMByte(val byteValue: Byte) : StackEntry()
+    data class VMInteger(val intValue: Int) : StackEntry()
+    data class VMByte(val byteValue: Byte) : StackEntry()
 
-    object Null : StackEntry()
+    object VMNull : StackEntry()
 }
 
-fun Int.toStackEntry() = StackEntry.VMInteger(this)
-fun Byte.toStackEntry() = StackEntry.VMByte(this)
+fun Int.toStackEntry() = VMInteger(this)
+fun Byte.toStackEntry() = VMByte(this)
 
 class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
     private val functions = info.functions
@@ -60,27 +78,30 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
     private val operandsStack = stack<StackEntry>()
 
     private val heap: Memory = MemoryBitTable(heapSize)
+    private val random = Random()
 
-    fun run(args: List<StackEntry>) {
+    fun run(args: List<StackEntry>): StackEntry {
         args.forEach { push(it) }
         call(mainIndex)
         loop()
         log("Program finished")
+        return pop()
     }
 
     private fun loop() {
         while (ip < bytecode.size) {
-            val code = bytecode[ip]
-            ++ip
+            val code = nextByte()
             when (code) {
-                CALL -> {
-                    call(functionIndex = decodeNextInt())
-                }
+                CALL -> call(functionIndex = decodeNextInt())
                 RET -> {
                     if (callStack.size == 1) return
                     ret()
                 }
-                JMP -> ip = decodeNextInt()
+                JMP -> jump(decodeNextInt())
+                JZ -> jz()
+                JNZ -> jnz()
+                JPOS -> jpos()
+                JNEG -> jneg()
 
                 CONSTI -> push(decodeNextInt().toStackEntry())
                 ALOADI -> argLoadInt()
@@ -90,6 +111,8 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                 MLOADI -> memoryLoadInt()
 
                 ADDI -> addi()
+                INCI -> inci()
+                DECI -> deci()
                 MULI -> muli()
                 DIVI -> divi()
                 MODI -> modi()
@@ -97,6 +120,12 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                 ANDI -> andi()
                 ORI -> ori()
                 NOTI -> noti()
+                CMPI -> cmpi()
+                CMPIC -> cmpic()
+                RNDI -> rndi()
+
+                MLOADB -> memoryLoadByte()
+                MSTORB -> memoryStoreByte()
 
                 ADDB -> addb()
                 MULB -> mulb()
@@ -106,11 +135,16 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                 ANDB -> andb()
                 ORB -> orb()
                 NOTB -> notb()
+                CMPB -> cmpb()
+                CMPBC -> cmpbc()
 
                 OUT -> out()
 
                 ALLOC -> alloc()
                 FREE -> free()
+
+                BTOI -> btoi()
+                ITOB -> itob()
 
                 else -> error("Unknown bytecode $code")
             }
@@ -119,33 +153,43 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
 
 
     private fun memoryStoreInt() {
-        //TODO add checks
-        val address = (pop() as StackEntry.VMInteger).intValue
-        val offset = (pop() as StackEntry.VMInteger).intValue
-        val argument = (pop() as StackEntry.VMInteger).intValue
+        val argument = pop<VMInteger>().intValue
+        val offset = pop<VMInteger>(PopOffsetMsg).intValue
+        val address = pop<VMInteger>(PopAddrMsg).intValue
 
         heap.writeInt(address + offset, argument)
     }
 
     private fun memoryLoadInt() {
-        //TODO add checks
-        val address = (pop() as StackEntry.VMInteger).intValue
-        val offset = (pop() as StackEntry.VMInteger).intValue
+        val offset = pop<VMInteger>(PopOffsetMsg).intValue
+        val address = pop<VMInteger>(PopAddrMsg).intValue
         push(heap.readInt(address + offset).toStackEntry())
+    }
+
+    private fun memoryStoreByte() {
+        val argument = pop<VMByte>().byteValue
+        val offset = pop<VMInteger>(PopOffsetMsg).intValue
+        val address = pop<VMInteger>(PopAddrMsg).intValue
+
+        heap[address + offset] = argument
+    }
+
+    private fun memoryLoadByte() {
+        val offset = pop<VMInteger>(PopOffsetMsg).intValue
+        val address = pop<VMInteger>(PopAddrMsg).intValue
+        push(heap[address + offset].toStackEntry())
     }
 
 
     private fun alloc() {
-        val argument = (pop() as? StackEntry.VMInteger) ?: error("alloc argument must be integer")
-        val size = (argument).intValue
-        if (size <= 0) error("alloc argument must be positive integer. Has $size.")
+        val size = pop<VMInteger> { "alloc argument must be int, $it found" }.intValue
+        if (size <= 0) error("alloc argument must be positive int, $size found")
 
         push(heap.allocate(size).toStackEntry())
     }
 
     private fun free() {
-        val argument = (pop() as? StackEntry.VMInteger) ?: error("free argument must be integer")
-        val address = argument.intValue
+        val address = pop<VMInteger> { "free argument must be Address(int), $it found" }.intValue
         heap.free(address)
     }
 
@@ -169,11 +213,14 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
 
     private fun decodeNextInt(): Int = bytecode.copyToInt(startIndex = ip).also { ip += 4 }
 
+    private fun nextByte(): Byte = bytecode[ip++]
+
+    //region control flow
     private fun call(functionIndex: Int) {
         val function = functions[functionIndex]
         log("call from $ip function #$functionIndex: $function")
-        val args = (0 until function.args).map { pop() }
-        val locals = (0 until function.locals).map { StackEntry.Null }.toMutableList<StackEntry>()
+        val args = (0 until function.args).map { pop() }.reversed()
+        val locals = (0 until function.locals).map { StackEntry.VMNull }.toMutableList<StackEntry>()
         callStack.push(StackFrame(args, locals, ip))
         ip = function.address
         log("args = $args")
@@ -183,15 +230,75 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
     private fun ret() {
         val frame = callStack.pop()
         ip = frame.returnAddress
-        log("ret to $ip")
+        log("ret (${peek()}) to $ip")
     }
 
+    private fun jz() = conditionalJump { value ->
+        when (value) {
+            is VMByte -> value.byteValue.toInt() == 0
+            is VMInteger -> value.intValue == 0
+            is StackEntry.VMNull -> true
+        }
+    }
+
+    private fun jnz() = conditionalJump { value ->
+        when (value) {
+            is VMByte -> value.byteValue.toInt() != 0
+            is VMInteger -> value.intValue != 0
+            is StackEntry.VMNull -> false
+        }
+    }
+
+    private fun jpos() = conditionalJump { value ->
+        when (value) {
+            is VMByte -> value.byteValue > 0
+            is VMInteger -> value.intValue > 0
+            is StackEntry.VMNull -> false
+        }
+    }
+
+    private fun jneg() = conditionalJump { value ->
+        when (value) {
+            is VMByte -> value.byteValue < 0
+            is VMInteger -> value.intValue < 0
+            is StackEntry.VMNull -> false
+        }
+    }
+
+    private inline fun conditionalJump(condition: (StackEntry) -> Boolean) {
+        val address = decodeNextInt()
+        val conditionArgument = pop()
+        if (condition(conditionArgument)) {
+            jump(address)
+        }
+    }
+
+    private fun jump(address: Address) {
+        ip = address
+    }
+
+    //endregion
+
+    //region stack
     private fun pop() = operandsStack.pop()
+
+    private inline fun <reified T : StackEntry> pop(lazyErrorMessage: (wrong: StackEntry) -> String = { "${T::class.simpleName} expected at top of the stack, but $it found" }): T {
+        val value = pop()
+        if (value !is T) error(lazyErrorMessage(value))
+        return value
+    }
 
     private fun push(entry: StackEntry) = operandsStack.push(entry)
 
-    //region int exprs
+    private fun peek() = operandsStack.peek()
+    //endregion
+
+    //region int expressions
     private fun addi() = binaryIntExpr { left, right -> left + right }
+
+    private fun inci() = unaryIntExpr { it + 1 }
+
+    private fun deci() = unaryIntExpr { it - 1 }
 
     private fun muli() = binaryIntExpr { left, right -> left * right }
 
@@ -207,20 +314,25 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
 
     private fun noti() = unaryIntExpr { it.inv() }
 
-    private inline fun unaryIntExpr(body: (Int) -> Int) = pop().let { value ->
-        if (value !is StackEntry.VMInteger) error("Unary int expression can't be used with $value")
-        push(body(value.intValue).toStackEntry())
+    private fun cmpi() = binaryIntExpr { left, right -> compareValues(left, right) }
+
+    private fun cmpic() = unaryIntExpr { left -> compareValues(left, decodeNextInt()) }
+
+    private fun rndi() = push(random.nextInt().toStackEntry())
+
+    private inline fun unaryIntExpr(body: (Int) -> Int) {
+        val value = pop<VMInteger>(PopIntExprOperandMsg).intValue
+        push(body(value).toStackEntry())
     }
 
     private inline fun binaryIntExpr(body: (left: Int, right: Int) -> Int) {
-        val left = pop()
-        val right = pop()
-        if (left !is StackEntry.VMInteger || right !is StackEntry.VMInteger) error("Binary int expression can't be used with $left and $right")
-        push(body(left.intValue, right.intValue).toStackEntry())
+        val right = pop<VMInteger>(PopIntExprOperandMsg).intValue
+        val left = pop<VMInteger>(PopIntExprOperandMsg).intValue
+        push(body(left, right).toStackEntry())
     }
     //endregion
 
-    //region byte exprs
+    //region byte expressions
     private fun addb() = binaryByteExpr { left, right -> left + right }
 
     private fun mulb() = binaryByteExpr { left, right -> left * right }
@@ -237,24 +349,41 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
 
     private fun notb() = unaryByteExpr { it.toInt().inv().toByte() }
 
-    private inline fun unaryByteExpr(body: (Byte) -> Byte) = pop().let { value ->
-        if (value !is StackEntry.VMByte) error("Unary int expression can't be used with $value")
-        push(body(value.byteValue).toStackEntry())
+    private fun cmpb() = binaryByteExpr { left, right -> compareValues(left, right) }
+
+    private fun cmpbc() {
+        TODO("not implemented")
+    }
+
+    private inline fun unaryByteExpr(body: (Byte) -> Byte) {
+        val value = pop<VMByte>(PopByteExprOperandMsg).byteValue
+        push(body(value).toStackEntry())
     }
 
     private inline fun binaryByteExpr(body: (left: Byte, right: Byte) -> Int) {
-        val left = pop()
-        val right = pop()
-        if (left !is StackEntry.VMByte || right !is StackEntry.VMByte) error("Binary byte expression can't be used with $left and $right")
-        push(body(left.byteValue, right.byteValue).toByte().toStackEntry())
+        val left = pop<VMByte>(PopByteExprOperandMsg).byteValue
+        val right = pop<VMByte>(PopByteExprOperandMsg).byteValue
+        push(body(left, right).toByte().toStackEntry())
     }
+    //endregion
+
+    //region casts
+
+    private fun btoi() = cast<VMByte, VMInteger> { it.byteValue.toInt().toStackEntry() }
+    private fun itob() = cast<VMInteger, VMByte> { it.intValue.toByte().toStackEntry() }
+
+    private inline fun <reified F : StackEntry, T : StackEntry> cast(convert: (F) -> T) {
+        val value = pop<F> { "Cast error: $it is not ${F::class.simpleName}" }
+        push(convert(value))
+    }
+
     //endregion
 
     private fun out() = pop().let { entry ->
         return@let when (entry) {
-            is StackEntry.VMInteger -> println(entry.intValue)
-            is StackEntry.VMByte -> println(entry.byteValue)
-            is StackEntry.Null -> println("null")
+            is VMInteger -> println(entry.intValue)
+            is VMByte -> println(entry.byteValue)
+            is StackEntry.VMNull -> println("null")
         }
     }
 
@@ -267,5 +396,11 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
     }
 
     private fun log(message: String) = println(message)
+
 }
+
+private val PopAddrMsg = { wrong: StackEntry -> "Address(int) expected at top of the stack, $wrong found." }
+private val PopOffsetMsg = { wrong: StackEntry -> "Offset(int) expected at top of the stack, $wrong found." }
+private val PopIntExprOperandMsg = { wrong: StackEntry -> "int expected as operand of int expression, $wrong found." }
+private val PopByteExprOperandMsg = { wrong: StackEntry -> "byte expected as operand of byte expression, $wrong found." }
 

@@ -4,8 +4,6 @@ import com.zagayevskiy.zvm.assertEquals
 import com.zagayevskiy.zvm.common.Token.*
 import com.zagayevskiy.zvm.util.extensions.toSequence
 import com.zagayevskiy.zvm.util.extensions.toToken
-import org.hamcrest.CoreMatchers.`is`
-import org.junit.Assert.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -33,7 +31,7 @@ private val symbols = mapOf(
 )
 
 @RunWith(Parameterized::class)
-internal class SequenceLexerTest(private val test: com.zagayevskiy.zvm.common.Test) {
+internal class SequenceLexerTest(private val test: TestData) {
 
     companion object {
 
@@ -106,6 +104,6 @@ val Int.tkn
     get() = toToken()
 
 
-internal data class Test(val text: String, val expected: List<Token>)
+internal data class TestData(val text: String, val expected: List<Token>)
 
-private infix fun String.expects(tokens: List<Token>) = Test(this, tokens)
+private infix fun String.expects(tokens: List<Token>) = TestData(this, tokens)

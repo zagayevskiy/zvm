@@ -32,6 +32,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
             }
         }
         checkThatAllLabelsDefined()
+        checkThatAllFunctionsDefined()
 
         val resultBytecode = ByteArray(ip)
         bytecode.copyTo(destination = resultBytecode, count = ip)
@@ -39,18 +40,29 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
     }
 
     private fun addInstruction(command: Instruction) = command.run {
-        val byte = opcodesMapping[opcode] ?: error("Unknown opcode at $command")
+        val byte = opcodesMapping[opcode] ?: error("Unknown opcode $opcode at $command")
 
         write(byte)
         operands.forEach { operand ->
             when (operand) {
-                is Instruction.Operand.Integer -> write(operand.value)
+                is Instruction.Operand.Integer -> when (opcode) {
+                    ByteConst -> writeByteConst(operand.value)
+                    else -> write(operand.value)
+                }
                 is Instruction.Operand.Id -> when (opcode) {
                     Call -> write(functionIndex(operand.name))
-                    Jmp -> write(obtainLabel(operand.name))
+                    Jmp, JumpZero, JumpNotZero, JumpPositive, JumpNegative -> write(obtainLabel(operand.name))
                     else -> error("opcode ${opcode.name} can't operate with $operand")
                 }
             }
+        }
+    }
+
+    private fun writeByteConst(operand: Int) {
+        if (operand in (Byte.MIN_VALUE..Byte.MAX_VALUE)) {
+            write(operand.toByte())
+        } else {
+            error("${ByteConst.name} operand must be in ${Byte.MIN_VALUE}..${Byte.MAX_VALUE}. Has $operand.")
         }
     }
 
@@ -123,7 +135,11 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
     }
 
     private fun checkThatAllLabelsDefined() {
-        labelDefinitions.values.firstOrNull { !it.defined }?.let { error("Label ${it.name} used but not defined") }
+        labelDefinitions.values.firstOrNull { !it.defined }?.let { error("Label \"${it.name}\" used but not defined.") }
+    }
+
+    private fun checkThatAllFunctionsDefined() {
+        functions.firstOrNull { !it.defined }?.let { error("Function \"${it.name}\" called but not defined.") }
     }
 
     private fun error(message: String): Nothing = throw GenerationException(message)
