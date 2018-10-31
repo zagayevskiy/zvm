@@ -44,6 +44,9 @@ import com.zagayevskiy.zvm.common.Opcodes.ORI
 import com.zagayevskiy.zvm.common.Opcodes.OUT
 import com.zagayevskiy.zvm.common.Opcodes.RET
 import com.zagayevskiy.zvm.common.Opcodes.RNDI
+import com.zagayevskiy.zvm.common.Opcodes.SHLI
+import com.zagayevskiy.zvm.common.Opcodes.SHRI
+import com.zagayevskiy.zvm.common.Opcodes.SUBI
 import com.zagayevskiy.zvm.common.Opcodes.XORB
 import com.zagayevskiy.zvm.common.Opcodes.XORI
 import com.zagayevskiy.zvm.util.extensions.*
@@ -111,6 +114,7 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                 MLOADI -> memoryLoadInt()
 
                 ADDI -> addi()
+                SUBI -> subi()
                 INCI -> inci()
                 DECI -> deci()
                 MULI -> muli()
@@ -120,6 +124,8 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                 ANDI -> andi()
                 ORI -> ori()
                 NOTI -> noti()
+                SHLI -> shli()
+                SHRI -> shri()
                 CMPI -> cmpi()
                 CMPIC -> cmpic()
                 RNDI -> rndi()
@@ -296,6 +302,8 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
     //region int expressions
     private fun addi() = binaryIntExpr { left, right -> left + right }
 
+    private fun subi() = binaryIntExpr { left, right -> left - right }
+
     private fun inci() = unaryIntExpr { it + 1 }
 
     private fun deci() = unaryIntExpr { it - 1 }
@@ -313,6 +321,10 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
     private fun ori() = binaryIntExpr { left, right -> left or right }
 
     private fun noti() = unaryIntExpr { it.inv() }
+
+    private fun shli() = binaryIntExpr { left, right -> left shl right }
+
+    private fun shri() = binaryIntExpr { left, right -> left ushr right }
 
     private fun cmpi() = binaryIntExpr { left, right -> compareValues(left, right) }
 

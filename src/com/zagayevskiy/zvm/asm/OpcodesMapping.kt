@@ -28,6 +28,7 @@ object OpcodesMapping {
 
             IntConst to Opcodes.CONSTI,
             IntAdd to Opcodes.ADDI,
+            IntSub to Opcodes.SUBI,
             IntInc to Opcodes.INCI,
             IntDec to Opcodes.DECI,
             IntMul to Opcodes.MULI,
@@ -37,6 +38,8 @@ object OpcodesMapping {
             IntAnd to Opcodes.ANDI,
             IntOr to Opcodes.ORI,
             IntNot to Opcodes.NOTI,
+            IntShl to Opcodes.SHLI,
+            IntShr to Opcodes.SHRI,
             IntCmp to Opcodes.CMPI,
             IntConstCmp to Opcodes.CMPIC,
             RandomInt to Opcodes.RNDI,
@@ -92,6 +95,7 @@ object MemeryLoadInt : OpcodeImpl(name = "mloadi")
 
 object IntConst : OpcodeImpl(name = "consti", operandCount = 1)
 object IntAdd : OpcodeImpl(name = "addi")
+object IntSub : OpcodeImpl(name = "subi")
 object IntInc : OpcodeImpl(name = "inci")
 object IntDec : OpcodeImpl(name = "deci")
 object IntMul : OpcodeImpl(name = "muli")
@@ -101,6 +105,8 @@ object IntXor : OpcodeImpl(name = "xori")
 object IntAnd : OpcodeImpl(name = "andi")
 object IntOr : OpcodeImpl(name = "ori")
 object IntNot : OpcodeImpl(name = "noti")
+object IntShl : OpcodeImpl(name = "shli")
+object IntShr : OpcodeImpl(name = "shri")
 object IntCmp : OpcodeImpl(name = "cmpi")
 object IntConstCmp : OpcodeImpl(name = "cmpic", operandCount = 1)
 object RandomInt : OpcodeImpl(name = "rndi")

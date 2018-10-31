@@ -53,12 +53,17 @@ internal class VirtualMachineProgramsTest(private val test: Tst) {
                 Tst("rec!2 ", factorialRecursive, entries(2), 2.toStackEntry()),
                 Tst("rec!5", factorialRecursive, entries(5), 120.toStackEntry()),
                 Tst("rec!12", factorialRecursive, entries(12), 479001600.toStackEntry()),
-//
-//                Tst("1+..+5", sumOfArray, entries(6), 15.toStackEntry(), 10),
-//                Tst("1+..+1000", sumOfArray, entries(1001), (1000 * (1 + 1000) / 2).toStackEntry(), 4000),
 
-                Tst("reverse 0x0a1b2c3d", reverseIntBytesViaMemory, entries(0x0a1b2c3d), 0x3d2c1b0a.toStackEntry(), 4),
-                Tst("reverse 0b01010101_11110000_00001111_00110011", reverseIntBytesViaMemory, entries(0b01010101_11110000_00001111_00110011), 0b00110011_00001111_11110000_01010101.toStackEntry(), 4)
+                Tst("1+..+5", sumOfArray, entries(6), 15.toStackEntry(), 10),
+                Tst("1+..+1000", sumOfArray, entries(1001), (1000 * (1 + 1000) / 2).toStackEntry(), 4000),
+
+                Tst("rbit 0x0a1b2c3d", reverseIntBytesViaBitManipulations, entries(0x0a1b2c3d), 0x3d2c1b0a.toStackEntry()),
+                Tst("rbit 0b01010101_11110000_00001111_00110011", reverseIntBytesViaBitManipulations, entries(0b01010101_11110000_00001111_00110011), 0b00110011_00001111_11110000_01010101.toStackEntry()),
+
+                Tst("rmem 0x0a1b2c3d", reverseIntBytesViaMemory, entries(0x0a1b2c3d), 0x3d2c1b0a.toStackEntry(), 4),
+                Tst("rmem 0b01010101_11110000_00001111_00110011", reverseIntBytesViaMemory, entries(0b01010101_11110000_00001111_00110011), 0b00110011_00001111_11110000_01010101.toStackEntry(), 4),
+
+                Tst("rev 0b01010101_11110000_00001111_11001100", reverseIntBits, entries(0b01010101_11110000_11100110_11001100), 0b00110011_01100111_00001111_10101010.toStackEntry())
         )
     }
 

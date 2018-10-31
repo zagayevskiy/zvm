@@ -27,18 +27,21 @@ object Opcodes {
     const val MLOADI: Byte = 0x44
     const val CONSTI: Byte = 0x45
     const val ADDI: Byte = 0x46
-    const val INCI: Byte = 0x47
-    const val DECI: Byte = 0x48
-    const val MULI: Byte = 0x49
-    const val DIVI: Byte = 0x4A
-    const val MODI: Byte = 0x4B
-    const val XORI: Byte = 0x4C
-    const val ANDI: Byte = 0x4D
-    const val ORI: Byte = 0x4E
-    const val NOTI: Byte = 0x4F
-    const val CMPI: Byte = 0x50
-    const val CMPIC: Byte = 0x51
-    const val RNDI: Byte = 0x52
+    const val SUBI: Byte = 0x47
+    const val INCI: Byte = 0x48
+    const val DECI: Byte = 0x49
+    const val MULI: Byte = 0x4A
+    const val DIVI: Byte = 0x4B
+    const val MODI: Byte = 0x4C
+    const val XORI: Byte = 0x4D
+    const val ANDI: Byte = 0x4E
+    const val ORI: Byte = 0x4F
+    const val NOTI: Byte = 0x50
+    const val SHLI: Byte = 0x51
+    const val SHRI: Byte = 0x52
+    const val CMPI: Byte = 0x53
+    const val CMPIC: Byte = 0x54
+    const val RNDI: Byte = 0x55
     //endregion
 
     //region byte opcodes
