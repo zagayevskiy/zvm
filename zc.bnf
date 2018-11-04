@@ -52,13 +52,14 @@ addition_expr ::= multiplication_expr { ("+" | "-") multiplication_expr }
 
 multiplication_expr ::= unary_expr { "*" | "/" | "%" unary_expr }
 
-unary_expr ::= [( "~" | "!" | "@")] value_expr
+unary_expr ::= [( "~" | "!" | "*")] value_expr
 
-value_expr ::= const |
-	"(" expression ")" [chain] |
-	identifier ("=" expression | [chain]) |
-    //TODO lambda syntax
-	
+value_expr ::= const | parenthesis_expr | assignment_expr //TODO lambda syntax
+
+parenthesis_expr ::= "(" expression ")" [chain]
+
+assignment_expr ::= identifier ("=" expression | [chain])
+
 expressions_list ::= expression { "," expression }
 
 chain ::= function_call | array_indexing | struct_field_dereference

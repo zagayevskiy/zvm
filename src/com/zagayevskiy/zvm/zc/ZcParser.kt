@@ -6,6 +6,11 @@ import com.zagayevskiy.zvm.common.Token.*
 
 private object StubAst : Ast()
 
+sealed class ParseResult {
+    class Success: ParseResult()
+    class Failure: ParseResult()
+}
+
 class ZcParser(private val lexer: Lexer) {
 
     companion object {
@@ -22,6 +27,7 @@ class ZcParser(private val lexer: Lexer) {
                 topLevelDefinition()
             }
         } catch (e: ParseException) {
+            throw e
 //            return ParseResult.Failure(lexer.currentLine, e.message, commands, e)
         }
 
@@ -58,9 +64,9 @@ class ZcParser(private val lexer: Lexer) {
     private fun function(): Ast? {
         maybe<ZcToken.Fun>() ?: return NotMatched
         val name = expect<Identifier>()
-        expect<ZcToken.CurlyBracketOpen>()
+        expect<ZcToken.ParenthesisOpen>()
         val args = functionArgsList()
-        expect<ZcToken.CurlyBracketClose>()
+        expect<ZcToken.ParenthesisClose>()
         val returnType = maybe<ZcToken.Colon>()?.andThan { functionReturnType() ?: error("Return type expected.") }
         functionBody() ?: error("Function body expected.")
         return StubAst
@@ -99,9 +105,7 @@ class ZcParser(private val lexer: Lexer) {
         return expression() ?: error("Expression expected in expression body.")
     }
 
-    private fun variableDecl(): Ast? {
-        return varDecl() ?: valDecl() ?: error("Variable declaration expected")
-    }
+    private fun variableDecl() = varDecl() ?: valDecl()
 
     // var_declaration ::= "var" identifier ((":" identifier) ["=" expression] | ("=" expression))
     private fun varDecl(): Ast? {
@@ -137,12 +141,13 @@ class ZcParser(private val lexer: Lexer) {
         skipAll<Eol>()
         val first = statement() ?: return StubAst // empty
         val statements = mutableListOf(first)
-        while (true) {
-            expect<Eol>()
+        while (maybe<Eol>() != null) {
+            skipAll<Eol>()
             val next = statement() ?: break
             statements.add(next)
-            skipAll<Eol>()
+
         }
+        skipAll<Eol>()
         expect<ZcToken.CurlyBracketClose>()
 
         return StubAst //filled
@@ -241,6 +246,8 @@ class ZcParser(private val lexer: Lexer) {
     // bit_or_expr ::= bit_xor_expr { "|" bit_xor_expr }
     private fun bitOrExpr(): Ast? {
         val xors = matchList<ZcToken.BitOr>(::bitXorExpr) ?: return NotMatched
+
+        return StubAst
     }
 
     // bit_xor_expr ::= bit_and_expr { "^" bit_and_expr }
@@ -324,11 +331,77 @@ class ZcParser(private val lexer: Lexer) {
     }
 
     // unary_expr ::= [( "~" | "!" | "@")] value_expr
-    private fun unaryExpr(): Ast? = maybe<ZcToken.BitNot>()?.andThan { valueExpr() ?: error("Bit-not argument expected.") }
-            ?: maybe<ZcToken.LogicalNot>()?.andThan { valueExpr() ?: error("Logical-not argument expected.") }
+    private fun unaryExpr(): Ast? = unaryBitNot() ?: unaryLogicalNot() ?: unaryDereferencing() ?: valueExpr()
 
-    private fun valueExpr(): Ast? {
+    private fun unaryBitNot() = maybe<ZcToken.BitNot>()?.andThan { valueExpr() ?: error("Bit-not argument expected.") }
 
+    private fun unaryLogicalNot() = maybe<ZcToken.LogicalNot>()?.andThan { valueExpr() ?: error("Logical-not argument expected.") }
+
+    private fun unaryDereferencing() = maybe<ZcToken.Asterisk>()?.andThan { valueExpr() ?: error("Dereferencing argument expected.") }
+
+    private fun valueExpr() = constExpr() ?: parenthesisExpr()
+
+    private fun constExpr(): Ast? {
+        val constant = maybe<Token.Integer>() ?: return NotMatched
+
+        return StubAst
+    }
+
+    // parenthesis_expr ::= "(" expression ")" [chain]
+    private fun parenthesisExpr(): Ast? {
+        maybe<ZcToken.ParenthesisOpen>() ?: return NotMatched
+
+        val expression = expression() ?: error("Expression expected.")
+
+        expect<ZcToken.ParenthesisClose>()
+
+        chain()
+
+        return StubAst // chained somehow
+    }
+
+    // identifier ("=" expression | [chain])
+    private fun assignmentExpr(): Ast? {
+        val identifier = maybe<Identifier>() ?: return NotMatched
+
+        val expression = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Right side of assignment expected.") }
+
+        if (expression != null) {
+            chain()
+        }
+
+        return StubAst // chained somehow
+    }
+
+    // chain ::= function_call | array_indexing | struct_field_dereference
+    private fun chain() = functionCall() ?: arrayIndexing() ?: structFieldDereference()
+
+    // function_call ::= "(" expressions_list ")" [chain]
+    private fun functionCall(): Ast? {
+        maybe<ZcToken.ParenthesisOpen>() ?: return NotMatched
+        val expressions = matchList<ZcToken.Comma>(::expression) ?: emptyList()
+        expect<ZcToken.ParenthesisClose>()
+
+        return StubAst
+    }
+
+    // array_indexing ::= "[" expression "]" ("=" expression | [chain])
+    private fun arrayIndexing(): Ast? {
+        maybe<ZcToken.SquareBracketOpen>() ?: return NotMatched
+        val expression = expression() ?: error("Expression expected as index.")
+        expect<ZcToken.SquareBracketClose>()
+        val assignmentExpr = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Right side of assignment expected.") }
+        if (assignmentExpr == null) {
+            chain()
+        }
+
+        return StubAst
+    }
+
+    // struct_field_dereference ::= "." identifier ("=" expression | [chain])
+    private fun structFieldDereference(): Ast? {
+        println("struct field dereferencing not implemented")
+        return NotMatched
     }
 
     private fun nextToken() {
@@ -337,7 +410,7 @@ class ZcParser(private val lexer: Lexer) {
         }
     }
 
-    private fun error(message: String = "Syntax error at token $token"): Nothing = throw ParseException(message)
+    private fun error(message: String = "Syntax error at token $token"): Nothing = throw ParseException("Line ${lexer.currentLine}: $message")
 
     private inline fun <reified T : Token> expect() = maybe<T>()
             ?: error("Unexpected token $token. Token of type ${T::class.simpleName} expected.")
