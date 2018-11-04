@@ -130,7 +130,8 @@ class ZcParser(private val lexer: Lexer) {
 
         val typeId = maybe<ZcToken.Colon>()?.andThan { expect<Identifier>() }
 
-        val assignmentAst = expect<ZcToken.Assign>().andThan { expression() } ?: error("Valid expression expected after assignment")
+        expect<ZcToken.Assign>()
+        val assignmentExpr = expression() ?: error("Valid expression expected after assignment")
 
         return StubAst
     }
@@ -333,13 +334,13 @@ class ZcParser(private val lexer: Lexer) {
     // unary_expr ::= [( "~" | "!" | "@")] value_expr
     private fun unaryExpr(): Ast? = unaryBitNot() ?: unaryLogicalNot() ?: unaryDereferencing() ?: valueExpr()
 
-    private fun unaryBitNot() = maybe<ZcToken.BitNot>()?.andThan { valueExpr() ?: error("Bit-not argument expected.") }
+    private fun unaryBitNot() = maybe<ZcToken.BitNot>()?.andThan { expression() ?: error("Bit-not argument expected.") }
 
-    private fun unaryLogicalNot() = maybe<ZcToken.LogicalNot>()?.andThan { valueExpr() ?: error("Logical-not argument expected.") }
+    private fun unaryLogicalNot() = maybe<ZcToken.LogicalNot>()?.andThan { expression() ?: error("Logical-not argument expected.") }
 
-    private fun unaryDereferencing() = maybe<ZcToken.Asterisk>()?.andThan { valueExpr() ?: error("Dereferencing argument expected.") }
+    private fun unaryDereferencing() = maybe<ZcToken.Asterisk>()?.andThan { expression() ?: error("Dereferencing argument expected.") }
 
-    private fun valueExpr() = constExpr() ?: parenthesisExpr()
+    private fun valueExpr() = constExpr() ?: parenthesisExpr() ?: assignmentExpr()
 
     private fun constExpr(): Ast? {
         val constant = maybe<Token.Integer>() ?: return NotMatched
@@ -366,7 +367,7 @@ class ZcParser(private val lexer: Lexer) {
 
         val expression = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Right side of assignment expected.") }
 
-        if (expression != null) {
+        if (expression == null) {
             chain()
         }
 
@@ -381,6 +382,8 @@ class ZcParser(private val lexer: Lexer) {
         maybe<ZcToken.ParenthesisOpen>() ?: return NotMatched
         val expressions = matchList<ZcToken.Comma>(::expression) ?: emptyList()
         expect<ZcToken.ParenthesisClose>()
+
+        chain()
 
         return StubAst
     }

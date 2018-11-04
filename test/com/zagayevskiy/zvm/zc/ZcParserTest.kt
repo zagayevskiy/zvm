@@ -16,8 +16,17 @@ class ZcParserTest {
                 val x = 1
                 var y: int
                 val z: byte = 2
-                val a: int = 13
+                val a: int = z
+
+                y = f() + g(x, y, z, a + 1 * ~!~!2 -3)[1][2 - 3] 
+
                 return 3
+            }
+
+            fn self(i: Int) = self
+
+            fn f() {
+                return 0
             }
         """.trimIndent()
 
