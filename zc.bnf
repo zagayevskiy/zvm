@@ -5,13 +5,14 @@ top_level_definition ::= struct | function
 struct ::= "struct" "{" struct_declaration_list "}"
 struct_declaration_list ::= variable_declaration { EOL variable_declaration }
 
-function ::= "fn" identifier "(" function_args_list ")" [":" return_type] function_body
+function ::= "fn" identifier "(" function_args_list ")" [":" function_return_type] function_body
 function_body ::= function_block_body | function_expression_body
 function_block_body ::= block
 function_expression_body ::= "=" expression
 function_args_list ::= [ function_arg_definition {"," function_arg_definition} ]
 function_arg_definition ::= identifier ":" identifier
-return_type ::= identifier
+function_return_type ::= identifier
+function_return_statement ::= "return" expression
 
 block ::= "{" statement { EOL statement } "}"
 statement ::= variable_declaration | loop | function_return_statement | expression
@@ -20,13 +21,18 @@ variable_declaration ::= var_declaration | val_declaration
 var_declaration ::= "var" identifier ((":" identifier) ["=" expression]| ("=" expression))
 val_declaration ::= "val" identifier [":" identifier] "=" expression
 
-function_return_statement ::= "return" expression
 loop ::= for_loop | while_loop
-for_loop ::= "for" "(" "..." ")" block
+for_loop ::= "for" "(" [for_loop_initializer] ";" [for_loop_condition] ";" [for_loop_step] ")" block
+for_loop_initializer ::= variable_declaration {"," variable_declaration}
+for_loop_condition ::= expression
+for_loop_step ::= expression {"," expression}
+
 while_loop ::= "while" "(" expression ")" block
 
-expression ::= if_else_expr | (conjunction_expr { "||" conjunction_expr })
+expression ::= if_else_expr | disjunction_expr
 if_else_expr ::= "if" "(" expression ")" (block | expression) [ "else" (block | expression) ]
+
+disjunction_expr ::= conjunction_expr { "||" conjunction_expr }
 
 conjunction_expr ::= bit_or_expr { "&&" bit_or_expr }
 

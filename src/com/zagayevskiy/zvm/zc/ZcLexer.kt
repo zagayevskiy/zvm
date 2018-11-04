@@ -10,6 +10,7 @@ object ZcToken {
     object Colon : Token
     object Comma : Token
     object Dot : Token
+    object Semicolon : Token
 
     object Plus : Token
     object PlusPlus : Token
@@ -19,7 +20,19 @@ object ZcToken {
     object Slash : Token
     object Percent : Token
 
+    object Disjunction: Token
+    object Conjunction: Token
+    object LogicalNot: Token
+
+    object BitOr: Token
+    object BitXor: Token
+    object BitAnd: Token
+    object BitNot: Token
+    object BitShiftLeft: Token
+    object BitShiftRight: Token
+
     object Equals : Token
+    object NotEquals : Token
     object Great : Token
     object GreatEq : Token
     object Less : Token
@@ -50,6 +63,7 @@ private val symbolsMap = mapOf(
         ":" to ZcToken.Colon,
         "," to ZcToken.Comma,
         "." to ZcToken.Dot,
+        ";" to ZcToken.Semicolon,
 
         "+" to ZcToken.Plus,
         "++" to ZcToken.PlusPlus,
@@ -58,7 +72,20 @@ private val symbolsMap = mapOf(
         "*" to ZcToken.Asterisk,
         "/" to ZcToken.Slash,
         "%" to ZcToken.Percent,
+
+        "&&" to ZcToken.Disjunction,
+        "||" to ZcToken.Conjunction,
+        "!" to ZcToken.LogicalNot,
+
+        "|" to ZcToken.BitOr,
+        "&" to ZcToken.BitAnd,
+        "^" to ZcToken.BitXor,
+        "~" to ZcToken.BitNot,
+        "<<" to ZcToken.BitShiftLeft,
+        ">>" to ZcToken.BitShiftRight,
+
         "==" to ZcToken.Equals,
+        "!=" to ZcToken.NotEquals,
         ">" to ZcToken.Great,
         ">=" to ZcToken.GreatEq,
         "<" to ZcToken.Less,
