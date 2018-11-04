@@ -1,4 +1,4 @@
-package com.zagayevskiy.zvm.c
+package com.zagayevskiy.zvm.zc
 
 import kotlin.reflect.KProperty
 

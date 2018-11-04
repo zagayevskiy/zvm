@@ -14,13 +14,13 @@ function_arg_definition ::= identifier ":" identifier
 return_type ::= identifier
 
 block ::= "{" statement { EOL statement } "}"
-statement ::= variable_declaration | loop | return_statement | expression
+statement ::= variable_declaration | loop | function_return_statement | expression
 
 variable_declaration ::= var_declaration | val_declaration
-var_declaration ::= "var" identifier ((":" identifier) | ("=" expression))
+var_declaration ::= "var" identifier ((":" identifier) ["=" expression]| ("=" expression))
 val_declaration ::= "val" identifier [":" identifier] "=" expression
 
-return_statement ::= "return" expression
+function_return_statement ::= "return" expression
 loop ::= for_loop | while_loop
 for_loop ::= "for" "(" "..." ")" block
 while_loop ::= "while" "(" expression ")" block

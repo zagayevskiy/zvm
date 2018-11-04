@@ -1,10 +1,10 @@
-package com.zagayevskiy.zvm.c
+package com.zagayevskiy.zvm.zc
 
 import com.zagayevskiy.zvm.common.Lexer
 import com.zagayevskiy.zvm.common.SequenceLexer
 import com.zagayevskiy.zvm.common.Token
 
-object CToken {
+object ZcToken {
     object Arrow : Token
     object Assign : Token
     object Colon : Token
@@ -32,6 +32,7 @@ object CToken {
     object CurlyBracketOpen : Token
     object CurlyBracketClose : Token
 
+    object Struct : Token
     object Fun : Token
     object Var : Token
     object Val : Token
@@ -44,46 +45,47 @@ object CToken {
 }
 
 private val symbolsMap = mapOf(
-        "->" to CToken.Arrow,
-        "=" to CToken.Assign,
-        ":" to CToken.Colon,
-        "," to CToken.Comma,
-        "." to CToken.Dot,
+        "->" to ZcToken.Arrow,
+        "=" to ZcToken.Assign,
+        ":" to ZcToken.Colon,
+        "," to ZcToken.Comma,
+        "." to ZcToken.Dot,
 
-        "+" to CToken.Plus,
-        "++" to CToken.PlusPlus,
-        "-" to CToken.Minus,
-        "--" to CToken.MinusMinus,
-        "*" to CToken.Asterisk,
-        "/" to CToken.Slash,
-        "%" to CToken.Percent,
-        "==" to CToken.Equals,
-        ">" to CToken.Great,
-        ">=" to CToken.GreatEq,
-        "<" to CToken.Less,
-        "<=" to CToken.LessEq,
+        "+" to ZcToken.Plus,
+        "++" to ZcToken.PlusPlus,
+        "-" to ZcToken.Minus,
+        "--" to ZcToken.MinusMinus,
+        "*" to ZcToken.Asterisk,
+        "/" to ZcToken.Slash,
+        "%" to ZcToken.Percent,
+        "==" to ZcToken.Equals,
+        ">" to ZcToken.Great,
+        ">=" to ZcToken.GreatEq,
+        "<" to ZcToken.Less,
+        "<=" to ZcToken.LessEq,
 
-        "(" to CToken.ParenthesisOpen,
-        ")" to CToken.ParenthesisClose,
-        "[" to CToken.SquareBracketOpen,
-        "]" to CToken.SquareBracketClose,
-        "{" to CToken.CurlyBracketOpen,
-        "}" to CToken.CurlyBracketClose
+        "(" to ZcToken.ParenthesisOpen,
+        ")" to ZcToken.ParenthesisClose,
+        "[" to ZcToken.SquareBracketOpen,
+        "]" to ZcToken.SquareBracketClose,
+        "{" to ZcToken.CurlyBracketOpen,
+        "}" to ZcToken.CurlyBracketClose
 )
 
 private val keywordsMap = mapOf(
-        "fn" to CToken.Fun,
-        "var" to CToken.Var,
-        "val" to CToken.Val,
-        "while" to CToken.While,
-        "for" to CToken.For,
-        "return" to CToken.Return,
-        "if" to CToken.If,
-        "else" to CToken.Else,
-        "when" to CToken.When
+        "struct" to ZcToken.Struct,
+        "fn" to ZcToken.Fun,
+        "var" to ZcToken.Var,
+        "val" to ZcToken.Val,
+        "while" to ZcToken.While,
+        "for" to ZcToken.For,
+        "return" to ZcToken.Return,
+        "if" to ZcToken.If,
+        "else" to ZcToken.Else,
+        "when" to ZcToken.When
 )
 
-class CSequenceLexer(sequence: Sequence<Char>) : Lexer by SequenceLexer(
+class ZcSequenceLexer(sequence: Sequence<Char>) : Lexer by SequenceLexer(
         sequence = sequence,
         symbols = symbolsMap,
         keywords = keywordsMap,
