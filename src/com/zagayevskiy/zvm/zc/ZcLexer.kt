@@ -117,5 +117,6 @@ class ZcSequenceLexer(sequence: Sequence<Char>) : Lexer by SequenceLexer(
         symbols = symbolsMap,
         keywords = keywordsMap,
         idStart = { isLetter() },
-        idPart = { isLetterOrDigit() || this == '_' }
+        idPart = { isLetterOrDigit() || this == '_' },
+        eolAsToken = false
 )

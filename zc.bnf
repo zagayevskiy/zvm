@@ -12,12 +12,12 @@ function_expression_body ::= "=" expression
 function_args_list ::= [ function_arg_definition {"," function_arg_definition} ]
 function_arg_definition ::= identifier ":" identifier
 function_return_type ::= identifier
-function_return_statement ::= "return" expression
+function_return_statement ::= "return" expression ";"
 
-block ::= "{" statement ";" { statement ";" } "}"
-statement ::= variable_declaration | loop | function_return_statement | expression
+block ::= "{" statement { statement } "}"
+statement ::= variable_declaration | loop | if_else | function_return_statement | expression_statement
 
-variable_declaration ::= var_declaration | val_declaration
+variable_declaration ::= (var_declaration | val_declaration) ";"
 var_declaration ::= "var" identifier ((":" identifier) ["=" expression]| ("=" expression))
 val_declaration ::= "val" identifier [":" identifier] "=" expression
 
@@ -27,10 +27,12 @@ for_loop_initializer ::= variable_declaration {"," variable_declaration}
 for_loop_condition ::= expression
 for_loop_step ::= expression {"," expression}
 
+if_else ::= "if" "(" expression ")" (block | expression) [ "else" (block | expression) ]
+
 while_loop ::= "while" "(" expression ")" block
 
-expression ::= if_else_expr | disjunction_expr
-if_else_expr ::= "if" "(" expression ")" (block | expression) [ "else" (block | expression) ]
+expression_statement ::= expression ";"
+expression ::=  disjunction_expr
 
 disjunction_expr ::= conjunction_expr { "||" conjunction_expr }
 

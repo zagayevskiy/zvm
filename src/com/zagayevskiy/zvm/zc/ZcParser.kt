@@ -7,8 +7,8 @@ import com.zagayevskiy.zvm.common.Token.*
 private object StubAst : Ast()
 
 sealed class ParseResult {
-    class Success: ParseResult()
-    class Failure: ParseResult()
+    class Success : ParseResult()
+    class Failure : ParseResult()
 }
 
 class ZcParser(private val lexer: Lexer) {
@@ -23,7 +23,6 @@ class ZcParser(private val lexer: Lexer) {
             nextToken()
             topLevelDefinition()
             while (token != Eof) {
-                atLeastOne<Eol>()
                 topLevelDefinition()
             }
         } catch (e: ParseException) {
@@ -52,10 +51,8 @@ class ZcParser(private val lexer: Lexer) {
     }
 
     private fun structDeclarationList(): List<Ast> = mutableListOf<Ast>().apply {
-        skipAll<Eol>()
         while (true) {
             add(variableDecl() ?: break)
-            atLeastOne<Eol>()
         }
         if (isEmpty()) error("At least one variable declaration expected.")
     }
@@ -74,7 +71,6 @@ class ZcParser(private val lexer: Lexer) {
 
     //function_args_list ::= [ function_arg_definition {"," function_arg_definition} ]
     private fun functionArgsList(): List<Ast> {
-        skipAll<Eol>()
         val first = functionArgDefinition() ?: return emptyList()
         val list = mutableListOf(first)
 
@@ -105,7 +101,7 @@ class ZcParser(private val lexer: Lexer) {
         return expression() ?: error("Expression expected in expression body.")
     }
 
-    private fun variableDecl() = varDecl() ?: valDecl()
+    private fun variableDecl() = (varDecl() ?: valDecl())?.also { expect<ZcToken.Semicolon>() }
 
     // var_declaration ::= "var" identifier ((":" identifier) ["=" expression] | ("=" expression))
     private fun varDecl(): Ast? {
@@ -139,23 +135,19 @@ class ZcParser(private val lexer: Lexer) {
     private fun block(): Ast? {
         maybe<ZcToken.CurlyBracketOpen>() ?: return NotMatched
 
-        skipAll<Eol>()
-        val first = statement() ?: return StubAst // empty
-        val statements = mutableListOf(first)
-        while (maybe<Eol>() != null) {
-            skipAll<Eol>()
-            val next = statement() ?: break
-            statements.add(next)
-
+        val statements = mutableListOf<Ast>().apply {
+            while (true) {
+                add(statement() ?: break)
+            }
         }
-        skipAll<Eol>()
+
         expect<ZcToken.CurlyBracketClose>()
 
         return StubAst //filled
     }
 
     // statement ::= variable_declaration | loop | function_return_statement | expression
-    private fun statement() = variableDecl() ?: loopStatement() ?: functionReturnStatement() ?: expression()
+    private fun statement() = variableDecl() ?: loopStatement() ?: ifElseStatement() ?: functionReturnStatement() ?: expressionStatement()
 
     private fun loopStatement() = forLoop() ?: whileLoop()
 
@@ -210,18 +202,8 @@ class ZcParser(private val lexer: Lexer) {
         return StubAst
     }
 
-    private fun functionReturnStatement(): Ast? {
-        maybe<ZcToken.Return>() ?: return NotMatched
-        val expression: Ast = expression() ?: error("Expression expected.")
-
-        return StubAst
-    }
-
-    // expression ::= if_else_expr | disjunction_expr
-    private fun expression() = ifElseExpr() ?: disjunctionExpr()
-
     // "if" "(" expression ")" (block | expression) [ "else" (block | expression) ]
-    private fun ifElseExpr(): Ast? {
+    private fun ifElseStatement(): Ast? {
         maybe<ZcToken.If>() ?: return NotMatched
         expect<ZcToken.ParenthesisOpen>()
         val condition = expression() ?: error("Expression expected as if-condition.")
@@ -231,6 +213,18 @@ class ZcParser(private val lexer: Lexer) {
 
         return StubAst
     }
+
+    private fun functionReturnStatement(): Ast? {
+        maybe<ZcToken.Return>() ?: return NotMatched
+        val expression: Ast = expression() ?: error("Expression expected.")
+        expect<ZcToken.Semicolon>()
+        return StubAst
+    }
+
+    private fun expressionStatement() = expression()?.also { expect<ZcToken.Semicolon>() }
+
+    // expression ::= if_else_expr | disjunction_expr
+    private fun expression() = disjunctionExpr()
 
     // disjunction_expr ::= conjunction_expr { "||" conjunction_expr }
     private fun disjunctionExpr(): Ast? {
@@ -319,7 +313,7 @@ class ZcParser(private val lexer: Lexer) {
 
     // multiplication_expr ::= unary_expr { "*" | "/" | "%" unary_expr }
     private fun multiplicationExpr(): Ast? {
-        val left = unaryExpr()
+        val left = unaryExpr() ?: return NotMatched
         fun maybeMul() = maybeOneOf(ZcToken.Asterisk, ZcToken.Slash, ZcToken.Percent)
 
         var token = maybeMul()
@@ -403,7 +397,7 @@ class ZcParser(private val lexer: Lexer) {
 
     // struct_field_dereference ::= "." identifier ("=" expression | [chain])
     private fun structFieldDereference(): Ast? {
-        println("struct field dereferencing not implemented")
+//
         return NotMatched
     }
 

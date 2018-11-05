@@ -12,21 +12,26 @@ class ZcParserTest {
 
 
         val text = """
-            fn main(argc: int): int {
-                val x = 1
-                var y: int
-                val z: byte = 2
-                val a: int = z
 
-                y = f() + g(x, y, z, a + 1 * ~!~!2 -3)[1][2 - 3] 
-
-                return 3
+            struct str {
+                val x = 1;
+                var y: int;
             }
 
-            fn self(i: Int) = self
-
-            fn f() {
-                return 0
+            fn main(argc: int): int {
+                val a = 1;
+                var b = 2;
+                var c: int;
+                var d: byte = 3;
+                val e: int  = 4;
+                c = (a + b) - (d[e]*e[d]);
+                if(true){
+                    c;
+                    while(1) {
+                        for(;;){}
+                    }
+                }
+                return 6;
             }
         """.trimIndent()
 
