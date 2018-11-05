@@ -78,7 +78,12 @@ internal class SequenceLexerTest(private val test: TestData) {
                         3.tkn, Eol,
                         TestToken,
                         Eof),
-                "#1###2######3" expects listOf(1.tkn, 2.tkn, 3.tkn, Eof)
+                "#1###2######3" expects listOf(1.tkn, 2.tkn, 3.tkn, Eof), // # is whitespace
+                ("""
+                    1
+                    2
+                    3
+                """.trimIndent() expects listOf(1.tkn, 2.tkn, 3.tkn, Eof)).copy(eolAsToken = false)
         )
 
     }
@@ -91,7 +96,8 @@ internal class SequenceLexerTest(private val test: TestData) {
                 keywords = keywords,
                 whitespace = { isWhitespace() || this == '#' },
                 idStart = { isLetter() },
-                idPart = { isLetterOrDigit() || this == '-' })
+                idPart = { isLetterOrDigit() || this == '-' },
+                eolAsToken = test.eolAsToken)
         val actual = lexer.toSequence().toList()
         assertEquals(actual, test.expected)
     }
@@ -104,6 +110,6 @@ val Int.tkn
     get() = toToken()
 
 
-internal data class TestData(val text: String, val expected: List<Token>)
+internal data class TestData(val text: String, val expected: List<Token>, val eolAsToken: Boolean = true)
 
 private infix fun String.expects(tokens: List<Token>) = TestData(this, tokens)

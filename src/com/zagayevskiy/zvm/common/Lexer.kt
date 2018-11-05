@@ -21,7 +21,8 @@ class SequenceLexer(private val sequence: Sequence<Char>,
                     private val keywords: Map<String, Token>,
                     private val whitespace: Char.() -> Boolean = { isWhitespace() },
                     private val idStart: Char.() -> Boolean = { isJavaIdentifierStart() },
-                    private val idPart: Char.() -> Boolean = { isJavaIdentifierPart() }) : Lexer {
+                    private val idPart: Char.() -> Boolean = { isJavaIdentifierPart() },
+                    private val eolAsToken: Boolean = true) : Lexer {
 
     override var currentLine = 0
 
@@ -39,8 +40,15 @@ class SequenceLexer(private val sequence: Sequence<Char>,
         }
         var current = currentChar ?: return Token.Eof
 
-        if (current.isEol()) {
-            return consumeEol()
+        if (eolAsToken) {
+            if (current.isEol()) {
+                return consumeEol()
+            }
+        } else {
+            while (currentChar?.isEol() == true) {
+                consumeEol()
+            }
+            current = currentChar ?: return Token.Eof
         }
 
         while (current.whitespace()) {

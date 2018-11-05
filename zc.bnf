@@ -1,9 +1,9 @@
-program ::= top_level_definition { EOL { EOL } top_level_definition }
+program ::= top_level_definition { top_level_definition }
 
 top_level_definition ::= struct | function
 
 struct ::= "struct" "{" struct_declaration_list "}"
-struct_declaration_list ::= variable_declaration { EOL variable_declaration }
+struct_declaration_list ::= variable_declaration { variable_declaration }
 
 function ::= "fn" identifier "(" function_args_list ")" [":" function_return_type] function_body
 function_body ::= function_block_body | function_expression_body
@@ -14,7 +14,7 @@ function_arg_definition ::= identifier ":" identifier
 function_return_type ::= identifier
 function_return_statement ::= "return" expression
 
-block ::= "{" statement { EOL statement } "}"
+block ::= "{" statement ";" { statement ";" } "}"
 statement ::= variable_declaration | loop | function_return_statement | expression
 
 variable_declaration ::= var_declaration | val_declaration
