@@ -1,8 +1,6 @@
 package com.zagayevskiy.zvm.zc
 
 import com.zagayevskiy.zvm.common.Lexer
-import com.zagayevskiy.zvm.common.Token
-import org.junit.Assert.*
 import org.junit.Test
 
 class ZcParserTest {

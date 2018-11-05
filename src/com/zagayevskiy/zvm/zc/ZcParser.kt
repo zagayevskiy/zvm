@@ -416,15 +416,6 @@ class ZcParser(private val lexer: Lexer) {
 
     private fun maybeOneOf(vararg tokens: Token) = tokens.firstOrNull { it == token }?.also { nextToken() }
 
-    private inline fun <reified T : Token> atLeastOne() {
-        expect<T>()
-        skipAll<T>()
-    }
-
-    private inline fun <reified T : Token> skipAll() {
-        while (maybe<T>() != null);
-    }
-
     private inline fun <T : Token, R> T.andThan(block: (T) -> R): R = block(this)
 
     private inline fun <reified T : Token> matchList(element: () -> Ast?): List<Ast>? {
