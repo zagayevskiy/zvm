@@ -80,7 +80,7 @@ class AstExpressionStatement(expression: AstExpr?) : AstStatement() {
     var expression by child(expression ?: AstConst.Undefined)
 }
 
-abstract class AstExpr(type: ZcType = ZcType.Unknown) : Ast(type)
+sealed class AstExpr(type: ZcType = ZcType.Unknown) : Ast(type)
 
 sealed class AstBinary(left: AstExpr, right: AstExpr) : AstExpr() {
     var left by child(left)
@@ -95,12 +95,39 @@ sealed class AstConst(type: ZcType) : AstExpr(type) {
     object Void : AstConst(ZcType.Void)
 }
 
+sealed class AstLogicalBinary(left: AstExpr, right: AstExpr): AstBinary(left, right)
+class AstDisjunction(left: AstExpr, right: AstExpr): AstLogicalBinary(left, right)
+class AstConjunction(left: AstExpr, right: AstExpr): AstLogicalBinary(left, right)
+
+sealed class AstBitBinary(left: AstExpr, right: AstExpr): AstBinary(left, right)
+class AstBitAnd(left: AstExpr, right: AstExpr): AstBitBinary(left, right)
+class AstBitOr(left: AstExpr, right: AstExpr): AstBitBinary(left, right)
+class AstBitXor(left: AstExpr, right: AstExpr): AstBitBinary(left, right)
+sealed class AstBitShift(left: AstExpr, right: AstExpr): AstBitBinary(left, right) {
+    class Left(left: AstExpr, right: AstExpr): AstBitShift(left, right)
+    class Right(left: AstExpr, right: AstExpr): AstBitShift(left, right)
+}
+
+sealed class AstComparison(left: AstExpr, right: AstExpr): AstBinary(left, right)
+class AstEquals(left: AstExpr, right: AstExpr): AstComparison(left, right)
+class AstNotEquals(left: AstExpr, right: AstExpr): AstComparison(left, right)
+class AstLess(left: AstExpr, right: AstExpr): AstComparison(left, right)
+class AstLessEq(left: AstExpr, right: AstExpr): AstComparison(left, right)
+class AstGreat(left: AstExpr, right: AstExpr): AstComparison(left, right)
+class AstGreatEq(left: AstExpr, right: AstExpr): AstComparison(left, right)
+
 class AstSum(left: AstExpr, right: AstExpr) : AstBinary(left, right)
 class AstDifference(left: AstExpr, right: AstExpr) : AstBinary(left, right)
 class AstMul(left: AstExpr, right: AstExpr) : AstBinary(left, right)
 class AstDiv(left: AstExpr, right: AstExpr) : AstBinary(left, right)
 class AstMod(left: AstExpr, right: AstExpr) : AstBinary(left, right)
 
+class AstLogicalNot(expression: AstExpr): AstExpr() {
+    var expression by child(expression)
+}
+class AstBitNot(expression: AstExpr): AstExpr() {
+    var expression by child(expression)
+}
 
 private val emptyVisitor: (Ast) -> Ast = { it }
 

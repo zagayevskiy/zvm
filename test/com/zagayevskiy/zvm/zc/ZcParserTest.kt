@@ -23,6 +23,8 @@ class ZcParserTest {
                 var d: byte = 3;
                 val e: int  = 4;
                 c = (a + b) - (d[e]*e[d]);
+                e = 1 || 2 || 3 || 4 & 5 & 6 & 7 || 8 || 9;
+                e = e + e +e + e +e -e -e -e + e +e -e * a* b *c *c /d /d /d/d/d;
                 if(true){
                     c;
                     while(1) {

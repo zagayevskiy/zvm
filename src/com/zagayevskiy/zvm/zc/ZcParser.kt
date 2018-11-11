@@ -229,124 +229,174 @@ class ZcParser(private val lexer: Lexer) {
     // expression ::= if_else_expr | disjunction_expr
     private fun expression() = disjunctionExpr()
 
-    // disjunction_expr ::= conjunction_expr { "||" conjunction_expr }
+    // disjunction_expr ::= conjunction_expr [ "||" disjunction_expr ]
     private fun disjunctionExpr(): AstExpr? {
-        var conjuctions = matchList<ZcToken.Disjunction>(::conjunctionExpr) ?: return NotMatched
-        return AstConst.Undefined //TODO
+        val left = conjunctionExpr() ?: return NotMatched
+        maybe<ZcToken.Disjunction>() ?: return left
+
+        val right = disjunctionExpr() ?: error("Right side of disjunction expected.")
+
+        return AstDisjunction(left, right)
     }
 
-    // conjunction_expr ::= bit_or_expr { "&&" bit_or_expr }
-    private fun conjunctionExpr(): Ast? {
-        val ors = matchList<ZcToken.Conjunction>(::bitOrExpr) ?: return NotMatched
-        return StubAst
+    // conjunction_expr ::= bit_or_expr [ "&&" conjunction_expr ]
+    private fun conjunctionExpr(): AstExpr? {
+        val left = bitOrExpr() ?: return NotMatched
+        maybe<ZcToken.Conjunction>() ?: return left
+        val right = conjunctionExpr() ?: error("Right side of conjunction expected.")
+        return AstConjunction(left, right)
     }
 
-    // bit_or_expr ::= bit_xor_expr { "|" bit_xor_expr }
-    private fun bitOrExpr(): Ast? {
-        val xors = matchList<ZcToken.BitOr>(::bitXorExpr) ?: return NotMatched
+    // bit_or_expr ::= bit_xor_expr [ "|" bit_or_expr ]
+    private fun bitOrExpr(): AstExpr? {
+        val left = bitXorExpr() ?: return NotMatched
+        maybe<ZcToken.BitOr>() ?: return left
+        val right = bitOrExpr() ?: error("Right side of bit-or expected.")
 
-        return StubAst
+        return AstBitOr(left, right)
     }
 
-    // bit_xor_expr ::= bit_and_expr { "^" bit_and_expr }
-    private fun bitXorExpr(): Ast? {
-        val ands = matchList<ZcToken.BitXor>(::bitAndExpr) ?: return NotMatched
-        return StubAst
+    // bit_xor_expr ::= bit_and_expr [ "^" bit_xor_expr ]
+    private fun bitXorExpr(): AstExpr? {
+        val left = bitAndExpr() ?: return NotMatched
+        maybe<ZcToken.BitXor>() ?: return left
+        val right = bitXorExpr() ?: error("Right side of bit-xor expected.")
+        return AstBitXor(left, right)
     }
 
-    // bit_and_expr ::= equality_expr { "&" equality_expr }
-    private fun bitAndExpr(): Ast? {
-        val eqs = matchList<ZcToken.BitAnd>(::eqExpr) ?: return NotMatched
-        return StubAst
+    // bit_and_expr ::= equality_expr [ "&" bit_and_expr ]
+    private fun bitAndExpr(): AstExpr? {
+        val left = eqExpr() ?: return NotMatched
+        maybe<ZcToken.BitAnd>() ?: return left
+        val right = bitAndExpr() ?: error("Right side of bit-and expected.")
+        return AstBitAnd(left, right)
     }
 
-    // equality_expr ::= comparison_expr { ("==" | "!=") comparison_expr }
-    private fun eqExpr(): Ast? {
+    // equality_expr ::= comparison_expr [ ("==" | "!=") equality_expr ]
+    private fun eqExpr(): AstExpr? {
         val left = comparisonExpr() ?: return NotMatched
 
-        fun maybeEquality() = maybeOneOf(ZcToken.Equals, ZcToken.NotEquals)
-
-        var token = maybeEquality()
-        while (token != null) {
-            comparisonExpr() ?: error("Right side of equality expected.")
-            token = maybeEquality()
+        return when (token) {
+            ZcToken.Equals -> {
+                nextToken()
+                AstEquals(left = left, right = eqExpr() ?: error("Right side of equals expected."))
+            }
+            ZcToken.NotEquals -> {
+                nextToken()
+                AstNotEquals(left = left, right = eqExpr() ?: error("Right size of not-equals expected."))
+            }
+            else -> left
         }
-
-
-        return StubAst
     }
 
-    // comparison_expr ::= bit_shift_expr { (">" | "<" | ">="| "<=") bit_shift_expr }
-    private fun comparisonExpr(): Ast? {
+    // comparison_expr ::= bit_shift_expr [ (">" | "<" | ">="| "<=") comparison_expr ]
+    private fun comparisonExpr(): AstExpr? {
         val left = bitShiftExpr() ?: return NotMatched
-        fun maybeComparison() = maybeOneOf(ZcToken.Great, ZcToken.GreatEq, ZcToken.Less, ZcToken.LessEq)
 
-        var token = maybeComparison()
-        while (token != null) {
-            bitShiftExpr() ?: error("Right side of comparison expected.")
-            token = maybeComparison()
+        return when (token) {
+            ZcToken.Great -> {
+                nextToken()
+                AstGreat(left = left, right = comparisonExpr() ?: error("Right side of > expected."))
+            }
+            ZcToken.GreatEq -> {
+                nextToken()
+                AstGreatEq(left = left, right = comparisonExpr() ?: error("Right side of >= expected."))
+            }
+            ZcToken.Less -> {
+                nextToken()
+                AstLess(left = left, right = comparisonExpr() ?: error("Right side of < expected."))
+            }
+            ZcToken.LessEq -> {
+                nextToken()
+                AstLessEq(left = left, right = comparisonExpr() ?: error("Right side of <= expected."))
+            }
+            else -> left
         }
 
-        return StubAst
     }
 
-    // bit_shift_expr ::= addition_expr { (">>" | "<<") addition_expr }
-    private fun bitShiftExpr(): Ast? {
+    // bit_shift_expr ::= addition_expr [ (">>" | "<<") addition_expr ]
+    private fun bitShiftExpr(): AstExpr? {
         val left = additionExpr() ?: return NotMatched
-        fun maybeShift() = maybeOneOf(ZcToken.BitShiftLeft, ZcToken.BitShiftRight)
 
-        var token = maybeShift()
-        while (token != null) {
-            additionExpr() ?: error("Right side of bit shift expected.")
-            token = maybeShift()
+        return when (token) {
+            ZcToken.BitShiftLeft -> {
+                nextToken()
+                AstBitShift.Left(left = left, right = bitShiftExpr() ?: error("Right side of bit-shift-left expected."))
+            }
+            ZcToken.BitShiftRight -> {
+                nextToken()
+                AstBitShift.Right(left = left, right = bitShiftExpr() ?: error("Right side of bit-shift-right expected."))
+            }
+            else -> left
         }
-
-        return StubAst
     }
 
     // addition_expr ::= multiplication_expr { ("+" | "-") multiplication_expr }
-    private fun additionExpr(): Ast? {
-
+    private fun additionExpr(): AstExpr? {
         val left = multiplicationExpr() ?: return NotMatched
-        val token = maybeOneOf(ZcToken.Plus, ZcToken.Minus) ?: return left
-        val right = additionExpr() ?: error("Right side of addition expected.")
 
-        return StubAst
+        return when (token) {
+            ZcToken.Plus -> {
+                nextToken()
+                AstSum(left = left, right = additionExpr() ?: error("Right side of sum expected."))
+            }
+            ZcToken.Minus -> {
+                nextToken()
+                AstDifference(left = left, right = additionExpr() ?: error("Right side of difference expected."))
+            }
+            else -> left
+        }
     }
 
-    // multiplication_expr ::= unary_expr { "*" | "/" | "%" unary_expr }
-    private fun multiplicationExpr(): Ast? {
+    // multiplication_expr ::= unary_expr [ "*" | "/" | "%" multiplication_expr ]
+    private fun multiplicationExpr(): AstExpr? {
         val left = unaryExpr() ?: return NotMatched
-        fun maybeMul() = maybeOneOf(ZcToken.Asterisk, ZcToken.Slash, ZcToken.Percent)
 
-        var token = maybeMul()
-        while (token != null) {
-            unaryExpr()
-            token = maybeMul()
+        return when (token) {
+            ZcToken.Asterisk -> {
+                nextToken()
+                AstMul(left = left, right = multiplicationExpr() ?: error("Right side of mul expected."))
+            }
+            ZcToken.Slash -> {
+                nextToken()
+                AstDiv(left = left, right = multiplicationExpr() ?: error("Right size of div expected."))
+            }
+            ZcToken.Percent -> {
+                nextToken()
+                AstMod(left = left, right = multiplicationExpr() ?: error("Right side of mod expected."))
+            }
+            else -> left
         }
-
-        return StubAst
     }
 
     // unary_expr ::= [( "~" | "!" | "@")] value_expr
-    private fun unaryExpr(): Ast? = unaryBitNot() ?: unaryLogicalNot() ?: unaryDereferencing() ?: valueExpr()
+    private fun unaryExpr(): AstExpr? = unaryBitNot() ?: unaryLogicalNot() ?: unaryDereferencing() ?: valueExpr()
 
-    private fun unaryBitNot() = maybe<ZcToken.BitNot>()?.andThan { expression() ?: error("Bit-not argument expected.") }
+    private fun unaryBitNot(): AstBitNot? {
+        maybe<ZcToken.BitNot>() ?: return NotMatched
+        val expression = expression() ?: error("Bit-not argument expected.")
+        return AstBitNot(expression)
+    }
 
-    private fun unaryLogicalNot() = maybe<ZcToken.LogicalNot>()?.andThan { expression() ?: error("Logical-not argument expected.") }
+    private fun unaryLogicalNot(): AstLogicalNot? {
+        maybe<ZcToken.LogicalNot>() ?: return NotMatched
+        val expression = expression() ?: error("Logical-not argument expected.")
+        return AstLogicalNot(expression)
+    }
 
     private fun unaryDereferencing() = maybe<ZcToken.Asterisk>()?.andThan { expression() ?: error("Dereferencing argument expected.") }
 
     private fun valueExpr() = constExpr() ?: parenthesisExpr() ?: assignmentExpr()
 
-    private fun constExpr(): Ast? {
+    private fun constExpr(): AstConst? {
         val constant = maybe<Token.Integer>() ?: return NotMatched
 
-        return StubAst
+        return AstConst.Integer(constant.value)
     }
 
     // parenthesis_expr ::= "(" expression ")" [chain]
-    private fun parenthesisExpr(): Ast? {
+    private fun parenthesisExpr(): AstExpr? {
         maybe<ZcToken.ParenthesisOpen>() ?: return NotMatched
 
         val expression = expression() ?: error("Expression expected.")
@@ -355,11 +405,11 @@ class ZcParser(private val lexer: Lexer) {
 
         chain()
 
-        return StubAst // chained somehow
+        return AstConst.Undefined //TODO // chained somehow
     }
 
     // identifier ("=" expression | [chain])
-    private fun assignmentExpr(): Ast? {
+    private fun assignmentExpr(): AstExpr? {
         val identifier = maybe<Identifier>() ?: return NotMatched
 
         val expression = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Right side of assignment expected.") }
@@ -368,7 +418,7 @@ class ZcParser(private val lexer: Lexer) {
             chain()
         }
 
-        return StubAst // chained somehow
+        return AstConst.Undefined // TODO // chained somehow
     }
 
     // chain ::= function_call | array_indexing | struct_field_dereference
