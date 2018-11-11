@@ -34,7 +34,9 @@ class ZcParserTest {
         """.trimIndent()
 
         val parser = ZcParser(PrintSpyLexer(ZcSequenceLexer(text.asSequence())))
-        parser.program()
+        val result = parser.program()
+
+        println(result)
 
     }
 

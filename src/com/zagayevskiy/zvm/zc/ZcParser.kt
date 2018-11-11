@@ -2,12 +2,12 @@ package com.zagayevskiy.zvm.zc
 
 import com.zagayevskiy.zvm.common.Lexer
 import com.zagayevskiy.zvm.common.Token
-import com.zagayevskiy.zvm.common.Token.*
-
-private object StubAst : Ast()
+import com.zagayevskiy.zvm.common.Token.Eof
+import com.zagayevskiy.zvm.common.Token.Identifier
+import com.zagayevskiy.zvm.zc.ast.*
 
 sealed class ParseResult {
-    class Success : ParseResult()
+    class Success(val program: Ast) : ParseResult()
     class Failure : ParseResult()
 }
 
@@ -18,28 +18,30 @@ class ZcParser(private val lexer: Lexer) {
     }
 
     private lateinit var token: Token
-    fun program() {
+    fun program(): ParseResult {
         try {
-            nextToken()
-            topLevelDefinition()
-            while (token != Eof) {
-                topLevelDefinition()
+            val topLevelDeclarations = mutableListOf<Ast>().apply {
+                nextToken()
+                add(topLevelDeclaration())
+                while (token != Eof) {
+                    add(topLevelDeclaration())
+                }
             }
+
+            return ParseResult.Success(AstProgram(topLevelDeclarations))
         } catch (e: ParseException) {
             throw e
-//            return ParseResult.Failure(lexer.currentLine, e.message, commands, e)
+//            return ParseResult.Failure()
         }
-
-//        return ParseResult.Success(commands)
     }
 
-    private fun topLevelDefinition() {
-        struct() ?: function() ?: error("Top-level declaration expected.")
+    private fun topLevelDeclaration(): TopLevelDeclaration {
+        return struct() ?: function() ?: error("Top-level declaration expected.")
     }
 
-    private fun struct(): Ast? {
+    private fun struct(): AstStructDeclaration? {
         maybe<ZcToken.Struct>() ?: return NotMatched
-        nextToken()
+        val name = expect<Identifier>().name
 
         expect<ZcToken.CurlyBracketOpen>()
 
@@ -47,7 +49,7 @@ class ZcParser(private val lexer: Lexer) {
 
         expect<ZcToken.CurlyBracketClose>()
 
-        return StubAst
+        return AstStructDeclaration(name)
     }
 
     private fun structDeclarationList(): List<Ast> = mutableListOf<Ast>().apply {
@@ -58,19 +60,20 @@ class ZcParser(private val lexer: Lexer) {
     }
 
     //"fn" identifier "(" function_args_list ")" [":" return_type] function_body
-    private fun function(): Ast? {
+    private fun function(): AstFunctionDeclaration? {
         maybe<ZcToken.Fun>() ?: return NotMatched
-        val name = expect<Identifier>()
+        val name = expect<Identifier>().name
         expect<ZcToken.ParenthesisOpen>()
         val args = functionArgsList()
         expect<ZcToken.ParenthesisClose>()
-        val returnType = maybe<ZcToken.Colon>()?.andThan { functionReturnType() ?: error("Return type expected.") }
-        functionBody() ?: error("Function body expected.")
-        return StubAst
+        val returnType = maybe<ZcToken.Colon>()?.andThan { functionReturnType() ?: error("Return type expected.") }?.name
+        val body = functionBody() ?: error("Function body expected.")
+
+        return AstFunctionDeclaration(name, args, returnType, body)
     }
 
     //function_args_list ::= [ function_arg_definition {"," function_arg_definition} ]
-    private fun functionArgsList(): List<Ast> {
+    private fun functionArgsList(): List<FunctionArgumentDeclaration> {
         val first = functionArgDefinition() ?: return emptyList()
         val list = mutableListOf(first)
 
@@ -82,15 +85,14 @@ class ZcParser(private val lexer: Lexer) {
     }
 
     //function_arg_definition ::= identifier ":" identifier
-    private fun functionArgDefinition(): Ast? {
-        val name = maybe<Identifier>() ?: return NotMatched
+    private fun functionArgDefinition(): FunctionArgumentDeclaration? {
+        val name = maybe<Identifier>()?.name ?: return NotMatched
         expect<ZcToken.Colon>()
-        val typeName = expect<Identifier>()
-
-        return StubAst
+        val typeName = expect<Identifier>().name
+        return FunctionArgumentDeclaration(name, typeName)
     }
 
-    private fun functionReturnType(): Ast? = maybe<Identifier>()?.andThan { StubAst }
+    private fun functionReturnType() = maybe<Identifier>()
 
     private fun functionBody() = functionBlockBody() ?: functionExpressionBody()
 
@@ -101,41 +103,41 @@ class ZcParser(private val lexer: Lexer) {
         return expression() ?: error("Expression expected in expression body.")
     }
 
-    private fun variableDecl() = (varDecl() ?: valDecl())?.also { expect<ZcToken.Semicolon>() }
+    private fun variableDecl(): AstStatement? = (varDecl() ?: valDecl())?.also { expect<ZcToken.Semicolon>() }
 
     // var_declaration ::= "var" identifier ((":" identifier) ["=" expression] | ("=" expression))
-    private fun varDecl(): Ast? {
+    private fun varDecl(): AstVarDecl? {
         maybe<ZcToken.Var>() ?: return NotMatched
 
-        val id = expect<Identifier>()
+        val name = expect<Identifier>().name
 
-        val typeId = maybe<ZcToken.Colon>()?.andThan { expect<Identifier>() }
+        val typeName = maybe<ZcToken.Colon>()?.andThan { expect<Identifier>() }?.name
 
-        val assignmentAst = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Expression expected.") }
+        val initializer = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Expression expected.") }
 
-        if (typeId == null && assignmentAst == null) error("type or assignment expected")
+        if (typeName == null && initializer == null) error("type or assignment expected")
 
-        return StubAst
+        return AstVarDecl(varName = name, typeName = typeName, initializer = initializer)
     }
 
 
-    private fun valDecl(): Ast? {
+    private fun valDecl(): AstValDecl? {
         maybe<ZcToken.Val>() ?: return NotMatched
 
-        val id = expect<Identifier>()
+        val name = expect<Identifier>().name
 
-        val typeId = maybe<ZcToken.Colon>()?.andThan { expect<Identifier>() }
+        val typeName = maybe<ZcToken.Colon>()?.andThan { expect<Identifier>() }?.name
 
         expect<ZcToken.Assign>()
-        val assignmentExpr = expression() ?: error("Valid expression expected after assignment")
+        val initializer = expression() ?: error("Valid expression expected after assignment")
 
-        return StubAst
+        return AstValDecl(valName = name, typeName = typeName, initializer = initializer)
     }
 
     private fun block(): Ast? {
         maybe<ZcToken.CurlyBracketOpen>() ?: return NotMatched
 
-        val statements = mutableListOf<Ast>().apply {
+        val statements = mutableListOf<AstStatement>().apply {
             while (true) {
                 add(statement() ?: break)
             }
@@ -143,16 +145,16 @@ class ZcParser(private val lexer: Lexer) {
 
         expect<ZcToken.CurlyBracketClose>()
 
-        return StubAst //filled
+        return AstBlock(statements)
     }
 
     // statement ::= variable_declaration | loop | function_return_statement | expression
-    private fun statement() = variableDecl() ?: loopStatement() ?: ifElseStatement() ?: functionReturnStatement() ?: expressionStatement()
+    private fun statement(): AstStatement? = variableDecl() ?: loopStatement() ?: ifElseStatement() ?: functionReturnStatement() ?: expressionStatement()
 
     private fun loopStatement() = forLoop() ?: whileLoop()
 
     // for_loop ::= "for" "(" [for_loop_initializer] ";" [for_loop_condition] ";" [for_loop_step] ")" block
-    private fun forLoop(): Ast? {
+    private fun forLoop(): AstLoop? {
         maybe<ZcToken.For>() ?: return NotMatched
         expect<ZcToken.ParenthesisOpen>()
         val initializer = forLoopInitializer()
@@ -162,7 +164,7 @@ class ZcParser(private val lexer: Lexer) {
         val step = forLoopStep()
         expect<ZcToken.ParenthesisClose>()
         val body = block() ?: error("For-loop body expected.")
-        return StubAst
+        return AstLoop(initializer, condition, step, body)
     }
 
     // for_loop_initializer ::= variable_declaration {"," variable_declaration}
@@ -176,9 +178,7 @@ class ZcParser(private val lexer: Lexer) {
         return StubAst
     }
 
-    private fun forLoopCondition(): Ast {
-        return expression() ?: StubAst // TODO ?: true
-    }
+    private fun forLoopCondition(): AstExpr? = expression()
 
     // for_loop_step ::= expression {"," expression}
     private fun forLoopStep(): Ast? {
@@ -192,18 +192,18 @@ class ZcParser(private val lexer: Lexer) {
     }
 
     // while_loop ::= "while" "(" expression ")" block
-    private fun whileLoop(): Ast? {
+    private fun whileLoop(): AstWhile? {
         maybe<ZcToken.While>() ?: return NotMatched
         expect<ZcToken.ParenthesisOpen>()
         val condition = expression() ?: error("Expression expected.")
         expect<ZcToken.ParenthesisClose>()
         val body = block() ?: error("While-loop body expected.")
 
-        return StubAst
+        return AstWhile(condition = condition, body = body)
     }
 
     // "if" "(" expression ")" (block | expression) [ "else" (block | expression) ]
-    private fun ifElseStatement(): Ast? {
+    private fun ifElseStatement(): AstIfElse? {
         maybe<ZcToken.If>() ?: return NotMatched
         expect<ZcToken.ParenthesisOpen>()
         val condition = expression() ?: error("Expression expected as if-condition.")
@@ -211,25 +211,28 @@ class ZcParser(private val lexer: Lexer) {
         val ifBody = block() ?: expression() ?: error("if-body expected.")
         val elseBody = maybe<ZcToken.Else>()?.andThan { block() ?: expression() ?: error("else-body expected") }
 
-        return StubAst
+        return AstIfElse(condition = condition, ifBody = ifBody, elseBody = elseBody)
     }
 
-    private fun functionReturnStatement(): Ast? {
+    private fun functionReturnStatement(): AstFunctionReturn? {
         maybe<ZcToken.Return>() ?: return NotMatched
-        val expression: Ast = expression() ?: error("Expression expected.")
+        val expression = expression() ?: error("Expression expected.")
         expect<ZcToken.Semicolon>()
-        return StubAst
+        return AstFunctionReturn(expression)
     }
 
-    private fun expressionStatement() = expression()?.also { expect<ZcToken.Semicolon>() }
+    private fun expressionStatement(): AstExpressionStatement? {
+        val expression = expression()?.also { expect<ZcToken.Semicolon>() } ?: return NotMatched
+        return AstExpressionStatement(expression)
+    }
 
     // expression ::= if_else_expr | disjunction_expr
     private fun expression() = disjunctionExpr()
 
     // disjunction_expr ::= conjunction_expr { "||" conjunction_expr }
-    private fun disjunctionExpr(): Ast? {
+    private fun disjunctionExpr(): AstExpr? {
         var conjuctions = matchList<ZcToken.Disjunction>(::conjunctionExpr) ?: return NotMatched
-        return StubAst
+        return AstConst.Undefined //TODO
     }
 
     // conjunction_expr ::= bit_or_expr { "&&" bit_or_expr }
