@@ -403,55 +403,57 @@ class ZcParser(private val lexer: Lexer) {
 
         expect<ZcToken.ParenthesisClose>()
 
-        chain()
-
-        return AstConst.Undefined //TODO // chained somehow
+        return chain(expression)
     }
 
     // identifier ("=" expression | [chain])
     private fun assignmentExpr(): AstExpr? {
-        val identifier = maybe<Identifier>() ?: return NotMatched
+        val varName = maybe<Identifier>()?.name ?: return NotMatched
+        val variable = AstVariable(varName)
 
         val expression = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Right side of assignment expected.") }
 
-        if (expression == null) {
-            chain()
+        if (expression != null) {
+            return AstAssignment(left = variable, right = expression)
         }
 
-        return AstConst.Undefined // TODO // chained somehow
+        return chain(variable)
     }
 
     // chain ::= function_call | array_indexing | struct_field_dereference
-    private fun chain() = functionCall() ?: arrayIndexing() ?: structFieldDereference()
+    private fun chain(leftSide: AstExpr): AstExpr = functionCall(leftSide) ?: arrayIndexing(leftSide) ?: structFieldDereference(leftSide) ?: leftSide
 
     // function_call ::= "(" expressions_list ")" [chain]
-    private fun functionCall(): Ast? {
+    private fun functionCall(function: AstExpr): AstExpr? {
         maybe<ZcToken.ParenthesisOpen>() ?: return NotMatched
         val expressions = matchList<ZcToken.Comma>(::expression) ?: emptyList()
         expect<ZcToken.ParenthesisClose>()
 
-        chain()
+        val functionCall = AstFunctionCall(function = function, params = expressions)
 
-        return StubAst
+        return chain(functionCall)
     }
 
     // array_indexing ::= "[" expression "]" ("=" expression | [chain])
-    private fun arrayIndexing(): Ast? {
+    private fun arrayIndexing(array: AstExpr): AstExpr? {
         maybe<ZcToken.SquareBracketOpen>() ?: return NotMatched
         val expression = expression() ?: error("Expression expected as index.")
         expect<ZcToken.SquareBracketClose>()
+
+        val indexedArray = AstArrayIndexing(array = array, index = expression)
+
         val assignmentExpr = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Right side of assignment expected.") }
-        if (assignmentExpr == null) {
-            chain()
+
+        if (assignmentExpr != null) {
+            return AstAssignment(left = indexedArray, right = assignmentExpr)
         }
 
-        return StubAst
+        return chain(indexedArray)
     }
 
     // struct_field_dereference ::= "." identifier ("=" expression | [chain])
-    private fun structFieldDereference(): Ast? {
-//
-        return NotMatched
+    private fun structFieldDereference(leftSide: AstExpr): AstExpr? {
+        return NotMatched //TODO
     }
 
     private fun nextToken() {
@@ -467,11 +469,9 @@ class ZcParser(private val lexer: Lexer) {
 
     private inline fun <reified T : Token> maybe() = (token as? T)?.also { nextToken() }
 
-    private fun maybeOneOf(vararg tokens: Token) = tokens.firstOrNull { it == token }?.also { nextToken() }
-
     private inline fun <T : Token, R> T.andThan(block: (T) -> R): R = block(this)
 
-    private inline fun <reified T : Token> matchList(element: () -> Ast?): List<Ast>? {
+    private inline fun <reified T : Token> matchList(element: () -> AstExpr?): List<AstExpr>? {
         val first = element() ?: return NotMatched
         return mutableListOf(first).apply {
             while (maybe<T>() != null) add(element() ?: error())

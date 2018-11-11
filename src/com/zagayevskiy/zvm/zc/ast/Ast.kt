@@ -1,6 +1,5 @@
 package com.zagayevskiy.zvm.zc.ast
 
-import com.sun.xml.internal.ws.wsdl.writer.document.soap.Body
 import com.zagayevskiy.zvm.zc.ZcType
 import kotlin.reflect.KProperty
 
@@ -80,11 +79,23 @@ class AstExpressionStatement(expression: AstExpr?) : AstStatement() {
     var expression by child(expression ?: AstConst.Undefined)
 }
 
-sealed class AstExpr(type: ZcType = ZcType.Unknown) : Ast(type)
+sealed class AstExpr(type: ZcType = ZcType.Unknown, children: MutableList<AstExpr> = mutableListOf<AstExpr>()) : Ast(type, mutableListOf<Ast>().apply { addAll(children) })
 
 sealed class AstBinary(left: AstExpr, right: AstExpr) : AstExpr() {
     var left by child(left)
     var right by child(right)
+}
+
+class AstAssignment(left: AstExpr, right: AstExpr) : AstBinary(left, right)
+class AstVariable(val varName: String) : AstExpr()
+
+class AstArrayIndexing(array: AstExpr, index: AstExpr) : AstExpr() {
+    var array by child(array)
+    var index by child(index)
+}
+
+class AstFunctionCall(function: AstExpr, params: List<AstExpr>) : AstExpr(children = params.toMutableList()) {
+    val function by child(function)
 }
 
 sealed class AstConst(type: ZcType) : AstExpr(type) {
@@ -95,26 +106,26 @@ sealed class AstConst(type: ZcType) : AstExpr(type) {
     object Void : AstConst(ZcType.Void)
 }
 
-sealed class AstLogicalBinary(left: AstExpr, right: AstExpr): AstBinary(left, right)
-class AstDisjunction(left: AstExpr, right: AstExpr): AstLogicalBinary(left, right)
-class AstConjunction(left: AstExpr, right: AstExpr): AstLogicalBinary(left, right)
+sealed class AstLogicalBinary(left: AstExpr, right: AstExpr) : AstBinary(left, right)
+class AstDisjunction(left: AstExpr, right: AstExpr) : AstLogicalBinary(left, right)
+class AstConjunction(left: AstExpr, right: AstExpr) : AstLogicalBinary(left, right)
 
-sealed class AstBitBinary(left: AstExpr, right: AstExpr): AstBinary(left, right)
-class AstBitAnd(left: AstExpr, right: AstExpr): AstBitBinary(left, right)
-class AstBitOr(left: AstExpr, right: AstExpr): AstBitBinary(left, right)
-class AstBitXor(left: AstExpr, right: AstExpr): AstBitBinary(left, right)
-sealed class AstBitShift(left: AstExpr, right: AstExpr): AstBitBinary(left, right) {
-    class Left(left: AstExpr, right: AstExpr): AstBitShift(left, right)
-    class Right(left: AstExpr, right: AstExpr): AstBitShift(left, right)
+sealed class AstBitBinary(left: AstExpr, right: AstExpr) : AstBinary(left, right)
+class AstBitAnd(left: AstExpr, right: AstExpr) : AstBitBinary(left, right)
+class AstBitOr(left: AstExpr, right: AstExpr) : AstBitBinary(left, right)
+class AstBitXor(left: AstExpr, right: AstExpr) : AstBitBinary(left, right)
+sealed class AstBitShift(left: AstExpr, right: AstExpr) : AstBitBinary(left, right) {
+    class Left(left: AstExpr, right: AstExpr) : AstBitShift(left, right)
+    class Right(left: AstExpr, right: AstExpr) : AstBitShift(left, right)
 }
 
-sealed class AstComparison(left: AstExpr, right: AstExpr): AstBinary(left, right)
-class AstEquals(left: AstExpr, right: AstExpr): AstComparison(left, right)
-class AstNotEquals(left: AstExpr, right: AstExpr): AstComparison(left, right)
-class AstLess(left: AstExpr, right: AstExpr): AstComparison(left, right)
-class AstLessEq(left: AstExpr, right: AstExpr): AstComparison(left, right)
-class AstGreat(left: AstExpr, right: AstExpr): AstComparison(left, right)
-class AstGreatEq(left: AstExpr, right: AstExpr): AstComparison(left, right)
+sealed class AstComparison(left: AstExpr, right: AstExpr) : AstBinary(left, right)
+class AstEquals(left: AstExpr, right: AstExpr) : AstComparison(left, right)
+class AstNotEquals(left: AstExpr, right: AstExpr) : AstComparison(left, right)
+class AstLess(left: AstExpr, right: AstExpr) : AstComparison(left, right)
+class AstLessEq(left: AstExpr, right: AstExpr) : AstComparison(left, right)
+class AstGreat(left: AstExpr, right: AstExpr) : AstComparison(left, right)
+class AstGreatEq(left: AstExpr, right: AstExpr) : AstComparison(left, right)
 
 class AstSum(left: AstExpr, right: AstExpr) : AstBinary(left, right)
 class AstDifference(left: AstExpr, right: AstExpr) : AstBinary(left, right)
@@ -122,10 +133,11 @@ class AstMul(left: AstExpr, right: AstExpr) : AstBinary(left, right)
 class AstDiv(left: AstExpr, right: AstExpr) : AstBinary(left, right)
 class AstMod(left: AstExpr, right: AstExpr) : AstBinary(left, right)
 
-class AstLogicalNot(expression: AstExpr): AstExpr() {
+class AstLogicalNot(expression: AstExpr) : AstExpr() {
     var expression by child(expression)
 }
-class AstBitNot(expression: AstExpr): AstExpr() {
+
+class AstBitNot(expression: AstExpr) : AstExpr() {
     var expression by child(expression)
 }
 

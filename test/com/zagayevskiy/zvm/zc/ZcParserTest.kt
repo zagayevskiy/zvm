@@ -17,6 +17,7 @@ class ZcParserTest {
             }
 
             fn main(argc: int): int {
+                f(1, 2, 3, 4)[5 + 6];
                 val a = 1;
                 var b = 2;
                 var c: int;
