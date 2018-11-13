@@ -1,16 +1,16 @@
 package com.zagayevskiy.zvm.zc.ast
 
-import com.sun.org.apache.xpath.internal.operations.Bool
 import com.zagayevskiy.zvm.zc.ZcType
 
 interface Scope {
+    val enclosingScope: Scope?
 }
-
-class ScopeDelegate
 
 class GlobalScope : Scope {
 
     private val functions = mutableMapOf<String, AstDefinedFunction>()
+
+    override val enclosingScope: Scope? = null
 
     fun declareFunction(name: String, args: List<AstFunctionArgument>, retType: ZcType, body: Ast): AstDefinedFunction? {
         val argTypes = args.map { it.type }
@@ -18,7 +18,12 @@ class GlobalScope : Scope {
 
         if (functions.containsKey(mangledName)) return null
 
-        return AstDefinedFunction(mangledName, args, retType, body)
+        return AstDefinedFunction(
+                name = mangledName,
+                args = args,
+                retType = retType,
+                body = body,
+                enclosingScope = this)
     }
 
     fun lookupFunction(name: String, argTypes: List<ZcType>): AstDefinedFunction? {
@@ -41,8 +46,12 @@ interface FunctionScope : Scope {
     fun lookupArgument(name: String): AstFunctionArgument?
 }
 
-class FunctionScopeDelegate(args: List<AstFunctionArgument>) : FunctionScope {
+class FunctionScopeDelegate(override val enclosingScope: Scope, args: List<AstFunctionArgument>) : FunctionScope {
     private val argsMap = args.associateBy { arg -> arg.name }
+
+    init {
+        if (argsMap.size != args.size) throw IllegalArgumentException("Args names must be different. Has $args.")
+    }
 
     override fun lookupArgument(name: String) = argsMap[name]
 }

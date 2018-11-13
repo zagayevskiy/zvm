@@ -39,8 +39,8 @@ class AstFunctionDeclaration(val name: String, val args: List<FunctionArgumentDe
 
 class AstStructDeclaration(val name: String) : TopLevelDeclaration()
 
-class AstDefinedFunction(val name: String, val args: List<AstFunctionArgument>, val retType: ZcType, body: Ast)
-    : TopLevelDeclaration() {
+class AstDefinedFunction(val name: String, val args: List<AstFunctionArgument>, val retType: ZcType, body: Ast, enclosingScope: Scope)
+    : TopLevelDeclaration(), FunctionScope by FunctionScopeDelegate(enclosingScope, args) {
     val body by child(body)
 }
 

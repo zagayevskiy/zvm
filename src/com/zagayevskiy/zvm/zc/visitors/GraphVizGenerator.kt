@@ -125,6 +125,9 @@ fun main(args: Array<String>) {
             fn g(x: int, y: byte): byte {
                 return x + y;
             }
+            fn g(x: byte, y: int): int {
+                return g(y, x);
+            }
 
             fn main(argc: int): int {
                 f(1, 2, 3, 4)[5 + 6];

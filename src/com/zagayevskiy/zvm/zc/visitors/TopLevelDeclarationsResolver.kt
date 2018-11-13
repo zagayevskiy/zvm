@@ -17,6 +17,7 @@ class TopLevelDeclarationsResolver(private val ast: Ast) {
     }
 
     private fun declare(function: AstFunctionDeclaration): AstDefinedFunction? {
+        checkArgNames(function)
         return with(function) {
             val resolvedArgs = args.mapIndexed { index, argDecl ->
                 AstFunctionArgument(argDecl.name, index, ZcType.byName(argDecl.typeName) ?: error("Unknown type ${argDecl.typeName}"))
@@ -25,6 +26,14 @@ class TopLevelDeclarationsResolver(private val ast: Ast) {
             val resolvedRetType = resolveReturnType(returnTypeName, body)
 
             globalScope.declareFunction(name, resolvedArgs, resolvedRetType, body)
+        }
+    }
+
+    private fun checkArgNames(function: AstFunctionDeclaration) {
+        val existedNames = mutableSetOf<String>()
+        function.args.forEach { arg ->
+            if (existedNames.contains(arg.name)) error("Argument ${arg.name} already defined in function ${function.name}")
+            existedNames += arg.name
         }
     }
 
