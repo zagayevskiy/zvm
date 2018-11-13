@@ -39,7 +39,8 @@ class AstFunctionDeclaration(val name: String, val args: List<FunctionArgumentDe
 
 class AstStructDeclaration(val name: String) : TopLevelDeclaration()
 
-class AstDefinedFunction(val name: String, body: Ast) : TopLevelDeclaration() {
+class AstDefinedFunction(val name: String, val args: List<AstFunctionArgument>, val retType: ZcType, body: Ast)
+    : TopLevelDeclaration() {
     val body by child(body)
 }
 
@@ -97,6 +98,8 @@ class AstArrayIndexing(array: AstExpr, index: AstExpr) : AstExpr() {
 class AstFunctionCall(function: AstExpr, params: List<AstExpr>) : AstExpr(children = params.toMutableList()) {
     val function by child(function)
 }
+
+class AstFunctionArgument(val name: String, val index: Int, type: ZcType) : AstExpr(type = type)
 
 sealed class AstConst(type: ZcType) : AstExpr(type) {
     class Integer(val value: Int) : AstConst(ZcType.Integer)

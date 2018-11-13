@@ -14,11 +14,13 @@ class GraphVizGenerator(private val ast: Ast) {
 
         override fun visit(ast: AstProgram) = "program" to ++id
 
-        override fun visit(ast: AstFunctionDeclaration) = "decl fun ${ast.name}" to ++id
+        override fun visit(ast: AstFunctionArgument) = "arg:${ast.name}:${ast.type.name}" to ++id
+
+        override fun visit(ast: AstFunctionDeclaration) = "decl fun ${ast.name}(${ast.args.map { it.typeName }}): ${ast.returnTypeName}" to ++id
 
         override fun visit(ast: AstStructDeclaration) = "decl struct ${ast.name}" to ++id
 
-        override fun visit(ast: AstDefinedFunction) = "fun ${ast.name}" to ++id
+        override fun visit(ast: AstDefinedFunction) = "fun ${ast.name}(${ast.args.map { it.type }}): ${ast.retType}" to ++id
 
         override fun visit(ast: AstBlock) = "{...}" to ++id
 
@@ -119,6 +121,11 @@ class GraphVizGenerator(private val ast: Ast) {
 
 fun main(args: Array<String>) {
     val text = """
+            fn f() {val x = g(1234, 2134);}
+            fn g(x: int, y: byte): byte {
+                return x + y;
+            }
+
             fn main(argc: int): int {
                 f(1, 2, 3, 4)[5 + 6];
                 val a = 1;
@@ -128,7 +135,7 @@ fun main(args: Array<String>) {
                 val e: int  = 4;
                 c = (a + b) - (d[e]*e[d]);
                 eeq = 11 || 22 || 33 || 44 & 55 & 66 & 77 || 88 || 99;
-                e000 = e + e1 +e2 + e3 +e4 -e5 -e6-e7 + e8 +e9 -e10 * a1* b2 *c3 *c4 /d5 /d6 /d7/d8/d9;
+                e000 = e + e1 +e2;
                 if(true){
                     c;
                     while(1) {
@@ -141,6 +148,7 @@ fun main(args: Array<String>) {
 
     val parser = ZcParser(ZcSequenceLexer(text.asSequence()))
     val result = parser.program() as ParseResult.Success
-    val dot = GraphVizGenerator(result.program).generateDot()
+    val resolved = TopLevelDeclarationsResolver(result.program).resolve()
+    val dot = GraphVizGenerator(resolved).generateDot()
     println(dot)
 }
