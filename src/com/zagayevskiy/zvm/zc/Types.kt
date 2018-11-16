@@ -10,7 +10,7 @@ sealed class ZcType(val name: String) {
     object Error : ZcType("error")
 
     companion object {
-        fun byName(name: String) = when (name) {
+        fun byName(name: String?) = when (name) {
             ZcType.Integer.name -> Integer
             ZcType.Byte.name -> Byte
             else -> null

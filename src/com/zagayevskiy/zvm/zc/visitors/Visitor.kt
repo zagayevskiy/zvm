@@ -68,7 +68,7 @@ interface AstVisitor<R> {
 
     fun visit(ast: AstMod): R
 
-    fun visit(ast: AstVariable): R
+    fun visit(ast: AstVar): R
 
     fun visit(ast: AstArrayIndexing): R
 
@@ -88,6 +88,9 @@ interface AstVisitor<R> {
 
     fun visit(ast: AstBitNot): R
     fun visit(ast: AstFunctionArgument): R
+    fun visit(ast: AstFunctionReference): R
+    fun visit(ast: AstIdentifier): R
+    fun visit(ast: AstVal): R
 }
 
 fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
@@ -123,7 +126,7 @@ fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
     is AstMul -> visitor.visit(ast)
     is AstDiv -> visitor.visit(ast)
     is AstMod -> visitor.visit(ast)
-    is AstVariable -> visitor.visit(ast)
+    is AstVar -> visitor.visit(ast)
     is AstArrayIndexing -> visitor.visit(ast)
     is AstFunctionCall -> visitor.visit(ast)
     is AstConst.Integer -> visitor.visit(ast)
@@ -134,4 +137,7 @@ fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
     is AstLogicalNot -> visitor.visit(ast)
     is AstBitNot -> visitor.visit(ast)
     is AstFunctionArgument -> visitor.visit(ast)
+    is AstFunctionReference -> visitor.visit(ast)
+    is AstIdentifier -> visitor.visit(ast)
+    is AstVal -> visitor.visit(ast)
 }

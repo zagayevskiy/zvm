@@ -10,11 +10,19 @@ class GraphVizGenerator(private val ast: Ast) {
     private var id = 0
 
     private val visitor = object : AstVisitor<Pair<String, Int>> {
+        override fun visit(ast: AstFunctionReference) = "ref ${ast.function}:${ast.type}" to ++id
+
+        override fun visit(ast: AstIdentifier) = "id: ${ast.name}" to ++id
+
+        override fun visit(ast: AstVal) = "val ${ast.valName}: ${ast.type}" to ++id
+
+        override fun visit(ast: AstVar) = "var:${ast.varName}" to ++id
+
         override fun visit(ast: StubAst) = "stub" to ++id
 
         override fun visit(ast: AstProgram) = "program" to ++id
 
-        override fun visit(ast: AstFunctionArgument) = "arg:${ast.name}:${ast.type.name}" to ++id
+        override fun visit(ast: AstFunctionArgument) = "arg: ${ast.name}:${ast.type.name}" to ++id
 
         override fun visit(ast: AstFunctionDeclaration) = "decl fun ${ast.name}(${ast.args.map { it.typeName }}): ${ast.returnTypeName}" to ++id
 
@@ -76,8 +84,6 @@ class GraphVizGenerator(private val ast: Ast) {
 
         override fun visit(ast: AstMod) = "%" to ++id
 
-        override fun visit(ast: AstVariable) = "var:${ast.varName}" to ++id
-
         override fun visit(ast: AstArrayIndexing) = "[ ]" to ++id
 
         override fun visit(ast: AstFunctionCall) = "call" to ++id
@@ -121,6 +127,22 @@ class GraphVizGenerator(private val ast: Ast) {
 
 fun main(args: Array<String>) {
     val text = """
+
+            fn main(argc: int): int {
+                f(argc, 2, 3, 4)[5 + 6];
+                val a = 1;
+                var b = 2 + argc;
+                var c: int;
+                var d: byte = 3;
+                val e: int  = 4;
+                c = (a + b) - (d[e]*e[d]);
+                for (;;) {
+                    if (e) {
+                    }
+                }
+                return 100000;
+            }
+
             fn f() {val x = g(1234, 2134);}
             fn g(x: int, y: byte): byte {
                 return x + y;
@@ -128,30 +150,12 @@ fun main(args: Array<String>) {
             fn g(x: byte, y: int): int {
                 return g(y, x);
             }
-
-            fn main(argc: int): int {
-                f(1, 2, 3, 4)[5 + 6];
-                val a = 1;
-                var b = 2;
-                var c: int;
-                var d: byte = 3;
-                val e: int  = 4;
-                c = (a + b) - (d[e]*e[d]);
-                eeq = 11 || 22 || 33 || 44 & 55 & 66 & 77 || 88 || 99;
-                e000 = e + e1 +e2;
-                if(true){
-                    c;
-                    while(1) {
-                        for(;;){}
-                    }
-                }
-                return 100000;
-            }
         """.trimIndent()
 
     val parser = ZcParser(ZcSequenceLexer(text.asSequence()))
     val result = parser.program() as ParseResult.Success
     val resolved = TopLevelDeclarationsResolver(result.program).resolve()
-    val dot = GraphVizGenerator(resolved).generateDot()
+    val typed = TypesProcessor(resolved as AstProgram).processTypes()
+    val dot = GraphVizGenerator(typed).generateDot()
     println(dot)
 }

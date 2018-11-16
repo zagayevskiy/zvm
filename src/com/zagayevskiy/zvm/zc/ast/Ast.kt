@@ -6,20 +6,38 @@ import kotlin.reflect.KProperty
 
 sealed class Ast(
         var type: ZcType = ZcType.Unknown,
-        private val children: MutableList<Ast> = mutableListOf<Ast>()) : MutableIterable<Ast> {
+        private val children: MutableList<Ast> = mutableListOf()) : MutableIterable<Ast> {
     protected fun <T : Ast> child(defaultValue: T) = ChildDelegate(defaultValue, children)
+    protected fun <T : Ast, L : List<T>> childList(defaultValue: L) = ChildListDelegate(defaultValue, children)
 
     protected class ChildDelegate<T : Ast>(defaultValue: T, private val list: MutableList<Ast>) {
-        private val index: Int = list.size
+        private val index = list.size
 
         init {
             list.add(defaultValue)
         }
 
+        @Suppress("UNCHECKED_CAST")
         operator fun getValue(thisRef: Ast, property: KProperty<*>): T = list[index] as T
+
         operator fun setValue(thisRef: Ast, property: KProperty<*>, value: T) {
             list[index] = value
         }
+    }
+
+    protected class ChildListDelegate<T : Ast, L : List<T>>(defaultValue: L, private val list: MutableList<Ast>) {
+        private val beginIndex = list.size
+
+        init {
+            list.addAll(defaultValue)
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        private val delegatedSubList = (list
+                .takeIf { defaultValue.isNotEmpty() }
+                ?.subList(beginIndex, beginIndex + defaultValue.size) ?: mutableListOf()) as L
+
+        operator fun getValue(thisRef: Ast, property: KProperty<*>): L = delegatedSubList
     }
 
     override fun iterator(): MutableListIterator<Ast> = children.listIterator()
@@ -44,14 +62,16 @@ class AstDefinedFunction(val name: String, val args: List<AstFunctionArgument>, 
     val body by child(body)
 }
 
+class AstFunctionReference(val function: AstDefinedFunction): AstExpr(type = function.retType)
+
 class AstBlock(statements: List<AstStatement>) : Ast(children = statements.toMutableList())
 
 sealed class AstStatement : Ast()
-class AstVarDecl(val varName: String, val typeName: String?, initializer: Ast?) : AstStatement() {
+class AstVarDecl(val varName: String, val typeName: String?, initializer: AstExpr?) : AstStatement() {
     var initializer by child(initializer ?: AstConst.Undefined)
 }
 
-class AstValDecl(val valName: String, val typeName: String?, initializer: Ast) : AstStatement() {
+class AstValDecl(val valName: String, val typeName: String?, initializer: AstExpr) : AstStatement() {
     var initializer by child(initializer)
 }
 
@@ -87,16 +107,19 @@ sealed class AstBinary(left: AstExpr, right: AstExpr) : AstExpr() {
     var right by child(right)
 }
 
+class AstIdentifier(val name: String) : AstExpr()
 class AstAssignment(left: AstExpr, right: AstExpr) : AstBinary(left, right)
-class AstVariable(val varName: String) : AstExpr()
+class AstVar(val varName: String, type: ZcType) : AstExpr(type)
+class AstVal(val valName: String, type: ZcType) : AstExpr(type)
 
 class AstArrayIndexing(array: AstExpr, index: AstExpr) : AstExpr() {
     var array by child(array)
     var index by child(index)
 }
 
-class AstFunctionCall(function: AstExpr, params: List<AstExpr>) : AstExpr(children = params.toMutableList()) {
-    val function by child(function)
+class AstFunctionCall(function: AstExpr, params: List<AstExpr>) : AstExpr() {
+    var function by child(function)
+    val params: MutableList<AstExpr> by childList(params.toMutableList())
 }
 
 class AstFunctionArgument(val name: String, val index: Int, type: ZcType) : AstExpr(type = type)

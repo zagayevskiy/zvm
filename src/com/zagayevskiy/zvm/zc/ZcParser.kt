@@ -409,7 +409,7 @@ class ZcParser(private val lexer: Lexer) {
     // identifier ("=" expression | [chain])
     private fun assignmentExpr(): AstExpr? {
         val varName = maybe<Identifier>()?.name ?: return NotMatched
-        val variable = AstVariable(varName)
+        val variable = AstIdentifier(varName)
 
         val expression = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Right side of assignment expected.") }
 
