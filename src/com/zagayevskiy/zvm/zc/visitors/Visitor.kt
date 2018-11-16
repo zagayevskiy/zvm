@@ -91,6 +91,7 @@ interface AstVisitor<R> {
     fun visit(ast: AstFunctionReference): R
     fun visit(ast: AstIdentifier): R
     fun visit(ast: AstVal): R
+    fun visit(ast: AstCastExpr): R
 }
 
 fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
@@ -140,4 +141,5 @@ fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
     is AstFunctionReference -> visitor.visit(ast)
     is AstIdentifier -> visitor.visit(ast)
     is AstVal -> visitor.visit(ast)
+    is AstCastExpr -> visitor.visit(ast)
 }

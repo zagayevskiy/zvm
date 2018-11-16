@@ -1,6 +1,6 @@
 package com.zagayevskiy.zvm.zc.visitors
 
-import com.zagayevskiy.zvm.zc.ZcType
+import com.zagayevskiy.zvm.zc.types.ZcType
 import com.zagayevskiy.zvm.zc.ast.*
 
 class TopLevelDeclarationsResolver(private val ast: Ast) {

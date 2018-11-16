@@ -1,8 +1,9 @@
 package com.zagayevskiy.zvm.zc.visitors
 
 import com.zagayevskiy.zvm.util.extensions.*
-import com.zagayevskiy.zvm.zc.ZcType
+import com.zagayevskiy.zvm.zc.types.ZcType
 import com.zagayevskiy.zvm.zc.ast.*
+import com.zagayevskiy.zvm.zc.types.relations.*
 
 class TypesProcessor(private val program: AstProgram) {
 
@@ -24,23 +25,84 @@ class TypesProcessor(private val program: AstProgram) {
     private fun onTopDown(ast: Ast): Ast = when (ast) {
         is Scope -> ast.also { scopes.push(ast) }
         is AstValDecl -> {
-            val astVal = currentScope.declareVal(ast.valName, ZcType.byName(ast.typeName) ?: ZcType.Unknown) ?: error("Name ${ast.valName} already declared.")
-            createAssignment(astVal, ast.initializer)
+            var type = ZcType.byName(ast.typeName)
+            var initializer = ast.initializer
+            if (type == null) {
+                initializer = resolveSymbolsAndTypes(initializer) as AstExpr
+                type = initializer.type
+            }
+            val astVal = currentScope.declareVal(ast.valName, type) ?: error("Name ${ast.valName} already declared.")
+            createAssignment(astVal, initializer)
 
         }
         is AstVarDecl -> {
-            val astVar = currentScope.declareVar(ast.varName, ZcType.byName(ast.typeName) ?: ZcType.Unknown) ?: error("Name ${ast.varName} already declared.")
-            createAssignment(astVar, ast.initializer)
+            var type = ZcType.byName(ast.typeName)
+            var initializer = ast.initializer
+            if (type == null) {
+                if (initializer == AstConst.Undefined) error("At least type or initializer must be specified for var declaration.")
+                initializer = resolveSymbolsAndTypes(initializer) as AstExpr
+                type = initializer.type
+            }
+            val astVar = currentScope.declareVar(ast.varName, type) ?: error("Name ${ast.varName} already declared.")
+            createAssignment(astVar, initializer)
         }
         is AstFunctionCall -> resolveFunctionCall(ast)
         is AstIdentifier -> currentScope.lookup(ast.name) ?: error("Unknown identifier '${ast.name}'")
         else -> ast
     }
 
-    private fun onBottomUp(ast: Ast): Ast = when (ast) {
-        is Scope -> ast.also { scopes.pop() }
+    private fun onBottomUp(ast: Ast): Ast {
+        // TODO may be do it typesafe?
+        if (ast.isLeaf() && ast.type == ZcType.Unknown) throw IllegalStateException("$ast type must not be unknown at that point.")
 
-        else -> ast
+        return when (ast) {
+            is Scope -> ast.also { scopes.pop() }
+            is AstArithmeticBinary -> ast.apply {
+                val promotedType = arithmeticTypesPromotion(left.type, right.type) ?: error("${left.type} and ${right.type} can't be used in arithmetic expressions.")
+                left = left.promoteTo(promotedType)
+                right = right.promoteTo(promotedType)
+                type = promotedType
+            }
+
+            is AstLogicalBinary -> ast.apply {
+                val promotedType = logicalTypesPromotion(left.type, right.type) ?: error("${left.type} and ${right.type} can't be used in logical expressions.")
+                left = left.promoteTo(promotedType)
+                right = right.promoteTo(promotedType)
+                type = promotedType
+
+            }
+
+            is AstLogicalNot -> ast.apply {
+                val promotedType = logicalUnaryTypePromotion(expression.type) ?: error("${expression.type} can't be used in unary logical expression.")
+                expression = expression.promoteTo(promotedType)
+                type = promotedType
+            }
+
+            is AstBitBinary -> ast.apply {
+                return@apply when (ast) {
+                    is AstBitAnd, is AstBitOr, is AstBitXor -> {
+                        val promotedType = bitBinaryTypesPromotion(left.type, right.type) ?: error("${left.type} and ${right.type} can't be used in bit expressions.")
+                        left = left.promoteTo(promotedType)
+                        right = right.promoteTo(promotedType)
+                        type = promotedType
+                    }
+                    is AstBitShift.Left, is AstBitShift.Right -> {
+                        val promotedLeftType = bitShiftOperandTypePromotion(left.type) ?: error("${left.type} can't be bit-shifted.")
+                        val promotedRightType = bitShiftOperandTypePromotion(right.type) ?: error("${right.type} can't be used as bit-shift right size.")
+                        left = left.promoteTo(promotedLeftType)
+                        right = right.promoteTo(promotedRightType)
+                        type = promotedLeftType
+                    }
+                }
+            }
+            is AstBitNot -> ast.apply {
+                val promotedType = bitUnaryTypePromotion(expression.type) ?: error("${expression.type} can't be used in unary bit expression.")
+                expression = expression.promoteTo(promotedType)
+                type = promotedType
+            }
+
+            else -> ast
+        }
     }
 
     private fun resolveFunctionCall(call: AstFunctionCall) = call.also {
@@ -59,5 +121,11 @@ class TypesProcessor(private val program: AstProgram) {
         } else {
             AstAssignment(left, right)
         }
+    }
+
+    private fun AstExpr.promoteTo(promotedType: ZcType) = if (type == promotedType) {
+        this
+    } else {
+        AstCastExpr(this, promotedType)
     }
 }

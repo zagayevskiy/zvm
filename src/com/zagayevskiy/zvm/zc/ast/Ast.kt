@@ -1,6 +1,6 @@
 package com.zagayevskiy.zvm.zc.ast
 
-import com.zagayevskiy.zvm.zc.ZcType
+import com.zagayevskiy.zvm.zc.types.ZcType
 import kotlin.reflect.KProperty
 
 
@@ -41,6 +41,10 @@ sealed class Ast(
     }
 
     override fun iterator(): MutableListIterator<Ast> = children.listIterator()
+
+    override fun toString() = "${javaClass.simpleName}:$type $children"
+
+    fun isLeaf() = children.isEmpty()
 }
 
 object StubAst : Ast()
@@ -62,7 +66,7 @@ class AstDefinedFunction(val name: String, val args: List<AstFunctionArgument>, 
     val body by child(body)
 }
 
-class AstFunctionReference(val function: AstDefinedFunction): AstExpr(type = function.retType)
+class AstFunctionReference(val function: AstDefinedFunction) : AstExpr(type = function.retType)
 
 class AstBlock(statements: List<AstStatement>) : Ast(children = statements.toMutableList())
 
@@ -153,11 +157,12 @@ class AstLessEq(left: AstExpr, right: AstExpr) : AstComparison(left, right)
 class AstGreat(left: AstExpr, right: AstExpr) : AstComparison(left, right)
 class AstGreatEq(left: AstExpr, right: AstExpr) : AstComparison(left, right)
 
-class AstSum(left: AstExpr, right: AstExpr) : AstBinary(left, right)
-class AstDifference(left: AstExpr, right: AstExpr) : AstBinary(left, right)
-class AstMul(left: AstExpr, right: AstExpr) : AstBinary(left, right)
-class AstDiv(left: AstExpr, right: AstExpr) : AstBinary(left, right)
-class AstMod(left: AstExpr, right: AstExpr) : AstBinary(left, right)
+sealed class AstArithmeticBinary(left: AstExpr, right: AstExpr) : AstBinary(left, right)
+class AstSum(left: AstExpr, right: AstExpr) : AstArithmeticBinary(left, right)
+class AstDifference(left: AstExpr, right: AstExpr) : AstArithmeticBinary(left, right)
+class AstMul(left: AstExpr, right: AstExpr) : AstArithmeticBinary(left, right)
+class AstDiv(left: AstExpr, right: AstExpr) : AstArithmeticBinary(left, right)
+class AstMod(left: AstExpr, right: AstExpr) : AstArithmeticBinary(left, right)
 
 class AstLogicalNot(expression: AstExpr) : AstExpr() {
     var expression by child(expression)
@@ -167,19 +172,23 @@ class AstBitNot(expression: AstExpr) : AstExpr() {
     var expression by child(expression)
 }
 
+class AstCastExpr(expression: AstExpr, castType: ZcType) : AstExpr(type = castType) {
+    val expression by child(expression)
+}
+
 private val emptyVisitor: (Ast) -> Ast = { it }
 
-fun Ast.walk(topDownVisitor: (Ast) -> Ast = emptyVisitor, bottomUpVisitor: (Ast) -> Ast = emptyVisitor, condition: (Ast) -> Boolean = { true }): Ast {
-    var modified = if (condition(this)) topDownVisitor(this) else this
+fun Ast.walk(topDownVisitor: (Ast) -> Ast = emptyVisitor, bottomUpVisitor: (Ast) -> Ast = emptyVisitor): Ast {
+    var modified = topDownVisitor(this)
 
     val iterator = modified.iterator()
     while (iterator.hasNext()) {
         val child = iterator.next()
-        val modifiedChild = child.walk(topDownVisitor, bottomUpVisitor, condition)
+        val modifiedChild = child.walk(topDownVisitor, bottomUpVisitor)
         iterator.set(modifiedChild)
     }
 
-    modified = if (condition(modified)) bottomUpVisitor(modified) else modified
+    modified = bottomUpVisitor(modified)
 
     return modified
 }

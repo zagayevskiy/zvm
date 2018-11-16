@@ -10,6 +10,8 @@ class GraphVizGenerator(private val ast: Ast) {
     private var id = 0
 
     private val visitor = object : AstVisitor<Pair<String, Int>> {
+        override fun visit(ast: AstCastExpr) = "cast from ${ast.expression.type} to ${ast.type}" to ++id
+
         override fun visit(ast: AstFunctionReference) = "ref ${ast.function}:${ast.type}" to ++id
 
         override fun visit(ast: AstIdentifier) = "id: ${ast.name}" to ++id
@@ -129,27 +131,17 @@ fun main(args: Array<String>) {
     val text = """
 
             fn main(argc: int): int {
-                f(argc, 2, 3, 4)[5 + 6];
                 val a = 1;
                 var b = 2 + argc;
                 var c: int;
                 var d: byte = 3;
                 val e: int  = 4;
-                c = (a + b) - (d[e]*e[d]);
-                for (;;) {
-                    if (e) {
-                    }
-                }
+                c = (a + b) - (d*e*e/d);
+                var q: bool;
+                q = !c;
                 return 100000;
             }
 
-            fn f() {val x = g(1234, 2134);}
-            fn g(x: int, y: byte): byte {
-                return x + y;
-            }
-            fn g(x: byte, y: int): int {
-                return g(y, x);
-            }
         """.trimIndent()
 
     val parser = ZcParser(ZcSequenceLexer(text.asSequence()))

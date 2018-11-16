@@ -1,6 +1,6 @@
 package com.zagayevskiy.zvm.zc.ast
 
-import com.zagayevskiy.zvm.zc.ZcType
+import com.zagayevskiy.zvm.zc.types.ZcType
 
 interface Scope {
     val enclosingScope: Scope?
