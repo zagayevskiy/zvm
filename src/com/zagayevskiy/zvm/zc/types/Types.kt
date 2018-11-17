@@ -7,6 +7,7 @@ sealed class ZcType(val name: String) {
     object Byte : ZcType("byte")
     object Boolean : ZcType("bool")
     object Unknown : ZcType("unknown")
+    class Pointer(val to: ZcType): ZcType("pointer->${to.name}")
 
     companion object {
         fun byName(name: String?) = when (name) {
