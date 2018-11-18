@@ -101,10 +101,10 @@ class TypesProcessor(private val program: AstProgram) {
                 type = promotedType
             }
             is AstArrayIndexing -> ast.apply {
-                val pointerType = (array.type as? ZcType.Pointer) ?: error("Only pointers can be indexed. ${array.type} can't be.")
-                val indexPromotedType = arithmeticTypesPromotion(index.type, ZcType.Integer) ?: error("${index.type} can't be used as index.")
-                type = pointerType.to
-                index = index.promoteTo(indexPromotedType)
+//                val pointerType = (array.type as? ZcType.Pointer) ?: error("Only pointers can be indexed. ${array.type} can't be.")
+//                val indexPromotedType = arithmeticTypesPromotion(index.type, ZcType.Integer) ?: error("${index.type} can't be used as index.")
+//                type = pointerType.to
+//                index = index.promoteTo(indexPromotedType)
             }
 
             else -> ast

@@ -10,9 +10,13 @@ function_body ::= function_block_body | function_expression_body
 function_block_body ::= block
 function_expression_body ::= "=" expression
 function_args_list ::= [ function_arg_definition {"," function_arg_definition} ]
-function_arg_definition ::= identifier ":" identifier
-function_return_type ::= identifier
+function_arg_definition ::= identifier ":" type
+function_return_type ::= type
 function_return_statement ::= "return" expression ";"
+
+type ::= identifier | functional_type | array_type
+functional_type ::= "(" [ type { ", " type } ] ")" "->" type
+array_type ::= "[" type "]"
 
 block ::= "{" statement { statement } "}"
 statement ::= variable_declaration | loop | if_else | function_return_statement | expression_statement

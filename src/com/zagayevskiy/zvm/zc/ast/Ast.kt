@@ -1,12 +1,14 @@
 package com.zagayevskiy.zvm.zc.ast
 
+import com.zagayevskiy.zvm.zc.types.UnresolvedType
 import com.zagayevskiy.zvm.zc.types.ZcType
+import java.lang.StringBuilder
 import kotlin.reflect.KProperty
 
 
 sealed class Ast(
-        var type: ZcType = ZcType.Unknown,
-        private val children: MutableList<Ast> = mutableListOf()) : MutableIterable<Ast> {
+        var type: ZcType = ZcType.Unknown) : MutableIterable<Ast> {
+    private val children: MutableList<Ast> = mutableListOf()
     protected fun <T : Ast> child(defaultValue: T) = ChildDelegate(defaultValue, children)
     protected fun <T : Ast, L : List<T>> childList(defaultValue: L) = ChildListDelegate(defaultValue, children)
 
@@ -49,11 +51,13 @@ sealed class Ast(
 
 object StubAst : Ast()
 
-class AstProgram(declarations: MutableList<Ast>) : Ast(children = declarations)
+class AstProgram(declarations: MutableList<Ast>) : Ast() {
+    val declarations by childList(declarations)
+}
 
 sealed class TopLevelDeclaration(type: ZcType = ZcType.Unknown) : Ast()
 
-class FunctionArgumentDeclaration(val name: String, val typeName: String)
+class FunctionArgumentDeclaration(val name: String, val type: UnresolvedType)
 
 class AstFunctionDeclaration(val name: String, val args: List<FunctionArgumentDeclaration>, val returnTypeName: String?, body: Ast) : TopLevelDeclaration() {
     val body by child(body)
@@ -68,7 +72,9 @@ class AstDefinedFunction(val name: String, val args: List<AstFunctionArgument>, 
 
 class AstFunctionReference(val function: AstDefinedFunction) : AstExpr(type = function.retType)
 
-class AstBlock(statements: List<AstStatement>) : Ast(children = statements.toMutableList())
+class AstBlock(statements: List<AstStatement>) : Ast() {
+    val statements by childList(statements)
+}
 
 sealed class AstStatement : Ast()
 class AstVarDecl(val varName: String, val typeName: String?, initializer: AstExpr?) : AstStatement() {
@@ -104,7 +110,7 @@ class AstExpressionStatement(expression: AstExpr?) : AstStatement() {
     var expression by child(expression ?: AstConst.Undefined)
 }
 
-sealed class AstExpr(type: ZcType = ZcType.Unknown, children: MutableList<AstExpr> = mutableListOf<AstExpr>()) : Ast(type, mutableListOf<Ast>().apply { addAll(children) })
+sealed class AstExpr(type: ZcType = ZcType.Unknown) : Ast(type)
 
 sealed class AstBinary(left: AstExpr, right: AstExpr) : AstExpr() {
     var left by child(left)

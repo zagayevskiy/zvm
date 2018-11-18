@@ -26,7 +26,7 @@ class GraphVizGenerator(private val ast: Ast) {
 
         override fun visit(ast: AstFunctionArgument) = "arg: ${ast.name}:${ast.type.name}" to ++id
 
-        override fun visit(ast: AstFunctionDeclaration) = "decl fun ${ast.name}(${ast.args.map { it.typeName }}): ${ast.returnTypeName}" to ++id
+        override fun visit(ast: AstFunctionDeclaration) = "decl fun ${ast.name}(${ast.args.map { it.type }}): ${ast.returnTypeName}" to ++id
 
         override fun visit(ast: AstStructDeclaration) = "decl struct ${ast.name}" to ++id
 

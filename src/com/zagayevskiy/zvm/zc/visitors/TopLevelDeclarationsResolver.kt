@@ -2,6 +2,7 @@ package com.zagayevskiy.zvm.zc.visitors
 
 import com.zagayevskiy.zvm.zc.types.ZcType
 import com.zagayevskiy.zvm.zc.ast.*
+import com.zagayevskiy.zvm.zc.types.UnresolvedType
 
 class TopLevelDeclarationsResolver(private val ast: Ast) {
 
@@ -9,7 +10,7 @@ class TopLevelDeclarationsResolver(private val ast: Ast) {
     fun resolve(): Ast {
         return ast.walk(topDownVisitor = { ast ->
             when (ast) {
-                is AstFunctionDeclaration -> declare(ast) ?: error("Function ${ast.name} with arguments ${ast.args.map { it.typeName }} already defined. ")
+                is AstFunctionDeclaration -> declare(ast) ?: error("Function ${ast.name} with arguments ${ast.args.map { it.type }} already defined. ")
 
                 else -> ast
             }
@@ -20,7 +21,8 @@ class TopLevelDeclarationsResolver(private val ast: Ast) {
         checkArgNames(function)
         return with(function) {
             val resolvedArgs = args.mapIndexed { index, argDecl ->
-                AstFunctionArgument(argDecl.name, index, ZcType.byName(argDecl.typeName) ?: error("Unknown type ${argDecl.typeName}"))
+                //TODO other types
+                AstFunctionArgument(argDecl.name, index, ZcType.byName((argDecl.type as? UnresolvedType.Simple)?.name) ?: error("Unknown type ${argDecl.type}"))
             }
 
             val resolvedRetType = resolveReturnType(returnTypeName, body)
@@ -44,6 +46,10 @@ class TopLevelDeclarationsResolver(private val ast: Ast) {
         } else {
             ZcType.byName(returnTypeName) ?: error("Unknown type $returnTypeName")
         }
+    }
+
+    private fun resolveType(unresolved: UnresolvedType): ZcType {
+        TODO()
     }
 
     private fun error(message: String): Nothing = throw RuntimeException(message)

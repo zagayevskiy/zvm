@@ -10,6 +10,9 @@ class ZcParserTest {
 
 
         val text = """
+            fn map(i: int, mapper: (int) -> byte) : byte {
+                return mapper(i);
+            }
 
             struct str {
                 val x = 1;

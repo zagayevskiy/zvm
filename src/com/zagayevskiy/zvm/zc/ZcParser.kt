@@ -5,6 +5,7 @@ import com.zagayevskiy.zvm.common.Token
 import com.zagayevskiy.zvm.common.Token.Eof
 import com.zagayevskiy.zvm.common.Token.Identifier
 import com.zagayevskiy.zvm.zc.ast.*
+import com.zagayevskiy.zvm.zc.types.UnresolvedType
 
 sealed class ParseResult {
     class Success(val program: Ast) : ParseResult()
@@ -88,8 +89,8 @@ class ZcParser(private val lexer: Lexer) {
     private fun functionArgDefinition(): FunctionArgumentDeclaration? {
         val name = maybe<Identifier>()?.name ?: return NotMatched
         expect<ZcToken.Colon>()
-        val typeName = expect<Identifier>().name
-        return FunctionArgumentDeclaration(name, typeName)
+        val type = type() ?: error("Type of function argument expected.")
+        return FunctionArgumentDeclaration(name, type)
     }
 
     private fun functionReturnType() = maybe<Identifier>()
@@ -101,6 +102,33 @@ class ZcParser(private val lexer: Lexer) {
     private fun functionExpressionBody(): Ast? {
         maybe<ZcToken.Assign>() ?: return NotMatched
         return expression() ?: error("Expression expected in expression body.")
+    }
+
+    private fun type(): UnresolvedType? = simpleType() ?: arrayType() ?: functionalType()
+
+    private fun simpleType(): UnresolvedType? = maybe<Identifier>()?.andThan { id -> UnresolvedType.Simple(id.name) }
+
+    private fun arrayType(): UnresolvedType? {
+        maybe<ZcToken.SquareBracketOpen>() ?: return null
+
+        val elementType = type() ?: error("Type of array elements expected.")
+
+        expect<ZcToken.SquareBracketClose>()
+
+        return UnresolvedType.Array(elementType)
+    }
+
+    private fun functionalType(): UnresolvedType? {
+        maybe<ZcToken.ParenthesisOpen>() ?: return null
+
+        val argTypes = matchList<ZcToken.Comma, UnresolvedType> (::type) ?: emptyList()
+
+        expect<ZcToken.ParenthesisClose>()
+        expect<ZcToken.Arrow>()
+
+        val returnType = type() ?: error("Return type expected.")
+
+        return UnresolvedType.Function(argTypes, returnType)
     }
 
     private fun variableDecl(): AstStatement? = (varDecl() ?: valDecl())?.also { expect<ZcToken.Semicolon>() }
@@ -426,7 +454,7 @@ class ZcParser(private val lexer: Lexer) {
     // function_call ::= "(" expressions_list ")" [chain]
     private fun functionCall(function: AstExpr): AstExpr? {
         maybe<ZcToken.ParenthesisOpen>() ?: return NotMatched
-        val expressions = matchList<ZcToken.Comma>(::expression) ?: emptyList()
+        val expressions = matchList<ZcToken.Comma, AstExpr>(::expression) ?: emptyList()
         expect<ZcToken.ParenthesisClose>()
 
         val functionCall = AstFunctionCall(function = function, params = expressions)
@@ -471,7 +499,7 @@ class ZcParser(private val lexer: Lexer) {
 
     private inline fun <T : Token, R> T.andThan(block: (T) -> R): R = block(this)
 
-    private inline fun <reified T : Token> matchList(element: () -> AstExpr?): List<AstExpr>? {
+    private inline fun <reified T : Token, R: Any> matchList(element: () -> R?): List<R>? {
         val first = element() ?: return NotMatched
         return mutableListOf(first).apply {
             while (maybe<T>() != null) add(element() ?: error())
