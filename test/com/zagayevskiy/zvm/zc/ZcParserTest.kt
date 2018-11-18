@@ -1,9 +1,36 @@
 package com.zagayevskiy.zvm.zc
 
 import com.zagayevskiy.zvm.common.Lexer
+import com.zagayevskiy.zvm.zc.ast.*
+import com.zagayevskiy.zvm.zc.types.UnresolvedType
 import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+private data class TestData(val text: String, val expected: AstProgram)
 
 class ZcParserTest {
+
+
+    val text = """
+        fn  main(i: int) {
+        }
+    """.trimIndent()
+    val expected = AstProgram(mutableListOf(
+            AstFunctionDeclaration(
+                    "main1",
+                    listOf(FunctionArgumentDeclaration("i", UnresolvedType.Simple("int"))),
+                    null,
+                    body = AstBlock(emptyList())
+            )
+    ))
+
+    @Test
+    fun t() {
+        val parser = ZcParser(PrintSpyLexer(ZcSequenceLexer(text.asSequence())))
+        val result = parser.program() as ParseResult.Success
+        assertEquals(expected, result.program)
+    }
 
     @Test
     fun test() {
@@ -48,9 +75,9 @@ class ZcParserTest {
 
 }
 
-class PrintSpyLexer(private val lexer: Lexer): Lexer {
+class PrintSpyLexer(private val lexer: Lexer) : Lexer {
     override fun nextToken() = lexer.nextToken().also { println(it) }
 
     override val currentLine
-            get() = lexer.currentLine
+        get() = lexer.currentLine
 }

@@ -2,12 +2,10 @@ package com.zagayevskiy.zvm.zc.ast
 
 import com.zagayevskiy.zvm.zc.types.UnresolvedType
 import com.zagayevskiy.zvm.zc.types.ZcType
-import java.lang.StringBuilder
 import kotlin.reflect.KProperty
 
 
-sealed class Ast(
-        var type: ZcType = ZcType.Unknown) : MutableIterable<Ast> {
+sealed class Ast(var type: ZcType = ZcType.Unknown) : MutableIterable<Ast> {
     private val children: MutableList<Ast> = mutableListOf()
     protected fun <T : Ast> child(defaultValue: T) = ChildDelegate(defaultValue, children)
     protected fun <T : Ast, L : List<T>> childList(defaultValue: L) = ChildListDelegate(defaultValue, children)
@@ -46,6 +44,8 @@ sealed class Ast(
 
     override fun toString() = "${javaClass.simpleName}:$type $children"
 
+    override fun equals(other: Any?) = other is Ast && this eq other
+
     fun isLeaf() = children.isEmpty()
 }
 
@@ -57,7 +57,7 @@ class AstProgram(declarations: MutableList<Ast>) : Ast() {
 
 sealed class TopLevelDeclaration(type: ZcType = ZcType.Unknown) : Ast()
 
-class FunctionArgumentDeclaration(val name: String, val type: UnresolvedType)
+data class FunctionArgumentDeclaration(val name: String, val type: UnresolvedType)
 
 class AstFunctionDeclaration(val name: String, val args: List<FunctionArgumentDeclaration>, val returnTypeName: String?, body: Ast) : TopLevelDeclaration() {
     val body by child(body)
