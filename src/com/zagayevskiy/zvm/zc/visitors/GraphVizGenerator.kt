@@ -138,6 +138,7 @@ fun main(args: Array<String>) {
                 val e: int  = 4;
                 c = (a + b) - (d*e*e/d);
                 var q: bool;
+                if (q) {return d;} else {return e;}
                 q = !c;
                 return d;
             }

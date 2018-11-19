@@ -98,6 +98,7 @@ class AstWhile(condition: AstExpr, body: Ast) : AstStatement() {
 }
 
 class AstIfElse(condition: AstExpr, ifBody: Ast, elseBody: Ast?) : AstStatement() {
+    var condition by child(condition)
     var ifBody by child(ifBody)
     var elseBody by child(elseBody ?: AstConst.Undefined)
 }

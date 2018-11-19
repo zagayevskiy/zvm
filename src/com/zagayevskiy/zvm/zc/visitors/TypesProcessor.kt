@@ -109,11 +109,11 @@ class TypesProcessor(private val program: AstProgram) {
 
             is AstFunctionReturn -> ast.apply {
                 val enclosingFunction = findEnclosingFunction() ?: error("Return-statement can be used only inside a function.")
-                if (expression.type.canBeAutoPromotedTo(enclosingFunction.retType)) {
-                    expression = expression.promoteTo(enclosingFunction.retType)
-                } else {
-                    error("${expression.type} can't be auto promoted to function return type(${enclosingFunction.retType}).")
-                }
+                expression = expression.tryAutoPromoteTo(enclosingFunction.retType) ?: error("${expression.type} can't be auto promoted to function return type(${enclosingFunction.retType}).")
+            }
+
+            is AstIfElse -> ast.apply {
+                condition = condition.tryAutoPromoteTo(ZcType.Boolean) ?: error("Condition type (${condition.type}) can't be auto promoted to ${ZcType.Boolean}")
             }
 
             else -> ast
@@ -142,6 +142,12 @@ class TypesProcessor(private val program: AstProgram) {
         null -> null
         is AstDefinedFunction -> scope
         else -> findEnclosingFunction(scope.enclosingScope)
+    }
+
+    private fun AstExpr.tryAutoPromoteTo(promotedType: ZcType) = if (type.canBeAutoPromotedTo(promotedType)) {
+        promoteTo(promotedType)
+    } else {
+        null
     }
 
     private fun AstExpr.promoteTo(promotedType: ZcType) = if (type == promotedType) {
