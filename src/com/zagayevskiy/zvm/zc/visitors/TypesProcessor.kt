@@ -101,10 +101,19 @@ class TypesProcessor(private val program: AstProgram) {
                 type = promotedType
             }
             is AstArrayIndexing -> ast.apply {
-//                val pointerType = (array.type as? ZcType.Pointer) ?: error("Only pointers can be indexed. ${array.type} can't be.")
+                //                val pointerType = (array.type as? ZcType.Pointer) ?: error("Only pointers can be indexed. ${array.type} can't be.")
 //                val indexPromotedType = arithmeticTypesPromotion(index.type, ZcType.Integer) ?: error("${index.type} can't be used as index.")
 //                type = pointerType.to
 //                index = index.promoteTo(indexPromotedType)
+            }
+
+            is AstFunctionReturn -> ast.apply {
+                val enclosingFunction = findEnclosingFunction() ?: error("Return-statement can be used only inside a function.")
+                if (expression.type.canBeAutoPromotedTo(enclosingFunction.retType)) {
+                    expression = expression.promoteTo(enclosingFunction.retType)
+                } else {
+                    error("${expression.type} can't be auto promoted to function return type(${enclosingFunction.retType}).")
+                }
             }
 
             else -> ast
@@ -129,9 +138,16 @@ class TypesProcessor(private val program: AstProgram) {
         }
     }
 
+    private fun findEnclosingFunction(scope: Scope? = currentScope): AstDefinedFunction? = when (scope) {
+        null -> null
+        is AstDefinedFunction -> scope
+        else -> findEnclosingFunction(scope.enclosingScope)
+    }
+
     private fun AstExpr.promoteTo(promotedType: ZcType) = if (type == promotedType) {
         this
     } else {
         AstCastExpr(this, promotedType)
     }
+
 }

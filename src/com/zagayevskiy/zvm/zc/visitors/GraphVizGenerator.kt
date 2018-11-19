@@ -18,7 +18,7 @@ class GraphVizGenerator(private val ast: Ast) {
 
         override fun visit(ast: AstVal) = "val ${ast.valName}: ${ast.type}" to ++id
 
-        override fun visit(ast: AstVar) = "var:${ast.varName}" to ++id
+        override fun visit(ast: AstVar) = "var:${ast.varName}: ${ast.type}" to ++id
 
         override fun visit(ast: StubAst) = "stub" to ++id
 
@@ -139,7 +139,7 @@ fun main(args: Array<String>) {
                 c = (a + b) - (d*e*e/d);
                 var q: bool;
                 q = !c;
-                return 100000;
+                return d;
             }
 
         """.trimIndent()

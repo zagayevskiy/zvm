@@ -18,5 +18,5 @@ sealed class ZcType(val name: String) {
         }
     }
 
-    override fun toString() = "ZcType#$name"
+    override fun toString() = "t:$name"
 }
