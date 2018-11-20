@@ -51,7 +51,7 @@ sealed class Ast(var type: ZcType = ZcType.Unknown) : MutableIterable<Ast> {
 
 object StubAst : Ast()
 
-class AstProgram(declarations: MutableList<Ast>) : Ast() {
+class AstProgram(declarations: MutableList<TopLevelDeclaration>) : Ast() {
     val declarations by childList(declarations)
 }
 

@@ -21,7 +21,7 @@ class ZcParser(private val lexer: Lexer) {
     private lateinit var token: Token
     fun program(): ParseResult {
         try {
-            val topLevelDeclarations = mutableListOf<Ast>().apply {
+            val topLevelDeclarations = mutableListOf<TopLevelDeclaration>().apply {
                 nextToken()
                 add(topLevelDeclaration())
                 while (token != Eof) {

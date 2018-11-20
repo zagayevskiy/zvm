@@ -4,6 +4,7 @@ import com.zagayevskiy.zvm.zc.types.ZcType
 
 interface Scope {
     val enclosingScope: Scope?
+    val totalVariablesCount: Int
 
     fun declareVar(name: String, type: ZcType): AstVar?
     fun declareVal(name: String, type: ZcType): AstVal?
@@ -16,6 +17,8 @@ open class BaseScope(override val enclosingScope: Scope?) : Scope {
 
     private val variables = mutableMapOf<String, AstExpr>()
 
+    override val totalVariablesCount: Int
+        get() = variables.size
 
     override fun declareVar(name: String, type: ZcType): AstVar? {
         if (name.existsInThisScope()) return null

@@ -16,7 +16,7 @@ import com.zagayevskiy.zvm.asm.Command.*
 sealed class Command {
     data class Func(val name: String, val args: Int = 0, val locals: Int = 0) : Command()
     data class Label(val label: String) : Command()
-    data class Instruction(val opcode: Opcode, val operands: List<Operand>) : Command() {
+    data class Instruction(val opcode: Opcode, val operands: List<Operand> = emptyList()) : Command() {
         init {
             if (opcode.operandCount != operands.size) throw IllegalArgumentException("""
                 operands size must be equals to declared opcode.operandCount
