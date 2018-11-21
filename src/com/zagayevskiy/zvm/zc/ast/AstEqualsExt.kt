@@ -21,7 +21,7 @@ private class AstEqualityVisitor(private val other: Ast) : AstVisitor<Boolean> {
 
     override fun visit(ast: AstValDecl) = ast.check { ast.valName == it.valName && ast.typeName == it.typeName }
 
-    override fun visit(ast: AstLoop) = ast.check()
+    override fun visit(ast: AstForLoop) = ast.check()
 
     override fun visit(ast: AstWhile) = ast.check()
 

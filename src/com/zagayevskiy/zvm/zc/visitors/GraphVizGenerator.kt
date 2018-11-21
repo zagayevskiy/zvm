@@ -38,7 +38,7 @@ class GraphVizGenerator(private val ast: Ast) {
 
         override fun visit(ast: AstValDecl) = "decl val ${ast.valName}: ${ast.typeName}" to ++id
 
-        override fun visit(ast: AstLoop) = "loop-for" to ++id
+        override fun visit(ast: AstForLoop) = "loop-for" to ++id
 
         override fun visit(ast: AstWhile) = "loop-while" to ++id
 

@@ -19,21 +19,21 @@ functional_type ::= "(" [ type { ", " type } ] ")" "->" type
 array_type ::= "[" type "]"
 
 block ::= "{" statement { statement } "}"
-statement ::= variable_declaration | loop | if_else | function_return_statement | expression_statement
+statement ::= block | variable_declaration | loop | if_else | function_return_statement | expression_statement
 
 variable_declaration ::= (var_declaration | val_declaration) ";"
 var_declaration ::= "var" identifier ((":" identifier) ["=" expression]| ("=" expression))
 val_declaration ::= "val" identifier [":" identifier] "=" expression
 
 loop ::= for_loop | while_loop
-for_loop ::= "for" "(" [for_loop_initializer] ";" [for_loop_condition] ";" [for_loop_step] ")" block
+for_loop ::= "for" "(" [for_loop_initializer] ";" [for_loop_condition] ";" [for_loop_step] ")" statement
 for_loop_initializer ::= variable_declaration {"," variable_declaration}
 for_loop_condition ::= expression
 for_loop_step ::= expression {"," expression}
 
-if_else ::= "if" "(" expression ")" (block | expression) [ "else" (block | expression) ]
+if_else ::= "if" "(" expression ")" statement [ "else" statement ]
 
-while_loop ::= "while" "(" expression ")" block
+while_loop ::= "while" "(" expression ")" statement
 
 expression_statement ::= expression ";"
 expression ::=  disjunction_expr

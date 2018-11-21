@@ -72,11 +72,16 @@ class AstDefinedFunction(val name: String, val args: List<AstFunctionArgument>, 
 
 class AstFunctionReference(val function: AstDefinedFunction) : AstExpr(type = function.retType)
 
-class AstBlock(statements: List<AstStatement>) : Ast() {
+sealed class AstStatement : Ast()
+
+class AstBlock(statements: List<AstStatement> = emptyList()) : AstStatement() {
     val statements by childList(statements)
+
+    companion object {
+        val Empty = AstBlock()
+    }
 }
 
-sealed class AstStatement : Ast()
 class AstVarDecl(val varName: String, val typeName: String?, initializer: AstExpr?) : AstStatement() {
     var initializer by child(initializer ?: AstConst.Undefined)
 }
@@ -85,7 +90,7 @@ class AstValDecl(val valName: String, val typeName: String?, initializer: AstExp
     var initializer by child(initializer)
 }
 
-class AstLoop(initializer: Ast?, condition: AstExpr?, step: Ast?, body: Ast) : AstStatement() {
+class AstForLoop(initializer: Ast?, condition: AstExpr?, step: Ast?, body: Ast) : AstStatement() {
     var initializer by child(initializer ?: AstConst.Undefined)
     var condition by child(condition ?: AstConst.Undefined)
     var step by child(step ?: AstConst.Undefined)
@@ -97,10 +102,10 @@ class AstWhile(condition: AstExpr, body: Ast) : AstStatement() {
     var body by child(body)
 }
 
-class AstIfElse(condition: AstExpr, ifBody: Ast, elseBody: Ast?) : AstStatement() {
+class AstIfElse(condition: AstExpr, ifBody: AstStatement, elseBody: AstStatement?) : AstStatement() {
     var condition by child(condition)
     var ifBody by child(ifBody)
-    var elseBody by child(elseBody ?: AstConst.Undefined)
+    var elseBody by child(elseBody ?: AstBlock.Empty)
 }
 
 class AstFunctionReturn(expression: AstExpr?) : AstStatement() {

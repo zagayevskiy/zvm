@@ -99,7 +99,7 @@ class ZcParser(private val lexer: Lexer) {
 
     private fun functionBlockBody() = block()
 
-    private fun functionExpressionBody(): Ast? {
+    private fun functionExpressionBody(): AstExpr? {
         maybe<ZcToken.Assign>() ?: return NotMatched
         return expression() ?: error("Expression expected in expression body.")
     }
@@ -162,7 +162,7 @@ class ZcParser(private val lexer: Lexer) {
         return AstValDecl(valName = name, typeName = typeName, initializer = initializer)
     }
 
-    private fun block(): Ast? {
+    private fun block(): AstBlock? {
         maybe<ZcToken.CurlyBracketOpen>() ?: return NotMatched
 
         val statements = mutableListOf<AstStatement>().apply {
@@ -177,12 +177,12 @@ class ZcParser(private val lexer: Lexer) {
     }
 
     // statement ::= variable_declaration | loop | function_return_statement | expression
-    private fun statement(): AstStatement? = variableDecl() ?: loopStatement() ?: ifElseStatement() ?: functionReturnStatement() ?: expressionStatement()
+    private fun statement(): AstStatement? = block() ?: variableDecl() ?: loopStatement() ?: ifElseStatement() ?: functionReturnStatement() ?: expressionStatement()
 
     private fun loopStatement() = forLoop() ?: whileLoop()
 
     // for_loop ::= "for" "(" [for_loop_initializer] ";" [for_loop_condition] ";" [for_loop_step] ")" block
-    private fun forLoop(): AstLoop? {
+    private fun forLoop(): AstForLoop? {
         maybe<ZcToken.For>() ?: return NotMatched
         expect<ZcToken.ParenthesisOpen>()
         val initializer = forLoopInitializer()
@@ -191,8 +191,8 @@ class ZcParser(private val lexer: Lexer) {
         expect<ZcToken.Semicolon>()
         val step = forLoopStep()
         expect<ZcToken.ParenthesisClose>()
-        val body = block() ?: error("For-loop body expected.")
-        return AstLoop(initializer, condition, step, body)
+        val body = statement() ?: error("For-loop body expected.")
+        return AstForLoop(initializer, condition, step, body)
     }
 
     // for_loop_initializer ::= variable_declaration {"," variable_declaration}
@@ -225,7 +225,7 @@ class ZcParser(private val lexer: Lexer) {
         expect<ZcToken.ParenthesisOpen>()
         val condition = expression() ?: error("Expression expected.")
         expect<ZcToken.ParenthesisClose>()
-        val body = block() ?: error("While-loop body expected.")
+        val body = statement() ?: error("While-loop body expected.")
 
         return AstWhile(condition = condition, body = body)
     }
@@ -236,8 +236,8 @@ class ZcParser(private val lexer: Lexer) {
         expect<ZcToken.ParenthesisOpen>()
         val condition = expression() ?: error("Expression expected as if-condition.")
         expect<ZcToken.ParenthesisClose>()
-        val ifBody = block() ?: expression() ?: error("if-body expected.")
-        val elseBody = maybe<ZcToken.Else>()?.andThan { block() ?: expression() ?: error("else-body expected") }
+        val ifBody = statement() ?: error("if-body expected.")
+        val elseBody = maybe<ZcToken.Else>()?.andThan { statement() ?: error("else-body expected") }
 
         return AstIfElse(condition = condition, ifBody = ifBody, elseBody = elseBody)
     }

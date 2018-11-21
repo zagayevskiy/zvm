@@ -1,7 +1,6 @@
 package com.zagayevskiy.zvm.zc.visitors
 
 import com.zagayevskiy.zvm.asm.*
-import com.zagayevskiy.zvm.zc.ZcToken
 import com.zagayevskiy.zvm.zc.ast.*
 import com.zagayevskiy.zvm.zc.types.ZcType
 
@@ -38,15 +37,11 @@ class ByteCommandsGenerator(private val program: AstProgram) {
         }
     }
 
-
-    private fun generate(block: AstBlock) {
-        block.statements.forEach { statement -> generate(statement) }
-    }
-
     private fun generate(statement: AstStatement) {
         when (statement) {
+            is AstBlock -> statement.statements.forEach { child -> generate(child) }
             is AstVarDecl, is AstValDecl -> error("Variables declarations must be resolved before. $statement")
-            is AstLoop -> TODO()
+            is AstForLoop -> generate(statement)
             is AstWhile -> TODO()
             is AstIfElse -> generate(statement)
             is AstFunctionReturn -> {
@@ -60,28 +55,30 @@ class ByteCommandsGenerator(private val program: AstProgram) {
         }
     }
 
+    private fun generate(loop: AstForLoop) {
+        TODO()
+    }
+
     private fun generate(ifElse: AstIfElse) {
         generate(ifElse.condition)
-        val labelElse = "else_label_$nextId"
-        val labelEnd = "end_label_$nextId"
-        commands.add(JumpZero.instruction(labelElse.id))
+        val beforeElse = "l_${nextId}_before__else"
+        val afterElse = "l_${nextId}_after_else"
+        commands.add(JumpZero.instruction(beforeElse.id))
         generate(ifElse.ifBody)
-        commands.add(Jmp.instruction(labelEnd.id))
-        commands.add(Command.Label(labelElse))
+        commands.add(Jmp.instruction(afterElse.id))
+        commands.add(Command.Label(beforeElse))
         generate(ifElse.elseBody)
-        commands.add(Command.Label(labelEnd))
-
-
+        commands.add(Command.Label(afterElse))
     }
 
     private fun generate(expression: AstExpr) {
-        when(expression) {
+        when (expression) {
             is AstFunctionReference -> TODO()
             is AstAssignment -> {
                 generate(expression.left)
                 generate(expression.right)
                 @Suppress("WhenWithOnlyElse")
-                when(expression.left) {
+                when (expression.left) {
                     else -> TODO()
                 }
             }
@@ -107,7 +104,7 @@ class ByteCommandsGenerator(private val program: AstProgram) {
         generate(binary.left)
         generate(binary.right)
 
-        commands.add(when(binary) {
+        commands.add(when (binary) {
             is AstAssignment -> TODO()
             is AstDisjunction -> TODO()
             is AstConjunction -> TODO()
@@ -130,7 +127,7 @@ class ByteCommandsGenerator(private val program: AstProgram) {
         })
     }
 
-    private fun instructionByType(type: ZcType, intOpcode: Opcode, byteOpcode: Opcode): Command.Instruction = when(type){
+    private fun instructionByType(type: ZcType, intOpcode: Opcode, byteOpcode: Opcode): Command.Instruction = when (type) {
         ZcType.Integer -> intOpcode.instruction()
         ZcType.Byte -> byteOpcode.instruction()
         else -> error("Unwanted type") //TODO
@@ -139,7 +136,8 @@ class ByteCommandsGenerator(private val program: AstProgram) {
 
 private fun Opcode.instruction(vararg operands: Command.Instruction.Operand) = Command.Instruction(this, listOf(*operands))
         .also { assert(it.opcode.operandCount == it.operands.size) }
+
 private val Int.op
-        get() = Command.Instruction.Operand.Integer(this)
+    get() = Command.Instruction.Operand.Integer(this)
 private val String.id
-        get() = Command.Instruction.Operand.Id(this)
+    get() = Command.Instruction.Operand.Id(this)

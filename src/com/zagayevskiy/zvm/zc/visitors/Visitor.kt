@@ -20,7 +20,7 @@ interface AstVisitor<R> {
 
     fun visit(ast: AstValDecl): R
 
-    fun visit(ast: AstLoop): R
+    fun visit(ast: AstForLoop): R
 
     fun visit(ast: AstWhile): R
 
@@ -103,7 +103,7 @@ fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
     is AstBlock -> visitor.visit(ast)
     is AstVarDecl -> visitor.visit(ast)
     is AstValDecl -> visitor.visit(ast)
-    is AstLoop -> visitor.visit(ast)
+    is AstForLoop -> visitor.visit(ast)
     is AstWhile -> visitor.visit(ast)
     is AstIfElse -> visitor.visit(ast)
     is AstFunctionReturn -> visitor.visit(ast)
