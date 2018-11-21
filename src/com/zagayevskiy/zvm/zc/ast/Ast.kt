@@ -90,10 +90,10 @@ class AstValDecl(val valName: String, val typeName: String?, initializer: AstExp
     var initializer by child(initializer)
 }
 
-class AstForLoop(initializer: Ast?, condition: AstExpr?, step: Ast?, body: Ast) : AstStatement() {
-    var initializer by child(initializer ?: AstConst.Undefined)
+class AstForLoop(initializer: AstStatement?, condition: AstExpr?, step: AstStatement?, body: Ast) : AstStatement() {
+    var initializer by child(initializer ?: AstBlock.Empty)
     var condition by child(condition ?: AstConst.Undefined)
-    var step by child(step ?: AstConst.Undefined)
+    var step by child(step ?: AstBlock.Empty)
     var body by child(body)
 }
 

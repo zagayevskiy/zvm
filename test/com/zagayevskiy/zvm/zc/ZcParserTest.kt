@@ -66,14 +66,25 @@ internal class ZcParserTest(private val test: TestData) {
                                         condition = AstConjunction(AstSum(1.const, 2.const), "c".id),
                                         ifBody = AstValDecl("x", null, initializer = 0.const),
                                         elseBody = AstFunctionReturn(3.const))
-                        ))))
-//                ,
-//                "fn forloop(){ for(var i = 0; i + 1 < 10; i = i + 1 ){}" expect program(
-//                        fn("forloop", args = emptyList(), body = AstBlock(
-//                          AstForLoop(
-//                                  initializer =
-//                          )
-//                        )))
+                        )))),
+                "fn for_loop_infinite() { for(;;){} } " expect program(
+                        fn("for_loop_infinite", args = emptyList(), body = AstBlock(listOf(
+                                AstForLoop(
+                                        initializer = AstBlock.Empty,
+                                        condition = AstConst.Undefined,
+                                        step = AstBlock.Empty,
+                                        body = AstBlock.Empty
+                                ))))),
+                "fn for_loop(){ for(var i = 0, val k = 1; i + 1 < 10; i = i + 3, k){} }" expect program(
+                        fn("for_loop", args = emptyList(), body = AstBlock(listOf(
+                                AstForLoop(
+                                        initializer = AstBlock(listOf(
+                                                AstVarDecl("i", null, 0.const),
+                                                AstValDecl("k", null, 1.const))),
+                                        condition = AstLess(AstSum("i".id, 1.const), 10.const),
+                                        step = AstBlock(listOf(AstExpressionStatement(AstAssignment("i".id, AstSum("i".id, 3.const))), AstExpressionStatement("k".id))),
+                                        body = AstBlock.Empty
+                                )))))
         )
     }
 

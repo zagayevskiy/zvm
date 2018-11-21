@@ -55,7 +55,7 @@ class ZcParser(private val lexer: Lexer) {
 
     private fun structDeclarationList(): List<Ast> = mutableListOf<Ast>().apply {
         while (true) {
-            add(variableDecl() ?: break)
+            add(variableDeclStatement() ?: break)
         }
         if (isEmpty()) error("At least one variable declaration expected.")
     }
@@ -121,7 +121,7 @@ class ZcParser(private val lexer: Lexer) {
     private fun functionalType(): UnresolvedType? {
         maybe<ZcToken.ParenthesisOpen>() ?: return null
 
-        val argTypes = matchList<ZcToken.Comma, UnresolvedType> (::type) ?: emptyList()
+        val argTypes = matchList<ZcToken.Comma, UnresolvedType>(::type) ?: emptyList()
 
         expect<ZcToken.ParenthesisClose>()
         expect<ZcToken.Arrow>()
@@ -131,7 +131,10 @@ class ZcParser(private val lexer: Lexer) {
         return UnresolvedType.Function(argTypes, returnType)
     }
 
-    private fun variableDecl(): AstStatement? = (varDecl() ?: valDecl())?.also { expect<ZcToken.Semicolon>() }
+
+    private fun variableDeclStatement() = variableDecl()?.also { expect<ZcToken.Semicolon>() }
+
+    private fun variableDecl(): AstStatement? = varDecl() ?: valDecl()
 
     // var_declaration ::= "var" identifier ((":" identifier) ["=" expression] | ("=" expression))
     private fun varDecl(): AstVarDecl? {
@@ -177,7 +180,7 @@ class ZcParser(private val lexer: Lexer) {
     }
 
     // statement ::= variable_declaration | loop | function_return_statement | expression
-    private fun statement(): AstStatement? = block() ?: variableDecl() ?: loopStatement() ?: ifElseStatement() ?: functionReturnStatement() ?: expressionStatement()
+    private fun statement(): AstStatement? = block() ?: variableDeclStatement() ?: loopStatement() ?: ifElseStatement() ?: functionReturnStatement() ?: expressionStatement()
 
     private fun loopStatement() = forLoop() ?: whileLoop()
 
@@ -196,27 +199,27 @@ class ZcParser(private val lexer: Lexer) {
     }
 
     // for_loop_initializer ::= variable_declaration {"," variable_declaration}
-    private fun forLoopInitializer(): Ast? {
+    private fun forLoopInitializer(): AstStatement? {
         val first = variableDecl() ?: return NotMatched
         val list = mutableListOf(first)
-        while (maybe<ZcToken.Colon>() != null) {
+        while (maybe<ZcToken.Comma>() != null) {
             list.add(variableDecl() ?: error("Initializer expected."))
         }
 
-        return StubAst
+        return AstBlock(list)
     }
 
     private fun forLoopCondition(): AstExpr? = expression()
 
     // for_loop_step ::= expression {"," expression}
-    private fun forLoopStep(): Ast? {
+    private fun forLoopStep(): AstStatement? {
         val first = expression() ?: return NotMatched
         val list = mutableListOf(first)
-        while (maybe<ZcToken.Colon>() != null) {
+        while (maybe<ZcToken.Comma>() != null) {
             list.add(expression() ?: error("Expression expected."))
         }
 
-        return StubAst
+        return AstBlock(list.map { AstExpressionStatement(it) })
     }
 
     // while_loop ::= "while" "(" expression ")" block
@@ -499,7 +502,7 @@ class ZcParser(private val lexer: Lexer) {
 
     private inline fun <T : Token, R> T.andThan(block: (T) -> R): R = block(this)
 
-    private inline fun <reified T : Token, R: Any> matchList(element: () -> R?): List<R>? {
+    private inline fun <reified T : Token, R : Any> matchList(element: () -> R?): List<R>? {
         val first = element() ?: return NotMatched
         return mutableListOf(first).apply {
             while (maybe<T>() != null) add(element() ?: error())
