@@ -223,14 +223,14 @@ class ZcParser(private val lexer: Lexer) {
     }
 
     // while_loop ::= "while" "(" expression ")" block
-    private fun whileLoop(): AstWhile? {
+    private fun whileLoop(): AstWhileLoop? {
         maybe<ZcToken.While>() ?: return NotMatched
         expect<ZcToken.ParenthesisOpen>()
         val condition = expression() ?: error("Expression expected.")
         expect<ZcToken.ParenthesisClose>()
         val body = statement() ?: error("While-loop body expected.")
 
-        return AstWhile(condition = condition, body = body)
+        return AstWhileLoop(condition = condition, body = body)
     }
 
     // "if" "(" expression ")" (block | expression) [ "else" (block | expression) ]

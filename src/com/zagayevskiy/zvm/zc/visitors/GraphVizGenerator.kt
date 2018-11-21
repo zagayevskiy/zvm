@@ -40,7 +40,7 @@ class GraphVizGenerator(private val ast: Ast) {
 
         override fun visit(ast: AstForLoop) = "loop-for" to ++id
 
-        override fun visit(ast: AstWhile) = "loop-while" to ++id
+        override fun visit(ast: AstWhileLoop) = "loop-while" to ++id
 
         override fun visit(ast: AstIfElse) = "if-else" to ++id
 

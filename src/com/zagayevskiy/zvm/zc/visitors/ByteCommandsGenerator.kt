@@ -42,7 +42,7 @@ class ByteCommandsGenerator(private val program: AstProgram) {
             is AstBlock -> statement.statements.forEach { child -> generate(child) }
             is AstVarDecl, is AstValDecl -> error("Variables declarations must be resolved before. $statement")
             is AstForLoop -> generate(statement)
-            is AstWhile -> TODO()
+            is AstWhileLoop -> generate(statement)
             is AstIfElse -> generate(statement)
             is AstFunctionReturn -> {
                 generate(statement.expression)
@@ -56,7 +56,29 @@ class ByteCommandsGenerator(private val program: AstProgram) {
     }
 
     private fun generate(loop: AstForLoop) {
-        TODO()
+        val conditionLabel = "l_${nextId}_for_condition"
+        val endLabel = "l_${nextId}_for_end"
+
+        generate(loop.initializer)
+        commands.add(Command.Label(conditionLabel))
+        generate(loop.condition)
+        commands.add(JumpZero.instruction(endLabel.id))
+        generate(loop.body)
+        generate(loop.step)
+        commands.add(Jmp.instruction(conditionLabel.id))
+        commands.add(Command.Label(endLabel))
+    }
+
+    private fun generate(loop: AstWhileLoop) {
+        val conditionLabel = "l_${nextId}_while_condition"
+        val endLabel = "l_${nextId}_while_end"
+
+        commands.add(Command.Label(conditionLabel))
+        generate(loop.condition)
+        commands.add(JumpZero.instruction(endLabel.id))
+        generate(loop.body)
+        commands.add(Jmp.instruction(conditionLabel.id))
+        commands.add(Command.Label(endLabel))
     }
 
     private fun generate(ifElse: AstIfElse) {

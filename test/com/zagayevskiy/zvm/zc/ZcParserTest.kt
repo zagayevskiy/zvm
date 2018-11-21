@@ -84,7 +84,14 @@ internal class ZcParserTest(private val test: TestData) {
                                         condition = AstLess(AstSum("i".id, 1.const), 10.const),
                                         step = AstBlock(listOf(AstExpressionStatement(AstAssignment("i".id, AstSum("i".id, 3.const))), AstExpressionStatement("k".id))),
                                         body = AstBlock.Empty
-                                )))))
+                                ))))),
+                "fn while_loop(){ while(1){} }" expect program(
+                        fn("while_loop", args = emptyList(), body = AstBlock(listOf(
+                                AstWhileLoop(
+                                        condition = 1.const,
+                                        body = AstBlock.Empty
+                                ))))
+                )
         )
     }
 

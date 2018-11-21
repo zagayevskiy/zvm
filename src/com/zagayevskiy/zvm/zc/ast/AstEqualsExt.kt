@@ -23,7 +23,7 @@ private class AstEqualityVisitor(private val other: Ast) : AstVisitor<Boolean> {
 
     override fun visit(ast: AstForLoop) = ast.check()
 
-    override fun visit(ast: AstWhile) = ast.check()
+    override fun visit(ast: AstWhileLoop) = ast.check()
 
     override fun visit(ast: AstIfElse) = ast.check()
 
