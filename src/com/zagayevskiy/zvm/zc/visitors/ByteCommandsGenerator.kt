@@ -100,7 +100,11 @@ class ByteCommandsGenerator(private val program: AstProgram) {
             is AstIdentifier -> error("All identifiers must be resolved before. Why $expression don't?")
             is AstVar -> TODO()
             is AstVal -> TODO()
-            is AstArrayIndexing -> TODO()
+            is AstArrayIndexing -> {
+                generate(expression.array)
+                generate(expression.index)
+                commands.add(instructionByType(expression.type, MemoryLoadInt, MemoryLoadByte))
+            }
             is AstFunctionCall -> TODO()
             is AstFunctionArgument -> TODO()
             is AstConst.Integer -> commands.add(IntConst.instruction(expression.value.op))

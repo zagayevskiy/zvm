@@ -1,13 +1,15 @@
 package com.zagayevskiy.zvm.zc.types
 
-sealed class ZcType(val name: String) {
+sealed class ZcType(val name: String, val sizeOf: Int) {
 
-    object Void : ZcType("void")
-    object Integer : ZcType("int")
-    object Byte : ZcType("byte")
-    object Boolean : ZcType("bool")
-    object Unknown : ZcType("unknown")
-//    class Pointer(val to: ZcType): ZcType("pointer->${to.name}")
+    object Void : ZcType("void", 0)
+    object Integer : ZcType("int", 4)
+    object Byte : ZcType("byte", 1)
+    object Boolean : ZcType("bool", 1)
+    object Unknown : ZcType("unknown", 0)
+    class Array(val itemType: ZcType): ZcType("array", 4) {
+        override fun toString() = "[$itemType]"
+    }
 
     companion object {
         fun byName(name: String?) = when (name) {
