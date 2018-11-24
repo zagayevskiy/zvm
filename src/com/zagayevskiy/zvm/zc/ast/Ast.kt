@@ -125,7 +125,7 @@ sealed class AstBinary(left: AstExpr, right: AstExpr) : AstExpr() {
 
 class AstIdentifier(val name: String) : AstExpr()
 class AstAssignment(left: AstExpr, right: AstExpr) : AstBinary(left, right)
-class AstVar(val varName: String, type: ZcType) : AstExpr(type)
+class AstVar(val varName: String, var varIndex: Int, type: ZcType) : AstExpr(type)
 class AstVal(val valName: String, type: ZcType) : AstExpr(type)
 
 class AstArrayIndexing(array: AstExpr, index: AstExpr) : AstExpr() {

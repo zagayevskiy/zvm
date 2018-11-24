@@ -96,14 +96,6 @@ class ByteCommandsGenerator(private val program: AstProgram) {
     private fun generate(expression: AstExpr) {
         when (expression) {
             is AstFunctionReference -> TODO()
-            is AstAssignment -> {
-                generate(expression.left)
-                generate(expression.right)
-                @Suppress("WhenWithOnlyElse")
-                when (expression.left) {
-                    else -> TODO()
-                }
-            }
             is AstBinary -> generate(expression)
             is AstIdentifier -> error("All identifiers must be resolved before. Why $expression don't?")
             is AstVar -> TODO()
@@ -123,11 +115,30 @@ class ByteCommandsGenerator(private val program: AstProgram) {
     }
 
     private fun generate(binary: AstBinary) {
+        if (binary is AstAssignment) {
+
+            when (val left = binary.left) {
+                is AstVar -> {
+                    generate(binary.right)
+                    TODO("check type")
+                    commands.add(LocalStoreInt.instruction(left.varIndex.op))
+                }
+                is AstArrayIndexing -> {
+                    generate(left)
+                    generate(binary.right)
+                    TODO("check type")
+                    commands.add(MemoryStoreInt.instruction())
+
+                }
+            }
+            return
+        }
+
         generate(binary.left)
         generate(binary.right)
 
         commands.add(when (binary) {
-            is AstAssignment -> TODO()
+            is AstAssignment -> error("Wtf, we check it earlier.")
             is AstDisjunction -> ByteOr.instruction()
             is AstConjunction -> ByteAnd.instruction()
             is AstBitAnd -> instructionByType(binary.type, IntAnd, ByteAnd)

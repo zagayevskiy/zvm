@@ -22,7 +22,7 @@ open class BaseScope(override val enclosingScope: Scope?) : Scope {
 
     override fun declareVar(name: String, type: ZcType): AstVar? {
         if (name.existsInThisScope()) return null
-        return AstVar(name, type).also { variables[name] = it }
+        return AstVar(name, variables.size, type).also { variables[name] = it }
     }
 
     override fun declareVal(name: String, type: ZcType): AstVal? {
