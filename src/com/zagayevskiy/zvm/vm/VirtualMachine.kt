@@ -2,7 +2,12 @@ package com.zagayevskiy.zvm.vm
 
 import com.zagayevskiy.zvm.Memory
 import com.zagayevskiy.zvm.MemoryBitTable
+import com.zagayevskiy.zvm.asm.IntGreater
+import com.zagayevskiy.zvm.asm.IntGreaterEq
+import com.zagayevskiy.zvm.asm.IntLess
+import com.zagayevskiy.zvm.asm.IntLessEq
 import com.zagayevskiy.zvm.common.Address
+import com.zagayevskiy.zvm.common.Opcodes
 import com.zagayevskiy.zvm.common.Opcodes.ADDB
 import com.zagayevskiy.zvm.common.Opcodes.ALLOC
 import com.zagayevskiy.zvm.common.Opcodes.ALOADI
@@ -20,6 +25,10 @@ import com.zagayevskiy.zvm.common.Opcodes.CONSTI
 import com.zagayevskiy.zvm.common.Opcodes.DECI
 import com.zagayevskiy.zvm.common.Opcodes.DIVB
 import com.zagayevskiy.zvm.common.Opcodes.DIVI
+import com.zagayevskiy.zvm.common.Opcodes.GREATB
+import com.zagayevskiy.zvm.common.Opcodes.GREATI
+import com.zagayevskiy.zvm.common.Opcodes.GREQB
+import com.zagayevskiy.zvm.common.Opcodes.GREQI
 import com.zagayevskiy.zvm.common.Opcodes.INCI
 import com.zagayevskiy.zvm.common.Opcodes.ITOB
 import com.zagayevskiy.zvm.common.Opcodes.JMP
@@ -27,6 +36,10 @@ import com.zagayevskiy.zvm.common.Opcodes.JNEG
 import com.zagayevskiy.zvm.common.Opcodes.JNZ
 import com.zagayevskiy.zvm.common.Opcodes.JPOS
 import com.zagayevskiy.zvm.common.Opcodes.JZ
+import com.zagayevskiy.zvm.common.Opcodes.LEQB
+import com.zagayevskiy.zvm.common.Opcodes.LEQI
+import com.zagayevskiy.zvm.common.Opcodes.LESSB
+import com.zagayevskiy.zvm.common.Opcodes.LESSI
 import com.zagayevskiy.zvm.common.Opcodes.LLOADI
 import com.zagayevskiy.zvm.common.Opcodes.LSTORI
 import com.zagayevskiy.zvm.common.Opcodes.MLOADB
@@ -128,6 +141,10 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                 SHRI -> shri()
                 CMPI -> cmpi()
                 CMPIC -> cmpic()
+                LESSI -> lessi()
+                LEQI -> leqi()
+                GREATI -> greati()
+                GREQI -> greqi()
                 RNDI -> rndi()
 
                 MLOADB -> memoryLoadByte()
@@ -143,6 +160,10 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                 NOTB -> notb()
                 CMPB -> cmpb()
                 CMPBC -> cmpbc()
+                LESSB -> lessb()
+                LEQB -> leqb()
+                GREATB -> greatb()
+                GREQB -> greqb()
 
                 OUT -> out()
 
@@ -241,7 +262,7 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
 
     private fun jz() = conditionalJump { value ->
         when (value) {
-            is VMByte -> value.byteValue.toInt() == 0
+            is VMByte -> value.byteValue == 0.toByte()
             is VMInteger -> value.intValue == 0
             is StackEntry.VMNull -> true
         }
@@ -328,6 +349,11 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
 
     private fun cmpi() = binaryIntExpr { left, right -> compareValues(left, right) }
 
+    private fun lessi() = compareIntExpr { left, right -> left < right }
+    private fun leqi() = compareIntExpr { left, right -> left <= right }
+    private fun greati() = compareIntExpr { left, right -> left > right }
+    private fun greqi() = compareIntExpr { left, right -> left >= right }
+
     private fun cmpic() = unaryIntExpr { left -> compareValues(left, decodeNextInt()) }
 
     private fun rndi() = push(random.nextInt().toStackEntry())
@@ -341,6 +367,13 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
         val right = pop<VMInteger>(PopIntExprOperandMsg).intValue
         val left = pop<VMInteger>(PopIntExprOperandMsg).intValue
         push(body(left, right).toStackEntry())
+    }
+
+    private inline fun compareIntExpr(body: (left: Int, right: Int) -> Boolean) {
+        val right = pop<VMInteger>(PopIntExprOperandMsg).intValue
+        val left = pop<VMInteger>(PopIntExprOperandMsg).intValue
+        val result: Byte = if (body(left, right)) 1 else 0
+        push(result.toStackEntry())
     }
     //endregion
 
@@ -363,6 +396,11 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
 
     private fun cmpb() = binaryByteExpr { left, right -> compareValues(left, right) }
 
+    private fun lessb() = compareByteExpr { left, right -> left < right }
+    private fun leqb() = compareByteExpr { left, right -> left <= right }
+    private fun greatb() = compareByteExpr { left, right -> left > right }
+    private fun greqb() = compareByteExpr { left, right -> left >= right }
+
     private fun cmpbc() {
         TODO("not implemented")
     }
@@ -377,6 +415,14 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
         val right = pop<VMByte>(PopByteExprOperandMsg).byteValue
         push(body(left, right).toByte().toStackEntry())
     }
+
+    private inline fun compareByteExpr(body: (left: Byte, right: Byte) -> Boolean) {
+        val right = pop<VMByte>(PopIntExprOperandMsg).byteValue
+        val left = pop<VMByte>(PopIntExprOperandMsg).byteValue
+        val result: Byte = if (body(left, right)) 1 else 0
+        push(result.toStackEntry())
+    }
+
     //endregion
 
     //region casts

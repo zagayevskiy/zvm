@@ -24,7 +24,7 @@ object OpcodesMapping {
             LocalStoreInt to Opcodes.LSTORI,
             LocalLoadInt to Opcodes.LLOADI,
             MemoryStoreInt to Opcodes.MSTORI,
-            MemeryLoadInt to Opcodes.MLOADI,
+            MemoryLoadInt to Opcodes.MLOADI,
 
             IntConst to Opcodes.CONSTI,
             IntAdd to Opcodes.ADDI,
@@ -42,13 +42,17 @@ object OpcodesMapping {
             IntShr to Opcodes.SHRI,
             IntCmp to Opcodes.CMPI,
             IntConstCmp to Opcodes.CMPIC,
+            IntLess to Opcodes.LESSI,
+            IntLessEq to Opcodes.LEQI,
+            IntGreater to Opcodes.GREATI,
+            IntGreaterEq to Opcodes.GREQI,
             RandomInt to Opcodes.RNDI,
 
             ArgLoadByte to Opcodes.ALOADB,
             LocalStoreByte to Opcodes.LSTORB,
             LocalLoadByte to Opcodes.LLOADB,
             MemoryStoreByte to Opcodes.MSTORB,
-            MemeryLoadByte to Opcodes.MLOADB,
+            MemoryLoadByte to Opcodes.MLOADB,
 
             ByteConst to Opcodes.CONSTB,
             ByteAdd to Opcodes.ADDB,
@@ -60,6 +64,10 @@ object OpcodesMapping {
             ByteOr to Opcodes.ORB,
             ByteNot to Opcodes.NOTB,
             ByteCmp to Opcodes.CMPB,
+            ByteLess to Opcodes.LESSB,
+            ByteLessEq to Opcodes.LEQB,
+            ByteGreater to Opcodes.GREATB,
+            ByteGreaterEq to Opcodes.GREQB,
             ByteConstCmp to Opcodes.CMPBC,
 
             Out to Opcodes.OUT,
@@ -91,7 +99,7 @@ object ArgLoadInt : OpcodeImpl(name = "aloadi", operandCount = 1)
 object LocalStoreInt : OpcodeImpl(name = "lstori", operandCount = 1)
 object LocalLoadInt : OpcodeImpl(name = "lloadi", operandCount = 1)
 object MemoryStoreInt : OpcodeImpl(name = "mstori")
-object MemeryLoadInt : OpcodeImpl(name = "mloadi")
+object MemoryLoadInt : OpcodeImpl(name = "mloadi")
 
 object IntConst : OpcodeImpl(name = "consti", operandCount = 1)
 object IntAdd : OpcodeImpl(name = "addi")
@@ -109,13 +117,17 @@ object IntShl : OpcodeImpl(name = "shli")
 object IntShr : OpcodeImpl(name = "shri")
 object IntCmp : OpcodeImpl(name = "cmpi")
 object IntConstCmp : OpcodeImpl(name = "cmpic", operandCount = 1)
+object IntLess : OpcodeImpl(name = "lessi")
+object IntLessEq : OpcodeImpl(name = "leqi")
+object IntGreater : OpcodeImpl(name = "greati")
+object IntGreaterEq : OpcodeImpl(name = "greqi")
 object RandomInt : OpcodeImpl(name = "rndi")
 
 object ArgLoadByte : OpcodeImpl(name = "aloadb", operandCount = 1)
 object LocalStoreByte : OpcodeImpl(name = "lstorb", operandCount = 1)
 object LocalLoadByte : OpcodeImpl(name = "lloadb", operandCount = 1)
 object MemoryStoreByte : OpcodeImpl(name = "mstorb")
-object MemeryLoadByte : OpcodeImpl(name = "mloadb")
+object MemoryLoadByte : OpcodeImpl(name = "mloadb")
 object ByteConst : OpcodeImpl(name = "constb", operandCount = 1)
 object ByteAdd : OpcodeImpl(name = "addb")
 object ByteMul : OpcodeImpl(name = "mulb")
@@ -127,6 +139,10 @@ object ByteOr : OpcodeImpl(name = "orb")
 object ByteNot : OpcodeImpl(name = "notb")
 object ByteCmp : OpcodeImpl(name = "cmpb")
 object ByteConstCmp : OpcodeImpl(name = "cmpib", operandCount = 1)
+object ByteLess : OpcodeImpl(name = "lessb")
+object ByteLessEq : OpcodeImpl(name = "leqb")
+object ByteGreater : OpcodeImpl(name = "greatb")
+object ByteGreaterEq : OpcodeImpl(name = "greqb")
 
 object Out : OpcodeImpl(name = "out")
 

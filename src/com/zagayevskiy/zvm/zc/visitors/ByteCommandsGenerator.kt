@@ -105,7 +105,7 @@ class ByteCommandsGenerator(private val program: AstProgram) {
                 }
             }
             is AstBinary -> generate(expression)
-            is AstIdentifier -> TODO()
+            is AstIdentifier -> error("All identifiers must be resolved before. Why $expression don't?")
             is AstVar -> TODO()
             is AstVal -> TODO()
             is AstArrayIndexing -> TODO()

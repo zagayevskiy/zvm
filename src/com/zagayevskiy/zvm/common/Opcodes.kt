@@ -41,7 +41,11 @@ object Opcodes {
     const val SHRI: Byte = 0x52
     const val CMPI: Byte = 0x53
     const val CMPIC: Byte = 0x54
-    const val RNDI: Byte = 0x55
+    const val LESSI: Byte = 0x55
+    const val LEQI: Byte = 0x56
+    const val GREATI: Byte = 0x57
+    const val GREQI: Byte = 0x58
+    const val RNDI: Byte = 0x60
     //endregion
 
     //region byte opcodes
@@ -61,13 +65,17 @@ object Opcodes {
     const val NOTB: Byte = 0x6D
     const val CMPB: Byte = 0x6E
     const val CMPBC: Byte = 0x6F
+    const val LESSB: Byte = 0x70
+    const val LEQB: Byte = 0x71
+    const val GREATB: Byte = 0x72
+    const val GREQB: Byte = 0x73
     //endregion
 
-    const val OUT: Byte = 0x70
+    const val OUT: Byte = -0x1
 
     //region memory opcodes
-    const val ALLOC: Byte = 0x71
-    const val FREE: Byte = 0x72
+    const val ALLOC: Byte = -0x2
+    const val FREE: Byte = -0x3
     //endregion
 
 }

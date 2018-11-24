@@ -113,7 +113,15 @@ class TypesProcessor(private val program: AstProgram) {
             }
 
             is AstIfElse -> ast.apply {
-                condition = condition.tryAutoPromoteTo(ZcType.Boolean) ?: error("Condition type (${condition.type}) can't be auto promoted to ${ZcType.Boolean}")
+                condition = condition.tryAutoPromoteTo(ZcType.Boolean) ?: error("If-condition type (${condition.type}) can't be auto promoted to ${ZcType.Boolean}")
+            }
+
+            is AstWhileLoop -> ast.apply {
+                this.condition = condition.tryAutoPromoteTo(ZcType.Boolean) ?: error("While-loop-condition type (${condition.type}) can't be auto promoted to ${ZcType.Boolean}")
+            }
+
+            is AstForLoop -> ast.apply {
+                this.condition = condition.tryAutoPromoteTo(ZcType.Boolean) ?: error("For-loop-condition type (${condition.type}) can't be auto promoted to ${ZcType.Boolean}")
             }
 
             else -> ast
