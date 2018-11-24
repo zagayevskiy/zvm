@@ -56,6 +56,7 @@ object OpcodesMapping {
 
             ByteConst to Opcodes.CONSTB,
             ByteAdd to Opcodes.ADDB,
+            ByteSub to Opcodes.SUBB,
             ByteMul to Opcodes.MULB,
             ByteDiv to Opcodes.DIVB,
             ByteMod to Opcodes.MODB,
@@ -69,6 +70,7 @@ object OpcodesMapping {
             ByteGreater to Opcodes.GREATB,
             ByteGreaterEq to Opcodes.GREQB,
             ByteConstCmp to Opcodes.CMPBC,
+            ByteLogicalNot to Opcodes.LNOTB,
 
             Out to Opcodes.OUT,
 
@@ -130,6 +132,7 @@ object MemoryStoreByte : OpcodeImpl(name = "mstorb")
 object MemoryLoadByte : OpcodeImpl(name = "mloadb")
 object ByteConst : OpcodeImpl(name = "constb", operandCount = 1)
 object ByteAdd : OpcodeImpl(name = "addb")
+object ByteSub : OpcodeImpl(name = "subb")
 object ByteMul : OpcodeImpl(name = "mulb")
 object ByteDiv : OpcodeImpl(name = "divb")
 object ByteMod : OpcodeImpl(name = "modb")
@@ -143,6 +146,7 @@ object ByteLess : OpcodeImpl(name = "lessb")
 object ByteLessEq : OpcodeImpl(name = "leqb")
 object ByteGreater : OpcodeImpl(name = "greatb")
 object ByteGreaterEq : OpcodeImpl(name = "greqb")
+object ByteLogicalNot: OpcodeImpl(name = "lnotb")
 
 object Out : OpcodeImpl(name = "out")
 

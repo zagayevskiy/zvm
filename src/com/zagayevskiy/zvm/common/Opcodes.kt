@@ -56,19 +56,21 @@ object Opcodes {
     const val MLOADB: Byte = 0x64
     const val CONSTB: Byte = 0x65
     const val ADDB: Byte = 0x66
-    const val MULB: Byte = 0x67
-    const val DIVB: Byte = 0x68
-    const val MODB: Byte = 0x69
-    const val XORB: Byte = 0x6A
-    const val ANDB: Byte = 0x6B
-    const val ORB: Byte = 0x6C
-    const val NOTB: Byte = 0x6D
-    const val CMPB: Byte = 0x6E
-    const val CMPBC: Byte = 0x6F
-    const val LESSB: Byte = 0x70
-    const val LEQB: Byte = 0x71
-    const val GREATB: Byte = 0x72
-    const val GREQB: Byte = 0x73
+    const val SUBB: Byte = 0x67
+    const val MULB: Byte = 0x68
+    const val DIVB: Byte = 0x69
+    const val MODB: Byte = 0x6A
+    const val XORB: Byte = 0x6B
+    const val ANDB: Byte = 0x6C
+    const val ORB: Byte = 0x6D
+    const val NOTB: Byte = 0x6E
+    const val CMPB: Byte = 0x6F
+    const val CMPBC: Byte = 0x70
+    const val LESSB: Byte = 0x71
+    const val LEQB: Byte = 0x72
+    const val GREATB: Byte = 0x73
+    const val GREQB: Byte = 0x74
+    const val LNOTB: Byte = 0x75
     //endregion
 
     const val OUT: Byte = -0x1
