@@ -46,6 +46,8 @@ sealed class Ast(var type: ZcType = ZcType.Unknown) : MutableIterable<Ast> {
 
     override fun equals(other: Any?) = other is Ast && this eq other
 
+    override fun hashCode() = toString().hashCode() //It's ok for our purpose
+
     fun isLeaf() = children.isEmpty()
 }
 
@@ -126,10 +128,12 @@ class AstAssignment(assigned: AstExpr, assignation: AstExpr) : AstExpr() {
     val assignable by child(assigned)
     var assignation by child(assignation)
 }
-class AstValInitialization(valToInit: AstVal, initializer: AstExpr): AstExpr() {
+
+class AstValInitialization(valToInit: AstVal, initializer: AstExpr) : AstExpr() {
     var valToInit by child(valToInit)
-    var  initializer by child((initializer))
+    var initializer by child((initializer))
 }
+
 class AstVar(val varName: String, var varIndex: Int, type: ZcType) : AstExpr(type)
 class AstVal(val valName: String, val valIndex: Int, type: ZcType) : AstExpr(type)
 

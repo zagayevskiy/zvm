@@ -24,13 +24,14 @@ private val String.id
 
 private fun program(vararg declarations: TopLevelDeclaration) = AstProgram(mutableListOf(*declarations))
 private fun fn(name: String, args: List<FunctionArgumentDeclaration>, returnType: String? = null, body: AstStatement) = AstFunctionDeclaration(name, args, returnType, body)
+
 private inline class Arg(val name: String)
 
 private infix fun Arg.withType(type: String) = FunctionArgumentDeclaration(name, UnresolvedType.Simple(type))
 
+
 @RunWith(Parameterized::class)
 internal class ZcParserTest(private val test: TestData) {
-
 
     companion object {
 
@@ -106,6 +107,21 @@ internal class ZcParserTest(private val test: TestData) {
                                                 params = listOf(1.const, "b".id)
                                         ))
                                 ))
+                        )))),
+                """fn variables() {
+                    val a = 0;
+                    val b: int = 1;
+                    var c: byte;
+                    var d = 2;
+                    var e: bool = 3;
+                }
+                """.trimIndent() expect program(
+                        fn("variables", args = emptyList(), body = AstBlock(listOf(
+                                AstValDecl("a", null, 0.const),
+                                AstValDecl("b", "int".type, 1.const),
+                                AstVarDecl("c", "byte".type, null),
+                                AstVarDecl("d", null, 2.const),
+                                AstVarDecl("e", "bool".type, 3.const)
                         ))))
         )
     }
