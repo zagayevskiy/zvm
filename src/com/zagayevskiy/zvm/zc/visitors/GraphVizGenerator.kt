@@ -134,11 +134,15 @@ fun main(args: Array<String>) {
                 val a = 1;
                 var b = 2 + argc;
                 var c: int;
-                var d: byte = 3;
+                var d: int = 3;
                 val e: int  = 4;
                 c = (a + b) - (d*e*e/d);
                 var q: bool;
                 if (q) {return d;} else {return e;}
+                for(var i = 0; i < 10; i = i + 1) {
+                    d = d + a;
+                    while(d >= i) d = d - i;
+                }
                 q = !c;
                 return d;
             }

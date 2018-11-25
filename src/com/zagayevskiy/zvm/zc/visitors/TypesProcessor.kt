@@ -100,6 +100,14 @@ class TypesProcessor(private val program: AstProgram) {
                 expression = expression.promoteTo(promotedType)
                 type = promotedType
             }
+            is AstComparison -> ast.apply {
+                when {
+                    left.type.canBeAutoPromotedTo(right.type) -> left = left.promoteTo(right.type)
+                    right.type.canBeAutoPromotedTo(left.type) -> right = right.promoteTo(left.type)
+                    else -> error("$left and $right can't be casted one to another for comparison.")
+                }
+                type = ZcType.Boolean
+            }
             is AstArrayIndexing -> ast.apply {
                 if (array.type is ZcType.Void) error("Array of ${ZcType.Void} can't be unreferenced.")
                 type = array.type
@@ -125,7 +133,7 @@ class TypesProcessor(private val program: AstProgram) {
 
             is AstAssignment -> ast.apply {
                 if (assignable !is AstVar && assignable !is AstArrayIndexing) error("Only var or array-indexing can be assignable. $assignable can't.")
-                assignation = assignation.tryAutoPromoteTo(assignable.type) ?: error("Can't auto promote $assignation to ${assignation.type} for assignment.")
+                assignation = assignation.tryAutoPromoteTo(assignable.type) ?: error("Can't auto promote $assignation to ${assignable.type} for assignment.")
             }
 
             else -> ast
