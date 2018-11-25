@@ -54,7 +54,12 @@ internal class CompilerTest(val test: CompilerTestData) {
                 test("rec !1", zcFactorialRecursive, entries(1), 1.toStackEntry()),
                 test("rec !2", zcFactorialRecursive, entries(2), 2.toStackEntry()),
                 test("rec !5", zcFactorialRecursive, entries(5), 120.toStackEntry()),
-                test("rec !12", zcFactorialRecursive, entries(12), 479001600.toStackEntry())
+                test("rec !12", zcFactorialRecursive, entries(12), 479001600.toStackEntry()),
+
+                test("rbit 0x0a1b2c3d", zcReverseIntBytesViaBitManipulations, entries(0x0a1b2c3d), 0x3d2c1b0a.toStackEntry()),
+                test("rbit 0b01010101_11110000_00001111_00110011", zcReverseIntBytesViaBitManipulations, entries(0b01010101_11110000_00001111_00110011), 0b00110011_00001111_11110000_01010101.toStackEntry()),
+
+                test("rev 0b01010101_11110000_00001111_11001100", zcReverseIntBits, entries(0b00110011_01100111_00001111_10101010), 0b01010101_11110000_11100110_11001100.toStackEntry())
         )
 
     }
