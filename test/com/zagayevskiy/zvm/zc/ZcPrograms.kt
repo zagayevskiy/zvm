@@ -26,5 +26,19 @@ internal val zcFibonacciRecursive = """
     fn main(n: int): int {
         return fibonacci(1, 1, n - 2);
     }
+""".trimIndent()
 
+internal val zcFactorialIterative = """
+    fn main(n: int): int {
+        var accum = 1;
+        for(var i = 0; i < n; i = i + 1, accum = accum * i) {}
+        return accum;
+    }
+""".trimIndent()
+
+internal val zcFactorialRecursive = """
+    fn main(n: int): int {
+        if (n <= 1) return 1;
+        return main(n - 1)*n;
+    }
 """.trimIndent()

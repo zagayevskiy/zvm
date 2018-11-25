@@ -44,7 +44,17 @@ internal class CompilerTest(val test: CompilerTestData) {
                 test("f_rec(9)", zcFibonacciRecursive, entries(9), 34.toStackEntry()),
                 test("f_rec(12)", zcFibonacciRecursive, entries(12), 144.toStackEntry()),
                 test("f_rec(33)", zcFibonacciRecursive, entries(33), 3524578.toStackEntry()),
-                test("f_rec(41)", zcFibonacciRecursive, entries(41), 165580141.toStackEntry())
+                test("f_rec(41)", zcFibonacciRecursive, entries(41), 165580141.toStackEntry()),
+
+                test("!1", zcFactorialIterative, entries(1), 1.toStackEntry()),
+                test("!2", zcFactorialIterative, entries(2), 2.toStackEntry()),
+                test("!5", zcFactorialIterative, entries(5), 120.toStackEntry()),
+                test("!12", zcFactorialIterative, entries(12), 479001600.toStackEntry()),
+
+                test("rec !1", zcFactorialRecursive, entries(1), 1.toStackEntry()),
+                test("rec !2", zcFactorialRecursive, entries(2), 2.toStackEntry()),
+                test("rec !5", zcFactorialRecursive, entries(5), 120.toStackEntry()),
+                test("rec !12", zcFactorialRecursive, entries(12), 479001600.toStackEntry())
         )
 
     }
