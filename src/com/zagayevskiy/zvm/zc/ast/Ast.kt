@@ -49,8 +49,6 @@ sealed class Ast(var type: ZcType = ZcType.Unknown) : MutableIterable<Ast> {
     fun isLeaf() = children.isEmpty()
 }
 
-object StubAst : Ast()
-
 class AstProgram(declarations: MutableList<TopLevelDeclaration>) : Ast() {
     val declarations by childList(declarations)
 }

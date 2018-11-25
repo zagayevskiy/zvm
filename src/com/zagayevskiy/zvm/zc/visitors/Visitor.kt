@@ -4,8 +4,6 @@ import com.zagayevskiy.zvm.zc.ast.*
 
 interface AstVisitor<R> {
 
-    fun visit(ast: StubAst): R
-
     fun visit(ast: AstProgram): R
 
     fun visit(ast: AstFunctionDeclaration): R
@@ -92,10 +90,10 @@ interface AstVisitor<R> {
     fun visit(ast: AstIdentifier): R
     fun visit(ast: AstVal): R
     fun visit(ast: AstCastExpr): R
+    fun visit(ast: AstValInitialization): R
 }
 
 fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
-    is StubAst -> visitor.visit(ast)
     is AstProgram -> visitor.visit(ast)
     is AstFunctionDeclaration -> visitor.visit(ast)
     is AstStructDeclaration -> visitor.visit(ast)
@@ -142,4 +140,5 @@ fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
     is AstIdentifier -> visitor.visit(ast)
     is AstVal -> visitor.visit(ast)
     is AstCastExpr -> visitor.visit(ast)
+    is AstValInitialization -> visitor.visit(ast)
 }

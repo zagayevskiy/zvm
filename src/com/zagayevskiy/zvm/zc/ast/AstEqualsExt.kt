@@ -5,7 +5,7 @@ import com.zagayevskiy.zvm.zc.visitors.AstVisitor
 import com.zagayevskiy.zvm.zc.visitors.visit
 
 private class AstEqualityVisitor(private val other: Ast) : AstVisitor<Boolean> {
-    override fun visit(ast: StubAst) = ast.check()
+    override fun visit(ast: AstValInitialization) = ast.check{ ast.valToInit == it.valToInit && ast.initializer == it.initializer }
 
     override fun visit(ast: AstProgram) = ast.check()
 

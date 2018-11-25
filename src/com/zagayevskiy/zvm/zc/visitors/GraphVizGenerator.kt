@@ -10,6 +10,8 @@ class GraphVizGenerator(private val ast: Ast) {
     private var id = 0
 
     private val visitor = object : AstVisitor<Pair<String, Int>> {
+        override fun visit(ast: AstValInitialization) = "init val ${ast.valToInit} = ${ast.initializer}" to ++id
+
         override fun visit(ast: AstCastExpr) = "cast from ${ast.expression.type} to ${ast.type}" to ++id
 
         override fun visit(ast: AstFunctionReference) = "ref ${ast.function}:${ast.type}" to ++id
@@ -19,8 +21,6 @@ class GraphVizGenerator(private val ast: Ast) {
         override fun visit(ast: AstVal) = "val ${ast.valName}: ${ast.type}" to ++id
 
         override fun visit(ast: AstVar) = "var:${ast.varName}: ${ast.type}" to ++id
-
-        override fun visit(ast: StubAst) = "stub" to ++id
 
         override fun visit(ast: AstProgram) = "program" to ++id
 

@@ -27,7 +27,7 @@ open class BaseScope(override val enclosingScope: Scope?) : Scope {
 
     override fun declareVal(name: String, type: ZcType): AstVal? {
         if (name.existsInThisScope()) return null
-        return AstVal(name, type).also { variables[name] = it }
+        return AstVal(name, variables.size, type).also { variables[name] = it }
     }
 
     override fun lookupFunction(name: String) = enclosingScope?.lookupFunction(name) ?: emptyList()

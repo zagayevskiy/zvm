@@ -8,8 +8,8 @@ import com.zagayevskiy.zvm.zc.ast.*
 import com.zagayevskiy.zvm.zc.types.UnresolvedType
 
 sealed class ParseResult {
-    class Success(val program: Ast) : ParseResult()
-    class Failure : ParseResult()
+    data class Success(val program: Ast) : ParseResult()
+    object Failure : ParseResult()
 }
 
 class ZcParser(private val lexer: Lexer) {
@@ -445,7 +445,7 @@ class ZcParser(private val lexer: Lexer) {
         val expression = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Right side of assignment expected.") }
 
         if (expression != null) {
-            return AstAssignment(left = variable, right = expression)
+            return AstAssignment(assigned = variable, assignation = expression)
         }
 
         return chain(variable)
@@ -476,7 +476,7 @@ class ZcParser(private val lexer: Lexer) {
         val assignmentExpr = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Right side of assignment expected.") }
 
         if (assignmentExpr != null) {
-            return AstAssignment(left = indexedArray, right = assignmentExpr)
+            return AstAssignment(assigned = indexedArray, assignation = assignmentExpr)
         }
 
         return chain(indexedArray)
