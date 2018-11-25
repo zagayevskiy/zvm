@@ -140,12 +140,13 @@ class TypesProcessor(private val program: AstProgram) {
         }
     }
 
-    private fun resolveFunctionCall(call: AstFunctionCall) = call.also {
-        when (val function = call.function) {
+    private fun resolveFunctionCall(call: AstFunctionCall) = call.apply {
+        when (val func = call.function) {
             is AstIdentifier -> {
-                val definedFunction = currentScope.lookupFunction(function.name) //TODO resolve with types
-                        .firstOrNull() ?: error("Unknown function ${function.name}")
-                call.function = AstFunctionReference(definedFunction)
+                val definedFunction = currentScope.lookupFunction(func.name) //TODO resolve with types
+                        .firstOrNull() ?: error("Unknown function ${func.name}")
+                function = AstFunctionReference(definedFunction)
+                type = definedFunction.retType
             }
         }
     }

@@ -7,9 +7,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
-internal data class CompilerTestData(val text: String, val expectedResult: StackEntry, val runArgs: List<StackEntry>, val heapSize: Int)
+internal data class CompilerTestData(val name: String, val text: String, val expectedResult: StackEntry, val runArgs: List<StackEntry>, val heapSize: Int)
 
-private fun test(text: String, runArgs: List<StackEntry>, expectedResult: StackEntry, heapSize: Int = 0) = CompilerTestData(text, expectedResult, runArgs, heapSize)
+private fun test(name: String, text: String, runArgs: List<StackEntry>, expectedResult: StackEntry, heapSize: Int = 0) = CompilerTestData(name, text, expectedResult, runArgs, heapSize)
 
 private fun entries(vararg values: Int) = values.map { it.toStackEntry() }
 
@@ -30,7 +30,21 @@ internal class CompilerTest(val test: CompilerTestData) {
         @JvmStatic
         @Parameterized.Parameters(name = "{index}: {0}")
         fun data() = listOf(
-            test(zcFibonacchiByLoop, entries(5), 5.toStackEntry())
+                test("f(-100)", zcFibonacciIterative, entries(-100), 1.toStackEntry()),
+                test("f(1)", zcFibonacciIterative, entries(1), 1.toStackEntry()),
+                test("f(5)", zcFibonacciIterative, entries(5), 5.toStackEntry()),
+                test("f(9)", zcFibonacciIterative, entries(9), 34.toStackEntry()),
+                test("f(12)", zcFibonacciIterative, entries(12), 144.toStackEntry()),
+                test("f(33)", zcFibonacciIterative, entries(33), 3524578.toStackEntry()),
+                test("f(41)", zcFibonacciIterative, entries(41), 165580141.toStackEntry()),
+
+                test("f_rec(-100)", zcFibonacciRecursive, entries(-100), 1.toStackEntry()),
+                test("f_rec(1)", zcFibonacciRecursive, entries(1), 1.toStackEntry()),
+                test("f_rec(5)", zcFibonacciRecursive, entries(5), 5.toStackEntry()),
+                test("f_rec(9)", zcFibonacciRecursive, entries(9), 34.toStackEntry()),
+                test("f_rec(12)", zcFibonacciRecursive, entries(12), 144.toStackEntry()),
+                test("f_rec(33)", zcFibonacciRecursive, entries(33), 3524578.toStackEntry()),
+                test("f_rec(41)", zcFibonacciRecursive, entries(41), 165580141.toStackEntry())
         )
 
     }
