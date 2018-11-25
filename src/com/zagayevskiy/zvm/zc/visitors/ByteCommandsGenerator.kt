@@ -16,7 +16,7 @@ class ByteCommandsGenerator(private val program: AstProgram) {
             return@forEach when (topLevelSymbol) {
 
                 is AstFunctionDeclaration -> error("All functions must be resolved before")
-                is AstStructDeclaration -> TODO()
+                is AstStructDeclaration -> TODO("Structs not supported yet.")
                 is AstDefinedFunction -> generate(topLevelSymbol)
             }
         }
@@ -39,18 +39,18 @@ class ByteCommandsGenerator(private val program: AstProgram) {
     }
 
     private fun generate(statement: AstStatement) {
-        when (statement) {
+        return when (statement) {
             is AstBlock -> statement.statements.forEach { child -> generate(child) }
-            is AstVarDecl, is AstValDecl -> error("Variables declarations must be resolved before. $statement")
+            is AstVarDecl, is AstValDecl -> error("Variables ($statement) declarations must be resolved before.")
             is AstForLoop -> generate(statement)
             is AstWhileLoop -> generate(statement)
             is AstIfElse -> generate(statement)
-            is AstFunctionReturn -> {
+            is AstFunctionReturn -> Unit.also {
                 generate(statement.expression)
                 commands.add(Ret.instruction())
             }
-            is AstExpressionStatement -> {
-                generate(statement)
+            is AstExpressionStatement -> Unit.also {
+                generate(statement.expression)
                 commands.add(Pop.instruction())
             }
         }
@@ -96,7 +96,7 @@ class ByteCommandsGenerator(private val program: AstProgram) {
 
     private fun generate(expression: AstExpr) {
         when (expression) {
-            is AstFunctionReference -> TODO()
+            is AstFunctionReference -> TODO("Dynamic function references not implemented yet.")
             is AstBinary -> generate(expression)
             is AstIdentifier -> error("All identifiers must be resolved before. Why $expression don't?")
             is AstFunctionArgument -> {
@@ -131,12 +131,12 @@ class ByteCommandsGenerator(private val program: AstProgram) {
             }
 
             is AstAssignment -> generate(expression)
-            is AstFunctionCall -> TODO()
+            is AstFunctionCall -> generate(expression)
             is AstConst.Integer -> commands.add(IntConst.instruction(expression.value.op))
             is AstConst.Byte -> commands.add(ByteConst.instruction(expression.value.op))
-            is AstConst.Boolean -> TODO()
-            AstConst.Undefined -> TODO()
-            AstConst.Void -> TODO()
+            is AstConst.Boolean -> commands.add(ByteConst.instruction((if (expression.value) 1 else 0).op))
+            AstConst.Undefined -> TODO("What to do with undefined?")
+            AstConst.Void -> TODO("What to do with void?")
             is AstLogicalNot -> commands.add(ByteLogicalNot.instruction())
             is AstBitNot -> commands.add(instructionByType(expression.type, IntNot, ByteNot))
             is AstCastExpr -> generate(expression)
@@ -167,6 +167,16 @@ class ByteCommandsGenerator(private val program: AstProgram) {
             is AstDiv -> instructionByType(binary.type, IntDiv, ByteDiv)
             is AstMod -> instructionByType(binary.type, IntMod, ByteMod)
         })
+    }
+
+    private fun generate(call: AstFunctionCall) {
+        call.params.forEach { expr -> generate(expr) }
+        when (val ref = call.function) {
+            is AstFunctionReference -> {
+                commands.add(Call.instruction(ref.function.name.id))
+            }
+            else -> TODO("Dynamic calls not implemented yet.")
+        }
     }
 
     private fun generate(assignment: AstAssignment) {
@@ -218,7 +228,7 @@ private fun instructionByType(type: ZcType, int: () -> Command.Instruction, byte
     is ZcType.Array -> int()
     ZcType.Byte -> byte()
     ZcType.Boolean -> byte()
-    else -> error("Unwanted type") //TODO
+    else -> error("Unwanted type")
 }
 
 private fun instructionByType(type: ZcType, intOpcode: Opcode, byteOpcode: Opcode): Command.Instruction = when (type) {
@@ -226,7 +236,7 @@ private fun instructionByType(type: ZcType, intOpcode: Opcode, byteOpcode: Opcod
     is ZcType.Array -> intOpcode.instruction()
     ZcType.Byte -> byteOpcode.instruction()
     ZcType.Boolean -> byteOpcode.instruction()
-    else -> error("Unwanted type") //TODO
+    else -> error("Unwanted type")
 }
 
 private fun Opcode.instruction(vararg operands: Command.Instruction.Operand) = Command.Instruction(this, listOf(*operands))

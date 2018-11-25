@@ -101,6 +101,7 @@ class TypesProcessor(private val program: AstProgram) {
                 type = promotedType
             }
             is AstArrayIndexing -> ast.apply {
+                if (array.type is ZcType.Void) error("Array of ${ZcType.Void} can't be unreferenced.")
                 type = array.type
                 index = index.tryAutoPromoteTo(ZcType.Integer) ?: error("$index used as array index can't be promoted to ${ZcType.Integer}")
             }
