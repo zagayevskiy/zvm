@@ -76,7 +76,7 @@ class AstDefinedFunction(val name: String, val args: List<AstFunctionArgument>, 
 
 class AstFunctionReference(val function: AstDefinedFunction) : AstExpr(type = function.retType)
 
-sealed class AstStatement : Ast()
+sealed class AstStatement : Ast(type = ZcType.Void)
 
 class AstBlock(statements: List<AstStatement> = emptyList()) : AstStatement() {
     val statements by childList(statements)
@@ -133,7 +133,7 @@ class AstAssignment(assigned: AstExpr, assignation: AstExpr) : AstExpr() {
     var assignation by child(assignation)
 }
 
-class AstValInitialization(valToInit: AstVal, initializer: AstExpr) : AstExpr() {
+class AstValInitialization(valToInit: AstVal, initializer: AstExpr) : AstStatement() {
     var valToInit by child(valToInit)
     var initializer by child((initializer))
 }

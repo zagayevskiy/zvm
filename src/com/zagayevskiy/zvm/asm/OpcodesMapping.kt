@@ -18,6 +18,7 @@ object OpcodesMapping {
 
             Push to Opcodes.PUSH,
             Pop to Opcodes.POP,
+            Dup to Opcodes.DUP,
 
 
             ArgLoadInt to Opcodes.ALOADI,
@@ -96,6 +97,7 @@ object Call : OpcodeImpl(name = "call", operandCount = 1)
 
 object Push : OpcodeImpl(name = "push", operandCount = 1)
 object Pop : OpcodeImpl(name = "pop")
+object Dup : OpcodeImpl(name = "dup")
 
 object ArgLoadInt : OpcodeImpl(name = "aloadi", operandCount = 1)
 object LocalStoreInt : OpcodeImpl(name = "lstori", operandCount = 1)

@@ -2,21 +2,15 @@ package com.zagayevskiy.zvm.vm
 
 import com.zagayevskiy.zvm.Memory
 import com.zagayevskiy.zvm.MemoryBitTable
-import com.zagayevskiy.zvm.asm.IntGreater
-import com.zagayevskiy.zvm.asm.IntGreaterEq
-import com.zagayevskiy.zvm.asm.IntLess
-import com.zagayevskiy.zvm.asm.IntLessEq
 import com.zagayevskiy.zvm.common.Address
-import com.zagayevskiy.zvm.common.Opcodes
 import com.zagayevskiy.zvm.common.Opcodes.ADDB
+import com.zagayevskiy.zvm.common.Opcodes.ADDI
 import com.zagayevskiy.zvm.common.Opcodes.ALLOC
 import com.zagayevskiy.zvm.common.Opcodes.ALOADI
-import com.zagayevskiy.zvm.common.Opcodes.CALL
-import com.zagayevskiy.zvm.common.Opcodes.FREE
-import com.zagayevskiy.zvm.common.Opcodes.ADDI
 import com.zagayevskiy.zvm.common.Opcodes.ANDB
 import com.zagayevskiy.zvm.common.Opcodes.ANDI
 import com.zagayevskiy.zvm.common.Opcodes.BTOI
+import com.zagayevskiy.zvm.common.Opcodes.CALL
 import com.zagayevskiy.zvm.common.Opcodes.CMPB
 import com.zagayevskiy.zvm.common.Opcodes.CMPBC
 import com.zagayevskiy.zvm.common.Opcodes.CMPI
@@ -25,6 +19,8 @@ import com.zagayevskiy.zvm.common.Opcodes.CONSTI
 import com.zagayevskiy.zvm.common.Opcodes.DECI
 import com.zagayevskiy.zvm.common.Opcodes.DIVB
 import com.zagayevskiy.zvm.common.Opcodes.DIVI
+import com.zagayevskiy.zvm.common.Opcodes.DUP
+import com.zagayevskiy.zvm.common.Opcodes.FREE
 import com.zagayevskiy.zvm.common.Opcodes.GREATB
 import com.zagayevskiy.zvm.common.Opcodes.GREATI
 import com.zagayevskiy.zvm.common.Opcodes.GREQB
@@ -56,6 +52,7 @@ import com.zagayevskiy.zvm.common.Opcodes.NOTI
 import com.zagayevskiy.zvm.common.Opcodes.ORB
 import com.zagayevskiy.zvm.common.Opcodes.ORI
 import com.zagayevskiy.zvm.common.Opcodes.OUT
+import com.zagayevskiy.zvm.common.Opcodes.POP
 import com.zagayevskiy.zvm.common.Opcodes.RET
 import com.zagayevskiy.zvm.common.Opcodes.RNDI
 import com.zagayevskiy.zvm.common.Opcodes.SHLI
@@ -127,6 +124,8 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                 LSTORI -> localStoreInt()
                 MSTORI -> memoryStoreInt()
                 MLOADI -> memoryLoadInt()
+                POP -> pop()
+                DUP -> push(peek())
 
                 ADDI -> addi()
                 SUBI -> subi()
@@ -177,7 +176,7 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                 BTOI -> btoi()
                 ITOB -> itob()
 
-                else -> error("Unknown bytecode $code")
+                else -> error("Unknown bytecode ${code.toString(16)}")
             }
         }
     }
@@ -436,8 +435,8 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
     }
 
     private inline fun compareByteExpr(body: (left: Byte, right: Byte) -> Boolean) {
-        val right = pop<VMByte>(PopIntExprOperandMsg).byteValue
-        val left = pop<VMByte>(PopIntExprOperandMsg).byteValue
+        val right = pop<VMByte>(PopByteExprOperandMsg).byteValue
+        val left = pop<VMByte>(PopByteExprOperandMsg).byteValue
         val result: Byte = if (body(left, right)) 1 else 0
         push(result.toStackEntry())
     }

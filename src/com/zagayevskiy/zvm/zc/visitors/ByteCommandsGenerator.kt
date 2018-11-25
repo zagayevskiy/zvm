@@ -42,6 +42,13 @@ class ByteCommandsGenerator(private val program: AstProgram) {
         return when (statement) {
             is AstBlock -> statement.statements.forEach { child -> generate(child) }
             is AstVarDecl, is AstValDecl -> error("Variables ($statement) declarations must be resolved before.")
+            is AstValInitialization -> Unit.also {
+                generate(statement.initializer)
+                val index = statement.valToInit.valIndex.op
+                commands.add(instructionByType(statement.type,
+                        int = { LocalStoreInt.instruction(index) },
+                        byte = { LocalStoreByte.instruction(index) }))
+            }
             is AstForLoop -> generate(statement)
             is AstWhileLoop -> generate(statement)
             is AstIfElse -> generate(statement)
@@ -117,13 +124,6 @@ class ByteCommandsGenerator(private val program: AstProgram) {
                         int = { LocalLoadInt.instruction(index) },
                         byte = { LocalLoadByte.instruction(index) }))
             }
-            is AstValInitialization -> {
-                generate(expression.initializer)
-                val index = expression.valToInit.valIndex.op
-                commands.add(instructionByType(expression.type,
-                        int = { LocalStoreInt.instruction(index) },
-                        byte = { LocalStoreByte.instruction(index) }))
-            }
             is AstArrayIndexing -> {
                 generate(expression.array)
                 generate(expression.index)
@@ -155,12 +155,12 @@ class ByteCommandsGenerator(private val program: AstProgram) {
             is AstBitXor -> instructionByType(binary.type, IntXor, ByteXor)
             is AstBitShift.Left -> IntShl.instruction()
             is AstBitShift.Right -> IntShr.instruction()
-            is AstEquals -> instructionByType(binary.type, IntCmp, ByteCmp)
+            is AstEquals -> instructionByType(binary.left.type, IntCmp, ByteCmp)
             is AstNotEquals -> TODO()
-            is AstLess -> instructionByType(binary.type, IntLess, ByteLess)
-            is AstLessEq -> instructionByType(binary.type, IntLessEq, ByteLessEq)
-            is AstGreat -> instructionByType(binary.type, IntGreater, ByteGreater)
-            is AstGreatEq -> instructionByType(binary.type, IntGreaterEq, ByteGreaterEq)
+            is AstLess -> instructionByType(binary.left.type, IntLess, ByteLess)
+            is AstLessEq -> instructionByType(binary.left.type, IntLessEq, ByteLessEq)
+            is AstGreat -> instructionByType(binary.left.type, IntGreater, ByteGreater)
+            is AstGreatEq -> instructionByType(binary.left.type, IntGreaterEq, ByteGreaterEq)
             is AstSum -> instructionByType(binary.type, IntAdd, ByteAdd)
             is AstDifference -> instructionByType(binary.type, IntSub, ByteSub)
             is AstMul -> instructionByType(binary.type, IntMul, ByteMul)
@@ -183,6 +183,7 @@ class ByteCommandsGenerator(private val program: AstProgram) {
         when (val left = assignment.assignable) {
             is AstVar -> {
                 generate(assignment.assignation)
+                commands.add(Dup.instruction())
                 val index = left.varIndex.op
                 commands.add(instructionByType(left.type,
                         int = { LocalStoreInt.instruction(index) },
@@ -192,6 +193,7 @@ class ByteCommandsGenerator(private val program: AstProgram) {
                 generate(left.array)
                 generate(left.index)
                 generate(assignment.assignation)
+                commands.add(Dup.instruction())
                 commands.add(instructionByType(left.type, MemoryStoreInt, MemoryStoreByte))
 
             }

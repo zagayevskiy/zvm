@@ -150,11 +150,11 @@ class TypesProcessor(private val program: AstProgram) {
         }
     }
 
-    private fun createAssignment(left: AstExpr, right: AstExpr): AstExpr {
+    private fun createAssignment(left: AstExpr, right: AstExpr): AstStatement {
         return if (right is AstConst.Undefined) {
-            left
+            AstExpressionStatement(left)
         } else {
-            AstAssignment(left, right)
+            AstExpressionStatement(AstAssignment(left, right))
         }
     }
 
