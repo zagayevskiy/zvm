@@ -13,15 +13,6 @@ private fun test(name: String, text: String, runArgs: List<StackEntry>, expected
 
 private fun entries(vararg values: Int) = values.map { it.toStackEntry() }
 
-/*
-Tst("f(-100)", fibonacci, entries(-100), 1.toStackEntry()),
-                Tst("f(1)", fibonacci, entries(1), 1.toStackEntry()),
-                Tst("f(5)", fibonacci, entries(5), 5.toStackEntry()),
-                Tst("f(9)", fibonacci, entries(9), 34.toStackEntry()),
-                Tst("f(12)", fibonacci, entries(12), 144.toStackEntry()),
-                Tst("f(33)", fibonacci, entries(33), 3524578.toStackEntry()),
-                Tst("f(41)", fibonacci, entries(41), 165580141.toStackEntry()),
- */
 
 @RunWith(Parameterized::class)
 internal class CompilerTest(val test: CompilerTestData) {

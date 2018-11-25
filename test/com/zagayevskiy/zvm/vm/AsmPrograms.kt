@@ -1,7 +1,7 @@
 package com.zagayevskiy.zvm.vm
 
 //run with two int arguments (x, y) and get x*y as result.
-internal val mulByRecursiveAdd = """
+internal val asmMulByRecursiveAdd = """
 
     .fun main: args=2
     aloadi 1
@@ -47,7 +47,7 @@ internal val mulByRecursiveAdd = """
 """.trimIndent()
 
 //run with one int argument (n) and get n's Fibonacci number
-internal val fibonacci = """
+internal val asmFibonacciIterative = """
     .fun main: args=1, locals=3
     aloadi 0
     cmpic 2
@@ -86,7 +86,7 @@ internal val fibonacci = """
 """.trimIndent()
 
 //run with one int argument (n) and get n's Fibonacci number (computed by recursive way)
-internal val fibonacciRecursive = """
+internal val asmFibonacciRecursive = """
 
     .fun main: args = 1
     consti 1
@@ -115,8 +115,8 @@ internal val fibonacciRecursive = """
 
 """.trimIndent()
 
-//run with one int argument(n) and get n!
-internal val factorial = """
+//run with one int argument(n) and get n! (computed by iterative way)
+internal val asmFactorialIterative = """
     .fun main: args = 1, locals = 2
     aloadi 0
     lstori 0
@@ -137,7 +137,7 @@ internal val factorial = """
 """.trimIndent()
 
 //run with one int argument(n) and get n! (computed by recursive way)
-internal val factorialRecursive = """
+internal val asmFactorialRecursive = """
     .fun main: args = 1
     aloadi 0
     jpos recursion
@@ -153,7 +153,7 @@ internal val factorialRecursive = """
 """.trimIndent()
 
 //run with one int argument(size), creates array of ints (size in bytes = size*4), fill it with indices, and get sum
-internal val sumOfArray = """
+internal val asmSumOfArray = """
     .fun createArray: args = 1, locals = 2
     aloadi 0
     consti 4
@@ -221,7 +221,7 @@ internal val sumOfArray = """
 """.trimIndent()
 
 //run with one argument(int) and reverse it bytes
-internal val reverseIntBytesViaBitManipulations = """
+internal val asmReverseIntBytesViaBitManipulations = """
     .fun main: args = 1
     aloadi 0
     call reverse
@@ -258,7 +258,7 @@ internal val reverseIntBytesViaBitManipulations = """
 """.trimIndent()
 
 //run with one argument(int) and reverse it bytes(via memory manipulations)
-internal val reverseIntBytesViaMemory = """
+internal val asmReverseIntBytesViaMemory = """
     .fun reverse: args = 1, locals = 1
     consti 4
     alloc
@@ -313,7 +313,7 @@ internal val reverseIntBytesViaMemory = """
 """.trimIndent()
 
 //run with one argument(int) and reverse it bits
-internal val reverseIntBits = """
+internal val asmReverseIntBits = """
     .fun main: args = 1
     aloadi 0
     call reverse

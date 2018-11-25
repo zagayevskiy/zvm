@@ -15,6 +15,7 @@ internal val zcFibonacciIterative = """
     }
 """.trimIndent()
 
+//run with one int argument (n) and get n's Fibonacci number (computed by recursive way)
 internal val zcFibonacciRecursive = """
     fn fibonacci(prevStep: int, currentStep: int, counter: int): int {
         if (counter <= 0)
@@ -28,6 +29,7 @@ internal val zcFibonacciRecursive = """
     }
 """.trimIndent()
 
+//run with one int argument (n) and get n's Fibonacci number (computed by iterative way)
 internal val zcFactorialIterative = """
     fn main(n: int): int {
         var accum = 1;
@@ -36,6 +38,7 @@ internal val zcFactorialIterative = """
     }
 """.trimIndent()
 
+//run with one int argument(n) and get n! (computed by recursive way)
 internal val zcFactorialRecursive = """
     fn main(n: int): int {
         if (n <= 1) return 1;
@@ -43,12 +46,14 @@ internal val zcFactorialRecursive = """
     }
 """.trimIndent()
 
+//run with one argument(int) and reverse it bytes
 internal val zcReverseIntBytesViaBitManipulations = """
     fn main(x: int): int {
         return ((x >> 24) & 255) | ((x >> 8) & 65280) | ((x & 255) << 24) | ((x & 65280) << 8);
     }
 """.trimIndent()
 
+//run with one argument(int) and reverse it bits
 internal val zcReverseIntBits = """
     fn main(x: int): int {
         var result = 0;
