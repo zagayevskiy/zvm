@@ -8,7 +8,7 @@ import com.zagayevskiy.zvm.zc.ast.*
 import com.zagayevskiy.zvm.zc.types.UnresolvedType
 
 sealed class ParseResult {
-    data class Success(val program: Ast) : ParseResult()
+    data class Success(val program: AstProgram) : ParseResult()
     object Failure : ParseResult()
 }
 

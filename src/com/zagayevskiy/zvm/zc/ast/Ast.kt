@@ -42,7 +42,7 @@ sealed class Ast(var type: ZcType = ZcType.Unknown) : MutableIterable<Ast> {
 
     override fun iterator(): MutableListIterator<Ast> = children.listIterator()
 
-    override fun toString() = "${javaClass.simpleName}:$type $children"
+    override fun toString() = "(${stringValue()} children=$children)"
 
     override fun equals(other: Any?) = other is Ast && this eq other
 

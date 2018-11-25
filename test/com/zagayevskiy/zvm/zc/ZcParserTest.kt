@@ -5,10 +5,10 @@ package com.zagayevskiy.zvm.zc
 import com.zagayevskiy.zvm.common.Lexer
 import com.zagayevskiy.zvm.zc.ast.*
 import com.zagayevskiy.zvm.zc.types.UnresolvedType
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import kotlin.test.assertEquals
 
 internal data class TestData(val text: String, val expected: AstProgram)
 
@@ -91,7 +91,22 @@ internal class ZcParserTest(private val test: TestData) {
                                         condition = 1.const,
                                         body = AstBlock.Empty
                                 ))))
-                )
+                ),
+
+                "fn call(){ call(); } " expect program(
+                        fn("call", args = emptyList(), body = AstBlock(listOf(
+                                AstExpressionStatement(AstFunctionCall(function = "call".id, params = emptyList()))
+                        )))),
+                "fn call_w_args(i: int, b: byte): byte { call_w_args1(i, call_w_args2(1, b)); }" expect program(
+                        fn("call_w_args", args = listOf(Arg("i") withType "int", Arg("b") withType "byte"), returnType = "byte".type, body = AstBlock(listOf(
+                                AstExpressionStatement(AstFunctionCall(
+                                        function = "call_w_args1".id,
+                                        params = listOf("i".id, AstFunctionCall(
+                                                function = "call_w_args2".id,
+                                                params = listOf(1.const, "b".id)
+                                        ))
+                                ))
+                        ))))
         )
     }
 
@@ -99,6 +114,7 @@ internal class ZcParserTest(private val test: TestData) {
     fun test() {
         val parser = ZcParser(PrintSpyLexer(ZcSequenceLexer(test.text.asSequence())))
         val result = parser.program() as ParseResult.Success
+
         assertEquals(test.expected, result.program)
     }
 
