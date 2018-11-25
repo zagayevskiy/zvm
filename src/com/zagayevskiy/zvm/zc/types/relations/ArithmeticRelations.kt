@@ -4,22 +4,16 @@ import com.zagayevskiy.zvm.zc.types.ZcType
 
 private val ErrorType = null
 
-fun arithmeticTypesPromotion(left: ZcType, right: ZcType) = when(left) {
-    ZcType.Void -> ErrorType
-    ZcType.Integer -> when(right) {
-        ZcType.Void -> ErrorType
+fun arithmeticTypesPromotion(left: ZcType, right: ZcType) = when (left) {
+    ZcType.Integer -> when (right) {
         ZcType.Integer -> ZcType.Integer
         ZcType.Byte -> ZcType.Integer
-        ZcType.Boolean -> ErrorType
-        ZcType.Unknown -> ErrorType
+        else -> ErrorType
     }
-    ZcType.Byte -> when(right) {
-        ZcType.Void -> ErrorType
+    ZcType.Byte -> when (right) {
         ZcType.Integer -> ZcType.Integer
         ZcType.Byte -> ZcType.Byte
-        ZcType.Boolean -> ErrorType
-        ZcType.Unknown -> ErrorType
+        else -> ErrorType
     }
-    ZcType.Boolean -> ErrorType
-    ZcType.Unknown -> ErrorType
+    else -> ErrorType
 }

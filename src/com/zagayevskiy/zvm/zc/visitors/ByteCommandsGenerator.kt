@@ -1,6 +1,7 @@
 package com.zagayevskiy.zvm.zc.visitors
 
 import com.zagayevskiy.zvm.asm.*
+import com.zagayevskiy.zvm.zc.ZcToken
 import com.zagayevskiy.zvm.zc.ast.*
 import com.zagayevskiy.zvm.zc.types.ZcType
 
@@ -98,51 +99,55 @@ class ByteCommandsGenerator(private val program: AstProgram) {
             is AstFunctionReference -> TODO()
             is AstBinary -> generate(expression)
             is AstIdentifier -> error("All identifiers must be resolved before. Why $expression don't?")
-            is AstVar -> TODO()
-            is AstVal -> TODO()
+            is AstFunctionArgument -> {
+                val index = expression.index.op
+                commands.add(instructionByType(expression.type,
+                        int = { ArgLoadInt.instruction(index) },
+                        byte = { ArgLoadByte.instruction(index) }))
+            }
+            is AstVar -> {
+                val index = expression.varIndex.op
+                commands.add(instructionByType(expression.type,
+                        int = { LocalLoadInt.instruction(index) },
+                        byte = { LocalLoadByte.instruction(index) }))
+            }
+            is AstVal -> {
+                val index = expression.valIndex.op
+                commands.add(instructionByType(expression.type,
+                        int = { LocalLoadInt.instruction(index) },
+                        byte = { LocalLoadByte.instruction(index) }))
+            }
+            is AstValInitialization -> {
+                generate(expression.initializer)
+                val index = expression.valToInit.valIndex.op
+                commands.add(instructionByType(expression.type,
+                        int = { LocalStoreInt.instruction(index) },
+                        byte = { LocalStoreByte.instruction(index) }))
+            }
             is AstArrayIndexing -> {
                 generate(expression.array)
                 generate(expression.index)
                 commands.add(instructionByType(expression.type, MemoryLoadInt, MemoryLoadByte))
             }
+
+            is AstAssignment -> generate(expression)
             is AstFunctionCall -> TODO()
-            is AstFunctionArgument -> TODO()
             is AstConst.Integer -> commands.add(IntConst.instruction(expression.value.op))
-            is AstConst.Byte -> TODO()
+            is AstConst.Byte -> commands.add(ByteConst.instruction(expression.value.op))
             is AstConst.Boolean -> TODO()
             AstConst.Undefined -> TODO()
             AstConst.Void -> TODO()
             is AstLogicalNot -> commands.add(ByteLogicalNot.instruction())
             is AstBitNot -> commands.add(instructionByType(expression.type, IntNot, ByteNot))
-            is AstCastExpr -> TODO()
+            is AstCastExpr -> generate(expression)
         }
     }
 
     private fun generate(binary: AstBinary) {
-        if (binary is AstAssignment) {
-
-            when (val left = binary.left) {
-                is AstVar -> {
-                    generate(binary.right)
-                    TODO("check type")
-                    commands.add(LocalStoreInt.instruction(left.varIndex.op))
-                }
-                is AstArrayIndexing -> {
-                    generate(left)
-                    generate(binary.right)
-                    TODO("check type")
-                    commands.add(MemoryStoreInt.instruction())
-
-                }
-            }
-            return
-        }
-
         generate(binary.left)
         generate(binary.right)
 
         commands.add(when (binary) {
-            is AstAssignment -> error("Wtf, we check it earlier.")
             is AstDisjunction -> ByteOr.instruction()
             is AstConjunction -> ByteAnd.instruction()
             is AstBitAnd -> instructionByType(binary.type, IntAnd, ByteAnd)
@@ -164,11 +169,64 @@ class ByteCommandsGenerator(private val program: AstProgram) {
         })
     }
 
-    private fun instructionByType(type: ZcType, intOpcode: Opcode, byteOpcode: Opcode): Command.Instruction = when (type) {
-        ZcType.Integer -> intOpcode.instruction()
-        ZcType.Byte -> byteOpcode.instruction()
-        else -> error("Unwanted type") //TODO
+    private fun generate(assignment: AstAssignment) {
+        when (val left = assignment.assignable) {
+            is AstVar -> {
+                generate(assignment.assignation)
+                val index = left.varIndex.op
+                commands.add(instructionByType(left.type,
+                        int = { LocalStoreInt.instruction(index) },
+                        byte = { LocalStoreByte.instruction(index) }))
+            }
+            is AstArrayIndexing -> {
+                generate(left.array)
+                generate(left.index)
+                generate(assignment.assignation)
+                commands.add(instructionByType(left.type, MemoryStoreInt, MemoryStoreByte))
+
+            }
+        }
     }
+
+    private fun generate(cast: AstCastExpr) {
+        generate(cast.expression)
+        when (cast.expression.type) {
+            ZcType.Integer -> when (cast.type) {
+                ZcType.Integer -> Unit
+                ZcType.Byte,
+                ZcType.Boolean -> IntToByte.instruction()
+                else -> error("${cast.expression} can't be casted to ${cast.type}")
+            }
+            ZcType.Byte,
+            ZcType.Boolean -> when (cast.type) {
+                ZcType.Integer -> ByteToInt.instruction()
+                ZcType.Byte,
+                ZcType.Boolean -> Unit
+                else -> error("${cast.expression} can't be casted to ${cast.type}")
+            }
+
+            is ZcType.Array -> Unit
+
+            ZcType.Void,
+            ZcType.Unknown -> error("${cast.expression} can't be casted to ${cast.type}")
+        }
+    }
+}
+
+private fun instructionByType(type: ZcType, int: () -> Command.Instruction, byte: () -> Command.Instruction): Command.Instruction = when (type) {
+    ZcType.Integer -> int()
+    is ZcType.Array -> int()
+    ZcType.Byte -> byte()
+    ZcType.Boolean -> byte()
+    else -> error("Unwanted type") //TODO
+}
+
+private fun instructionByType(type: ZcType, intOpcode: Opcode, byteOpcode: Opcode): Command.Instruction = when (type) {
+    ZcType.Integer -> intOpcode.instruction()
+    is ZcType.Array -> intOpcode.instruction()
+    ZcType.Byte -> byteOpcode.instruction()
+    ZcType.Boolean -> byteOpcode.instruction()
+    else -> error("Unwanted type") //TODO
 }
 
 private fun Opcode.instruction(vararg operands: Command.Instruction.Operand) = Command.Instruction(this, listOf(*operands))
@@ -176,5 +234,7 @@ private fun Opcode.instruction(vararg operands: Command.Instruction.Operand) = C
 
 private val Int.op
     get() = Command.Instruction.Operand.Integer(this)
+private val Byte.op
+    get() = Command.Instruction.Operand.Integer(toInt())
 private val String.id
     get() = Command.Instruction.Operand.Id(this)

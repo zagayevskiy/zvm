@@ -32,7 +32,7 @@ class TypesProcessor(private val program: AstProgram) {
                 type = initializer.type
             }
             val astVal = currentScope.declareVal(ast.valName, type) ?: error("Name ${ast.valName} already declared.")
-            createAssignment(astVal, initializer)
+            AstValInitialization(astVal, initializer)
 
         }
         is AstVarDecl -> {
@@ -120,6 +120,11 @@ class TypesProcessor(private val program: AstProgram) {
 
             is AstForLoop -> ast.apply {
                 this.condition = condition.tryAutoPromoteTo(ZcType.Boolean) ?: error("For-loop-condition type (${condition.type}) can't be auto promoted to ${ZcType.Boolean}")
+            }
+
+            is AstAssignment -> ast.apply {
+                if (assignable !is AstVar && assignable !is AstArrayIndexing) error("Only var or array-indexing can be assignable. $assignable can't.")
+                assignation = assignation.tryAutoPromoteTo(assignable.type) ?: error("Can't auto promote $assignation to ${assignation.type} for assignment.")
             }
 
             else -> ast

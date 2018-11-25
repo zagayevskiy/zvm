@@ -124,9 +124,16 @@ sealed class AstBinary(left: AstExpr, right: AstExpr) : AstExpr() {
 }
 
 class AstIdentifier(val name: String) : AstExpr()
-class AstAssignment(left: AstExpr, right: AstExpr) : AstBinary(left, right)
+class AstAssignment(assigned: AstExpr, assignation: AstExpr) : AstExpr() {
+    val assignable by child(assigned)
+    var assignation by child(assignation)
+}
+class AstValInitialization(valToInit: AstVal, initializer: AstExpr): AstExpr() {
+    var valToInit by child(valToInit)
+    var  initializer by child((initializer))
+}
 class AstVar(val varName: String, var varIndex: Int, type: ZcType) : AstExpr(type)
-class AstVal(val valName: String, type: ZcType) : AstExpr(type)
+class AstVal(val valName: String, val valIndex: Int, type: ZcType) : AstExpr(type)
 
 class AstArrayIndexing(array: AstExpr, index: AstExpr) : AstExpr() {
     var array by child(array)
@@ -142,7 +149,7 @@ class AstFunctionArgument(val name: String, val index: Int, type: ZcType) : AstE
 
 sealed class AstConst(type: ZcType) : AstExpr(type) {
     class Integer(val value: Int) : AstConst(ZcType.Integer)
-    class Byte(val value: Byte) : AstConst(ZcType.Byte)
+    class Byte(val value: kotlin.Byte) : AstConst(ZcType.Byte)
     class Boolean(val value: kotlin.Boolean) : AstConst(ZcType.Boolean)
     object Undefined : AstConst(ZcType.Unknown)
     object Void : AstConst(ZcType.Void)
