@@ -13,9 +13,11 @@ private fun test(name: String, text: String, runArgs: List<StackEntry>, expected
 
 private fun entries(vararg values: Int) = values.map { it.toStackEntry() }
 
+private val True = 1.toByte().toStackEntry()
+private val False = 0.toByte().toStackEntry()
 
 @RunWith(Parameterized::class)
-internal class CompilerTest(val test: CompilerTestData) {
+internal class CompilerTest(private val test: CompilerTestData) {
     companion object {
 
         @JvmStatic
@@ -50,7 +52,15 @@ internal class CompilerTest(val test: CompilerTestData) {
                 test("rbit 0x0a1b2c3d", zcReverseIntBytesViaBitManipulations, entries(0x0a1b2c3d), 0x3d2c1b0a.toStackEntry()),
                 test("rbit 0b01010101_11110000_00001111_00110011", zcReverseIntBytesViaBitManipulations, entries(0b01010101_11110000_00001111_00110011), 0b00110011_00001111_11110000_01010101.toStackEntry()),
 
-                test("rev 0b01010101_11110000_00001111_11001100", zcReverseIntBits, entries(0b00110011_01100111_00001111_10101010), 0b01010101_11110000_11100110_11001100.toStackEntry())
+                test("rev 0b01010101_11110000_00001111_11001100", zcReverseIntBits, entries(0b00110011_01100111_00001111_10101010), 0b01010101_11110000_11100110_11001100.toStackEntry()),
+
+                test("isPrime(2)", zcIsPrime, entries(2), True),
+                test("isPrime(3)", zcIsPrime, entries(3), True),
+                test("isPrime(4)", zcIsPrime, entries(4), False),
+                test("isPrime(5)", zcIsPrime, entries(5), True),
+                test("isPrime(35)", zcIsPrime, entries(35), False),
+                test("isPrime(104729)", zcIsPrime, entries(104729), True),
+                test("isPrime(7919*7919)", zcIsPrime, entries(7919*7919), False)
         )
 
     }

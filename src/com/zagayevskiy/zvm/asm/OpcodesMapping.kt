@@ -47,6 +47,8 @@ object OpcodesMapping {
             IntLessEq to Opcodes.LEQI,
             IntGreater to Opcodes.GREATI,
             IntGreaterEq to Opcodes.GREQI,
+            IntEq to Opcodes.EQI,
+            IntNotEq to Opcodes.NEQI,
             RandomInt to Opcodes.RNDI,
 
             ArgLoadByte to Opcodes.ALOADB,
@@ -71,6 +73,8 @@ object OpcodesMapping {
             ByteGreater to Opcodes.GREATB,
             ByteGreaterEq to Opcodes.GREQB,
             ByteConstCmp to Opcodes.CMPBC,
+            ByteEq to Opcodes.EQB,
+            ByteNotEq to Opcodes.NEQB,
             ByteLogicalNot to Opcodes.LNOTB,
 
             Out to Opcodes.OUT,
@@ -125,6 +129,8 @@ object IntLess : OpcodeImpl(name = "lessi")
 object IntLessEq : OpcodeImpl(name = "leqi")
 object IntGreater : OpcodeImpl(name = "greati")
 object IntGreaterEq : OpcodeImpl(name = "greqi")
+object IntEq : OpcodeImpl(name = "eqi")
+object IntNotEq : OpcodeImpl(name = "neqi")
 object RandomInt : OpcodeImpl(name = "rndi")
 
 object ArgLoadByte : OpcodeImpl(name = "aloadb", operandCount = 1)
@@ -148,6 +154,8 @@ object ByteLess : OpcodeImpl(name = "lessb")
 object ByteLessEq : OpcodeImpl(name = "leqb")
 object ByteGreater : OpcodeImpl(name = "greatb")
 object ByteGreaterEq : OpcodeImpl(name = "greqb")
+object ByteEq : OpcodeImpl(name = "eqb")
+object ByteNotEq : OpcodeImpl(name = "neqb")
 object ByteLogicalNot: OpcodeImpl(name = "lnotb")
 
 object Out : OpcodeImpl(name = "out")

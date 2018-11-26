@@ -6,6 +6,7 @@ import com.zagayevskiy.zvm.common.Address
 import com.zagayevskiy.zvm.common.Opcodes.ADDB
 import com.zagayevskiy.zvm.common.Opcodes.ADDI
 import com.zagayevskiy.zvm.common.Opcodes.ALLOC
+import com.zagayevskiy.zvm.common.Opcodes.ALOADB
 import com.zagayevskiy.zvm.common.Opcodes.ALOADI
 import com.zagayevskiy.zvm.common.Opcodes.ANDB
 import com.zagayevskiy.zvm.common.Opcodes.ANDI
@@ -15,11 +16,14 @@ import com.zagayevskiy.zvm.common.Opcodes.CMPB
 import com.zagayevskiy.zvm.common.Opcodes.CMPBC
 import com.zagayevskiy.zvm.common.Opcodes.CMPI
 import com.zagayevskiy.zvm.common.Opcodes.CMPIC
+import com.zagayevskiy.zvm.common.Opcodes.CONSTB
 import com.zagayevskiy.zvm.common.Opcodes.CONSTI
 import com.zagayevskiy.zvm.common.Opcodes.DECI
 import com.zagayevskiy.zvm.common.Opcodes.DIVB
 import com.zagayevskiy.zvm.common.Opcodes.DIVI
 import com.zagayevskiy.zvm.common.Opcodes.DUP
+import com.zagayevskiy.zvm.common.Opcodes.EQB
+import com.zagayevskiy.zvm.common.Opcodes.EQI
 import com.zagayevskiy.zvm.common.Opcodes.FREE
 import com.zagayevskiy.zvm.common.Opcodes.GREATB
 import com.zagayevskiy.zvm.common.Opcodes.GREATI
@@ -36,8 +40,10 @@ import com.zagayevskiy.zvm.common.Opcodes.LEQB
 import com.zagayevskiy.zvm.common.Opcodes.LEQI
 import com.zagayevskiy.zvm.common.Opcodes.LESSB
 import com.zagayevskiy.zvm.common.Opcodes.LESSI
+import com.zagayevskiy.zvm.common.Opcodes.LLOADB
 import com.zagayevskiy.zvm.common.Opcodes.LLOADI
 import com.zagayevskiy.zvm.common.Opcodes.LNOTB
+import com.zagayevskiy.zvm.common.Opcodes.LSTORB
 import com.zagayevskiy.zvm.common.Opcodes.LSTORI
 import com.zagayevskiy.zvm.common.Opcodes.MLOADB
 import com.zagayevskiy.zvm.common.Opcodes.MLOADI
@@ -47,6 +53,8 @@ import com.zagayevskiy.zvm.common.Opcodes.MSTORB
 import com.zagayevskiy.zvm.common.Opcodes.MSTORI
 import com.zagayevskiy.zvm.common.Opcodes.MULB
 import com.zagayevskiy.zvm.common.Opcodes.MULI
+import com.zagayevskiy.zvm.common.Opcodes.NEQB
+import com.zagayevskiy.zvm.common.Opcodes.NEQI
 import com.zagayevskiy.zvm.common.Opcodes.NOTB
 import com.zagayevskiy.zvm.common.Opcodes.NOTI
 import com.zagayevskiy.zvm.common.Opcodes.ORB
@@ -119,11 +127,21 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                 JNEG -> jneg()
 
                 CONSTI -> push(decodeNextInt().toStackEntry())
+                CONSTB -> push(nextByte().toStackEntry())
+
                 ALOADI -> argLoadInt()
+                ALOADB -> argLoadByte()
+
                 LLOADI -> localLoadInt()
                 LSTORI -> localStoreInt()
+                LLOADB -> localLoadByte()
+                LSTORB -> localStoreByte()
+
                 MSTORI -> memoryStoreInt()
                 MLOADI -> memoryLoadInt()
+                MLOADB -> memoryLoadByte()
+                MSTORB -> memoryStoreByte()
+
                 POP -> pop()
                 DUP -> push(peek())
 
@@ -146,10 +164,9 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                 LEQI -> leqi()
                 GREATI -> greati()
                 GREQI -> greqi()
+                EQI -> eqi()
+                NEQI -> neqi()
                 RNDI -> rndi()
-
-                MLOADB -> memoryLoadByte()
-                MSTORB -> memoryStoreByte()
 
                 ADDB -> addb()
                 SUBB -> subb()
@@ -166,6 +183,8 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                 LEQB -> leqb()
                 GREATB -> greatb()
                 GREQB -> greqb()
+                EQB -> eqb()
+                NEQB -> neqb()
                 LNOTB -> lnotb()
 
                 OUT -> out()
@@ -176,7 +195,7 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                 BTOI -> btoi()
                 ITOB -> itob()
 
-                else -> error("Unknown bytecode ${code.toString(16)}")
+                else -> error("Unknown bytecode 0x${code.toString(16)}")
             }
         }
     }
@@ -229,6 +248,13 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
         push(args[index])
     }
 
+    private fun argLoadByte() = callStack.peek().apply {
+        //TODO check type
+        val index = decodeNextInt()
+        checkArgIndex(index)
+        push(args[index])
+    }
+
     private fun localLoadInt() = callStack.peek().apply {
         val index = decodeNextInt()
         checkLocalIndex(index)
@@ -238,6 +264,21 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
     private fun localStoreInt() = callStack.peek().apply {
         val index = decodeNextInt()
         checkLocalIndex(index)
+        locals[index] = pop()
+    }
+
+    private fun localLoadByte() = callStack.peek().apply {
+        val index = decodeNextInt()
+        checkLocalIndex(index)
+        val local = locals[index]
+        //TODO check type
+        push(local)
+    }
+
+    private fun localStoreByte() = callStack.peek().apply {
+        val index = decodeNextInt()
+        checkLocalIndex(index)
+        //TODO check type
         locals[index] = pop()
     }
 
@@ -360,6 +401,8 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
     private fun leqi() = compareIntExpr { left, right -> left <= right }
     private fun greati() = compareIntExpr { left, right -> left > right }
     private fun greqi() = compareIntExpr { left, right -> left >= right }
+    private fun eqi() = compareIntExpr { left, right -> left == right }
+    private fun neqi() = compareIntExpr { left, right -> left != right }
 
     private fun cmpic() {
         val left = pop<VMInteger>(PopIntExprOperandMsg).intValue
@@ -410,12 +453,11 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
     private fun cmpb() = binaryByteExpr { left, right -> compareValues(left, right) }
 
     private fun lessb() = compareByteExpr { left, right -> left < right }
-
     private fun leqb() = compareByteExpr { left, right -> left <= right }
-
     private fun greatb() = compareByteExpr { left, right -> left > right }
-
     private fun greqb() = compareByteExpr { left, right -> left >= right }
+    private fun eqb() = compareByteExpr { left, right -> left == right }
+    private fun neqb() = compareByteExpr { left, right -> left != right }
 
     private fun lnotb() = unaryByteExpr { if (it == 0.toByte()) 1 else 0 }
 

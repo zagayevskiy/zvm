@@ -45,7 +45,7 @@ class ByteCommandsGenerator(private val program: AstProgram) {
             is AstValInitialization -> Unit.also {
                 generate(statement.initializer)
                 val index = statement.valToInit.valIndex.op
-                commands.add(instructionByType(statement.type,
+                commands.add(instructionByType(statement.valToInit.type,
                         int = { LocalStoreInt.instruction(index) },
                         byte = { LocalStoreByte.instruction(index) }))
             }
@@ -155,8 +155,8 @@ class ByteCommandsGenerator(private val program: AstProgram) {
             is AstBitXor -> instructionByType(binary.type, IntXor, ByteXor)
             is AstBitShift.Left -> IntShl.instruction()
             is AstBitShift.Right -> IntShr.instruction()
-            is AstEquals -> instructionByType(binary.left.type, IntCmp, ByteCmp)
-            is AstNotEquals -> TODO()
+            is AstEquals -> instructionByType(binary.left.type, IntEq, ByteEq)
+            is AstNotEquals -> instructionByType(binary.left.type, IntNotEq, ByteNotEq)
             is AstLess -> instructionByType(binary.left.type, IntLess, ByteLess)
             is AstLessEq -> instructionByType(binary.left.type, IntLessEq, ByteLessEq)
             is AstGreat -> instructionByType(binary.left.type, IntGreater, ByteGreater)
@@ -230,7 +230,7 @@ private fun instructionByType(type: ZcType, int: () -> Command.Instruction, byte
     is ZcType.Array -> int()
     ZcType.Byte -> byte()
     ZcType.Boolean -> byte()
-    else -> error("Unwanted type")
+    else -> error("Unwanted type $type")
 }
 
 private fun instructionByType(type: ZcType, intOpcode: Opcode, byteOpcode: Opcode): Command.Instruction = when (type) {
@@ -238,7 +238,7 @@ private fun instructionByType(type: ZcType, intOpcode: Opcode, byteOpcode: Opcod
     is ZcType.Array -> intOpcode.instruction()
     ZcType.Byte -> byteOpcode.instruction()
     ZcType.Boolean -> byteOpcode.instruction()
-    else -> error("Unwanted type")
+    else -> error("Unwanted type $type")
 }
 
 private fun Opcode.instruction(vararg operands: Command.Instruction.Operand) = Command.Instruction(this, listOf(*operands))

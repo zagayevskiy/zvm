@@ -61,3 +61,16 @@ internal val zcReverseIntBits = """
         return result;
     }
 """.trimIndent()
+
+internal val zcIsPrime = """
+    fn main(i: int): bool {
+        var divider = 2;
+        val true = 0 == 0;
+        val false = 0 != 0;
+        for(;divider < i;) {
+            if ((i % divider) < 1) {return false;}
+            divider = divider + 1;
+        }
+        return true;
+    }
+""".trimIndent()

@@ -130,21 +130,15 @@ class GraphVizGenerator(private val ast: Ast) {
 fun main(args: Array<String>) {
     val text = """
 
-            fn main(argc: int): int {
-                val a = 1;
-                var b = 2 + argc;
-                var c: int;
-                var d: int = 3;
-                val e: int  = 4;
-                c = (a + b) - (d*e*e/d);
-                var q: bool;
-                if (q) {return d;} else {return e;}
-                for(var i = 0; i < 10; i = i + 1) {
-                    d = d + a;
-                    while(d >= i) d = d - i;
+            fn main(i: int): bool {
+                var divider = 2;
+                val true = 0 == 0;
+                val false = !true;
+                while(divider < i) {
+                    if ((i % divider) == 0) return true;
+                    divider = divider + 1;
                 }
-                q = !c;
-                return d;
+                return false;
             }
 
         """.trimIndent()
