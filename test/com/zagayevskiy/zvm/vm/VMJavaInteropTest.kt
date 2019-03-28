@@ -44,6 +44,9 @@ internal class VMJavaInteropTest(private val test: TstI) {
                         222, (-22).toByte(), OverloadDataClass(222, -22),
                         -333, 33.toByte(), "안녕하세요 낯선", OverloadDataClass(-333, 33, "안녕하세요 낯선"),
                         444, 44.toByte(), 100000, EmptyConstructorData(100000), OverloadDataClass(444, 44, "안녕하세요 낯선", EmptyConstructorData(100000))
+                )),
+                TstI(javaCall, listOf(100500.toStackEntry(), 77.toByte().toStackEntry()), listOf(
+                        77.toByte(), 35.toByte(), 3141592, 100500, DataClassFactory(100500), DataClassFactory(100500).create(77, 35, 3141592)
                 ))
         )
     }

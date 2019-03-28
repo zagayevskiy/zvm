@@ -110,6 +110,30 @@ internal val overloadedConstructor = """
 
 """.trimIndent()
 
+internal data class DataClassFactory(val i: Int) {
+    fun create(b: Byte, plus: Byte, minus: Int) = DataClass(i - minus, (b + plus).toByte(), "හෙලෝ ආගන්තුක")
+}
+internal val javaCall = """
+    .fun main: args = 2, locals = 1
+
+    aloadb 1
+    btoj
+    constb 35
+    btoj
+    consti 3141592
+    itoj
+
+    ${storeStringWithSize("create")}
+
+    aloadi 0
+    itoj
+    ${storeClassNameWithSize<DataClassFactory>()}
+    jnew 1
+
+    jcall 3
+
+""".trimIndent()
+
 private inline fun <reified T> storeClassNameWithSize(): String = storeStringWithSize(T::class.java.name)
 
 private fun storeStringWithSize(s: String): String {

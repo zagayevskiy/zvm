@@ -79,6 +79,7 @@ import com.zagayevskiy.zvm.util.extensions.*
 import com.zagayevskiy.zvm.vm.StackEntry.VMByte
 import com.zagayevskiy.zvm.vm.StackEntry.VMInteger
 import java.lang.reflect.Constructor
+import java.lang.reflect.Method
 import java.util.*
 
 
@@ -352,19 +353,20 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
     }
 
     private fun jcall(operandsCount: Int) {
+        val objectIndex = pop<VMInteger> { "obj name must be int" }.intValue
+        val methodName = popStringUtf8()
+
         val operands = (1..operandsCount)
                 .map { pop<VMInteger> { "arguments must be ints" }.intValue }
                 .asReversed()
                 .map { javaInterop.get(it) }
                 .toTypedArray()
-        val operandsClasses = operands.map { it?.javaClass }.toTypedArray()
+        val operandsClasses = operands.map { it?.javaClass as? Class<*> }.toTypedArray()
 
-        val methodName = popStringUtf8()
 
-        val objectIndex = pop<VMInteger> { "obj name must be int" }.intValue
         val obj = javaInterop.get(objectIndex)!!
         val clazz = obj.javaClass
-        val method = clazz.getMethod(methodName, *operandsClasses)
+        val method = clazz.findMethod(methodName, operandsClasses)
 
         val result = method(obj, *operands)
 
@@ -390,6 +392,13 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
         }
 
         push(javaInterop.put(newInstance).toStackEntry())
+    }
+
+    private fun Class<*>.findMethod(name: String, types: Array<Class<*>?>): Method {
+        return declaredMethods.first {
+            it.name == name &&
+                    it.parameterCount == types.size && (0 until types.size).all { index -> matchTypes(it.parameterTypes[index], types[index]) }
+        }
     }
 
     private fun Class<*>.findConstructor(types: Array<Class<*>?>): Constructor<*> {
