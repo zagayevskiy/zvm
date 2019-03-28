@@ -24,6 +24,9 @@ object Opcodes {
     //region casts opcodes
     const val ITOB: Byte = 0x30
     const val BTOI: Byte = 0x31
+    const val ITOJ: Byte = 0x32
+    const val BTOJ: Byte = 0x33
+    const val STOJ: Byte = 0x34
     //endregion
 
     //region int opcodes

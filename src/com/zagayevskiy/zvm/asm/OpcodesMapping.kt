@@ -87,7 +87,10 @@ object OpcodesMapping {
             Free to Opcodes.FREE,
 
             ByteToInt to Opcodes.BTOI,
-            IntToByte to Opcodes.ITOB
+            IntToByte to Opcodes.ITOB,
+            ByteToJava to Opcodes.BTOJ,
+            IntToJava to Opcodes.ITOJ,
+            StringToJava to Opcodes.STOJ
     )
 
     val opcodes = mapping.keys
@@ -164,7 +167,7 @@ object ByteGreater : OpcodeImpl(name = "greatb")
 object ByteGreaterEq : OpcodeImpl(name = "greqb")
 object ByteEq : OpcodeImpl(name = "eqb")
 object ByteNotEq : OpcodeImpl(name = "neqb")
-object ByteLogicalNot: OpcodeImpl(name = "lnotb")
+object ByteLogicalNot : OpcodeImpl(name = "lnotb")
 
 object Out : OpcodeImpl(name = "out")
 
@@ -173,3 +176,6 @@ object Free : OpcodeImpl(name = "free")
 
 object ByteToInt : OpcodeImpl(name = "btoi")
 object IntToByte : OpcodeImpl(name = "itob")
+object ByteToJava : OpcodeImpl(name = "btoj")
+object IntToJava : OpcodeImpl(name = "itoj")
+object StringToJava : OpcodeImpl(name = "stoj")

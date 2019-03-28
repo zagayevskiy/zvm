@@ -11,6 +11,7 @@ import com.zagayevskiy.zvm.common.Opcodes.ALOADI
 import com.zagayevskiy.zvm.common.Opcodes.ANDB
 import com.zagayevskiy.zvm.common.Opcodes.ANDI
 import com.zagayevskiy.zvm.common.Opcodes.BTOI
+import com.zagayevskiy.zvm.common.Opcodes.BTOJ
 import com.zagayevskiy.zvm.common.Opcodes.CALL
 import com.zagayevskiy.zvm.common.Opcodes.CMPB
 import com.zagayevskiy.zvm.common.Opcodes.CMPBC
@@ -31,6 +32,7 @@ import com.zagayevskiy.zvm.common.Opcodes.GREQB
 import com.zagayevskiy.zvm.common.Opcodes.GREQI
 import com.zagayevskiy.zvm.common.Opcodes.INCI
 import com.zagayevskiy.zvm.common.Opcodes.ITOB
+import com.zagayevskiy.zvm.common.Opcodes.ITOJ
 import com.zagayevskiy.zvm.common.Opcodes.JCALL
 import com.zagayevskiy.zvm.common.Opcodes.JDEL
 import com.zagayevskiy.zvm.common.Opcodes.JMP
@@ -68,6 +70,7 @@ import com.zagayevskiy.zvm.common.Opcodes.RET
 import com.zagayevskiy.zvm.common.Opcodes.RNDI
 import com.zagayevskiy.zvm.common.Opcodes.SHLI
 import com.zagayevskiy.zvm.common.Opcodes.SHRI
+import com.zagayevskiy.zvm.common.Opcodes.STOJ
 import com.zagayevskiy.zvm.common.Opcodes.SUBB
 import com.zagayevskiy.zvm.common.Opcodes.SUBI
 import com.zagayevskiy.zvm.common.Opcodes.XORB
@@ -75,6 +78,7 @@ import com.zagayevskiy.zvm.common.Opcodes.XORI
 import com.zagayevskiy.zvm.util.extensions.*
 import com.zagayevskiy.zvm.vm.StackEntry.VMByte
 import com.zagayevskiy.zvm.vm.StackEntry.VMInteger
+import java.lang.reflect.Constructor
 import java.util.*
 
 
@@ -233,6 +237,11 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
                 BTOI -> btoi()
                 ITOB -> itob()
 
+                BTOJ -> btoj()
+                ITOJ -> itoj()
+                STOJ -> stoj()
+
+
                 else -> error("Unknown bytecode 0x${code.toString(16)}")
             }
         }
@@ -363,24 +372,53 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
     }
 
     private fun jnew(operandsCount: Int) {
+        val className = popStringUtf8()
+
         val operands = (1..operandsCount)
                 .map { pop<VMInteger> { "arguments must be ints" }.intValue }
                 .asReversed()
                 .map { javaInterop.get(it) }
                 .toTypedArray()
 
-        val className = popStringUtf8()
-
         val clazz = Class.forName(className)
         val newInstance = if (operands.isEmpty()) {
             clazz.newInstance()
         } else {
-            val operandsClasses = operands.map { it?.javaClass }.toTypedArray()
-            val constructor = clazz.getDeclaredConstructor(*operandsClasses)
+            val operandsClasses = operands.map { it?.javaClass as? Class<*> }.toTypedArray()
+            val constructor = clazz.findConstructor(operandsClasses)
             constructor.newInstance(*operands)
         }
 
         push(javaInterop.put(newInstance).toStackEntry())
+    }
+
+    private fun Class<*>.findConstructor(types: Array<Class<*>?>): Constructor<*> {
+        return declaredConstructors.first {
+            val paramsTypes = it.parameterTypes
+            it.parameterCount == types.size && (0 until types.size).all { index -> matchTypes(paramsTypes[index], types[index]) }
+        }
+    }
+
+    private fun matchTypes(need: Class<*>, got: Class<*>?): Boolean {
+        return when {
+            got == null -> !need.isPrimitive
+            need.isPrimitive -> matchPrimitiveTypes(need, got)
+            else -> need.isAssignableFrom(got)
+        }
+    }
+
+    private fun matchPrimitiveTypes(need: Class<*>, got: Class<*>): Boolean {
+        return when (need) {
+            Int::class.javaPrimitiveType -> java.lang.Integer::class.java == got
+            Byte::class.javaPrimitiveType -> java.lang.Byte::class.java == got
+            Boolean::class.javaPrimitiveType -> java.lang.Boolean::class.java == got
+            Long::class.javaPrimitiveType -> java.lang.Long::class.java == got
+            Float::class.javaPrimitiveType -> java.lang.Float::class.java == got
+            Double::class.javaPrimitiveType -> java.lang.Double::class.java == got
+            Char::class.javaPrimitiveType -> java.lang.Character::class.java == got
+            Short::class.javaPrimitiveType -> java.lang.Short::class.java == got
+            else -> false
+        }
     }
 
     private fun jdel() {
@@ -389,8 +427,8 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
     }
 
     private fun popStringUtf8(): String {
-        val length = pop<VMInteger> { "string length must be int" }.intValue
         val address = pop<VMInteger> { "string must be int" }.intValue
+        val length = pop<VMInteger> { "string length must be int" }.intValue
         val buffer = ByteArray(length)
         heap.copyOut(source = address, count = length, destination = buffer)
         return String(buffer, Charsets.UTF_8)
@@ -585,6 +623,17 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
     private inline fun <reified F : StackEntry, T : StackEntry> cast(convert: (F) -> T) {
         val value = pop<F> { "Cast error: $it is not ${F::class.simpleName}" }
         push(convert(value))
+    }
+
+    private fun btoj() = castToJava<VMByte> { it.byteValue }
+    private fun itoj() = castToJava<VMInteger> { it.intValue }
+    private fun stoj() {
+        push(javaInterop.put(popStringUtf8()).toStackEntry())
+    }
+
+    private inline fun <reified F : StackEntry> castToJava(convert: (F) -> Any) {
+        val value = pop<F> { "Java cast error: $it is not ${F::class.simpleName}" }
+        push(javaInterop.put(convert(value)).toStackEntry())
     }
 
     //endregion
