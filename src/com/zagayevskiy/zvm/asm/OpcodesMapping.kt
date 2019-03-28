@@ -16,6 +16,10 @@ object OpcodesMapping {
             Call to Opcodes.CALL,
             Ret to Opcodes.RET,
 
+            JavaCall to Opcodes.JCALL,
+            JavaNew to Opcodes.JNEW,
+            JavaDelete to Opcodes.JDEL,
+
             Push to Opcodes.PUSH,
             Pop to Opcodes.POP,
             Dup to Opcodes.DUP,
@@ -98,6 +102,10 @@ object JumpNegative : OpcodeImpl(name = "jneg", operandCount = 1)
 
 object Ret : OpcodeImpl(name = "ret")
 object Call : OpcodeImpl(name = "call", operandCount = 1)
+
+object JavaCall : OpcodeImpl(name = "jcall", operandCount = 1)
+object JavaNew : OpcodeImpl(name = "jnew", operandCount = 1)
+object JavaDelete : OpcodeImpl(name = "jdel")
 
 object Push : OpcodeImpl(name = "push", operandCount = 1)
 object Pop : OpcodeImpl(name = "pop")

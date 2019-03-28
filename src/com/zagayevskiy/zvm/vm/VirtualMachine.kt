@@ -31,8 +31,11 @@ import com.zagayevskiy.zvm.common.Opcodes.GREQB
 import com.zagayevskiy.zvm.common.Opcodes.GREQI
 import com.zagayevskiy.zvm.common.Opcodes.INCI
 import com.zagayevskiy.zvm.common.Opcodes.ITOB
+import com.zagayevskiy.zvm.common.Opcodes.JCALL
+import com.zagayevskiy.zvm.common.Opcodes.JDEL
 import com.zagayevskiy.zvm.common.Opcodes.JMP
 import com.zagayevskiy.zvm.common.Opcodes.JNEG
+import com.zagayevskiy.zvm.common.Opcodes.JNEW
 import com.zagayevskiy.zvm.common.Opcodes.JNZ
 import com.zagayevskiy.zvm.common.Opcodes.JPOS
 import com.zagayevskiy.zvm.common.Opcodes.JZ
@@ -90,7 +93,37 @@ sealed class StackEntry {
 fun Int.toStackEntry() = VMInteger(this)
 fun Byte.toStackEntry() = VMByte(this)
 
-class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
+interface JavaInterop {
+    fun put(obj: Any?): Int
+    fun get(index: Int): Any?
+    fun remove(index: Int)
+}
+
+class SimpleJavaInterop : JavaInterop {
+
+    private val javaObjects = mutableMapOf<Int, Any?>()
+    private var javaObjectIndex = 1
+
+    override fun put(obj: Any?): Int {
+        val index = javaObjectIndex++
+        javaObjects[index] = obj
+        return index
+    }
+
+    override fun get(index: Int): Any? = javaObjects[index]
+
+    override fun remove(index: Int) {
+        javaObjects[index] = null
+    }
+}
+
+private object DisabledJavaInterop : JavaInterop {
+    override fun put(obj: Any?): Int = 0
+    override fun get(index: Int): Any? = null
+    override fun remove(index: Int) = Unit
+}
+
+class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaInterop: JavaInterop = DisabledJavaInterop) {
     private val functions = info.functions
     private val mainIndex = info.mainIndex
     private val bytecode = info.bytecode
@@ -102,6 +135,7 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
 
     private val heap: Memory = MemoryBitTable(heapSize)
     private val random = Random()
+
 
     fun run(args: List<StackEntry>): StackEntry {
         args.forEach { push(it) }
@@ -120,6 +154,10 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
                     if (callStack.size == 1) return
                     ret()
                 }
+                JCALL -> jcall(decodeNextInt())
+                JNEW -> jnew(decodeNextInt())
+                JDEL -> jdel()
+
                 JMP -> jump(decodeNextInt())
                 JZ -> jz()
                 JNZ -> jnz()
@@ -302,6 +340,60 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0) {
         val frame = callStack.pop()
         ip = frame.returnAddress
         log("ret (${peek()}) to $ip")
+    }
+
+    private fun jcall(operandsCount: Int) {
+        val operands = (1..operandsCount)
+                .map { pop<VMInteger> { "arguments must be ints" }.intValue }
+                .asReversed()
+                .map { javaInterop.get(it) }
+                .toTypedArray()
+        val operandsClasses = operands.map { it?.javaClass }.toTypedArray()
+
+        val methodName = popStringUtf8()
+
+        val objectIndex = pop<VMInteger> { "obj name must be int" }.intValue
+        val obj = javaInterop.get(objectIndex)!!
+        val clazz = obj.javaClass
+        val method = clazz.getMethod(methodName, *operandsClasses)
+
+        val result = method(obj, *operands)
+
+        push(javaInterop.put(result).toStackEntry())
+    }
+
+    private fun jnew(operandsCount: Int) {
+        val operands = (1..operandsCount)
+                .map { pop<VMInteger> { "arguments must be ints" }.intValue }
+                .asReversed()
+                .map { javaInterop.get(it) }
+                .toTypedArray()
+
+        val className = popStringUtf8()
+
+        val clazz = Class.forName(className)
+        val newInstance = if (operands.isEmpty()) {
+            clazz.newInstance()
+        } else {
+            val operandsClasses = operands.map { it?.javaClass }.toTypedArray()
+            val constructor = clazz.getDeclaredConstructor(*operandsClasses)
+            constructor.newInstance(*operands)
+        }
+
+        push(javaInterop.put(newInstance).toStackEntry())
+    }
+
+    private fun jdel() {
+        val deleteIndex = pop<VMInteger> { "del index must be int" }.intValue
+        javaInterop.remove(deleteIndex)
+    }
+
+    private fun popStringUtf8(): String {
+        val length = pop<VMInteger> { "string length must be int" }.intValue
+        val address = pop<VMInteger> { "string must be int" }.intValue
+        val buffer = ByteArray(length)
+        heap.copyOut(source = address, count = length, destination = buffer)
+        return String(buffer, Charsets.UTF_8)
     }
 
     private fun jz() = conditionalJump { value ->

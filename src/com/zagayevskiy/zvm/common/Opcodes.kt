@@ -11,6 +11,12 @@ object Opcodes {
     const val JNEG: Byte = 0x16
     //endregion
 
+    //region java interop opcodes
+    const val JCALL: Byte = 0x1A
+    const val JNEW: Byte = 0x1B
+    const val JDEL: Byte = 0x1C
+    //endregion
+
     const val PUSH: Byte = 0x20
     const val POP: Byte = 0x21
     const val DUP: Byte = 0x22
