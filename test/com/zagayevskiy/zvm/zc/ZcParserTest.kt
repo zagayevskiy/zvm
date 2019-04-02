@@ -40,6 +40,7 @@ internal class ZcParserTest(private val test: TestData) {
         fun data() = listOf(
                 "fn f(){}" expect program(fn("f", emptyList(), body = AstBlock.Empty)),
                 "fn main(i: int) {}" expect program(fn("main", args = listOf(Arg("i") withType "int"), body = AstBlock.Empty)),
+                """fn f(){ asm{ "hello, asm!" } }""" expect program(fn("f", emptyList(), body = AstBlock(listOf(AstAsmBlock("hello, asm!"))))),
                 "fn g(): int {}" expect program(fn("g", args = emptyList(), returnType = "int".type, body = AstBlock.Empty)),
                 "fn k(){ 1 + 2; }" expect program(fn("k", args = emptyList(), body = AstBlock(listOf(AstExpressionStatement(
                         AstSum(1.const, 2.const)))))),

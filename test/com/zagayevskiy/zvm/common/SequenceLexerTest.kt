@@ -128,7 +128,7 @@ internal class SequenceLexerTest(private val test: TestData) {
                 idStart = { isLetter() },
                 idPart = { isLetterOrDigit() || this == '-' },
                 eolAsToken = test.eolAsToken,
-                stringConstValidator = { it.takeIf { limiter -> limiter == '%' || limiter == '"' } })
+                stringConstDelimitator = { it.takeIf { limiter -> limiter == '%' || limiter == '"' } })
         val actual = lexer.toSequence().toList()
         assertEquals(actual, test.expected)
     }

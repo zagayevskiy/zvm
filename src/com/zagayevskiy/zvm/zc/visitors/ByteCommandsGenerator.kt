@@ -41,6 +41,7 @@ class ByteCommandsGenerator(private val program: AstProgram) {
     private fun generate(statement: AstStatement) {
         return when (statement) {
             is AstBlock -> statement.statements.forEach { child -> generate(child) }
+            is AstAsmBlock -> generate(statement)
             is AstVarDecl, is AstValDecl -> error("Variables ($statement) declarations must be resolved before.")
             is AstValInitialization -> Unit.also {
                 generate(statement.initializer)
@@ -61,6 +62,10 @@ class ByteCommandsGenerator(private val program: AstProgram) {
                 commands.add(Pop.instruction())
             }
         }
+    }
+
+    private fun generate(asm: AstAsmBlock) {
+        TODO("Asm insertion not implemented yet")
     }
 
     private fun generate(loop: AstForLoop) {

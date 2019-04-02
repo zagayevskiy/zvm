@@ -20,16 +20,16 @@ object ZcToken {
     object Slash : Token
     object Percent : Token
 
-    object Disjunction: Token
-    object Conjunction: Token
-    object LogicalNot: Token
+    object Disjunction : Token
+    object Conjunction : Token
+    object LogicalNot : Token
 
-    object BitOr: Token
-    object BitXor: Token
-    object BitAnd: Token
-    object BitNot: Token
-    object BitShiftLeft: Token
-    object BitShiftRight: Token
+    object BitOr : Token
+    object BitXor : Token
+    object BitAnd : Token
+    object BitNot : Token
+    object BitShiftLeft : Token
+    object BitShiftRight : Token
 
     object Equals : Token
     object NotEquals : Token
@@ -45,6 +45,7 @@ object ZcToken {
     object CurlyBracketOpen : Token
     object CurlyBracketClose : Token
 
+    object Asm : Token
     object Struct : Token
     object Fun : Token
     object Var : Token
@@ -52,9 +53,9 @@ object ZcToken {
     object For : Token
     object While : Token
     object Return : Token
-    object If: Token
-    object Else: Token
-    object When: Token
+    object If : Token
+    object Else : Token
+    object When : Token
 }
 
 private val symbolsMap = mapOf(
@@ -100,6 +101,7 @@ private val symbolsMap = mapOf(
 )
 
 private val keywordsMap = mapOf(
+        "asm" to ZcToken.Asm,
         "struct" to ZcToken.Struct,
         "fn" to ZcToken.Fun,
         "var" to ZcToken.Var,
@@ -118,5 +120,6 @@ class ZcSequenceLexer(sequence: Sequence<Char>) : Lexer by SequenceLexer(
         keywords = keywordsMap,
         idStart = { isLetter() },
         idPart = { isLetterOrDigit() || this == '_' },
-        eolAsToken = false
+        eolAsToken = false,
+        stringConstDelimitator = { it.takeIf { limiter -> limiter == '"' } }
 )

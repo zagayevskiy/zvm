@@ -24,7 +24,7 @@ class SequenceLexer(private val sequence: Sequence<Char>,
                     private val idStart: Char.() -> Boolean = { isJavaIdentifierStart() },
                     private val idPart: Char.() -> Boolean = { isJavaIdentifierPart() },
                     private val eolAsToken: Boolean = true,
-                    private val stringConstValidator: (Char) -> Char? = { null }) : Lexer {
+                    private val stringConstDelimitator: (Char) -> Char? = { null }) : Lexer {
 
     override var currentLine = 0
 
@@ -75,7 +75,7 @@ class SequenceLexer(private val sequence: Sequence<Char>,
             return keywordOrId(builder.toString())
         }
 
-        val stringEnd = stringConstValidator(current)
+        val stringEnd = stringConstDelimitator(current)
         if (stringEnd != null) {
             val builder = StringBuilder()
             current = nextChar() ?: error("""Unexpected eof, string constant not finished. Has "$builder"""")

@@ -180,7 +180,21 @@ class ZcParser(private val lexer: Lexer) {
     }
 
     // statement ::= variable_declaration | loop | function_return_statement | expression
-    private fun statement(): AstStatement? = block() ?: variableDeclStatement() ?: loopStatement() ?: ifElseStatement() ?: functionReturnStatement() ?: expressionStatement()
+    private fun statement(): AstStatement? = block()
+            ?: variableDeclStatement()
+            ?: loopStatement()
+            ?: ifElseStatement()
+            ?: functionReturnStatement()
+            ?: expressionStatement()
+            ?: asmStatement()
+
+    private fun asmStatement(): AstAsmBlock? {
+        maybe<ZcToken.Asm>() ?: return NotMatched
+        expect<ZcToken.CurlyBracketOpen>()
+        val asmBody = expect<Token.StringConst>()
+        expect<ZcToken.CurlyBracketClose>()
+        return AstAsmBlock(asmBody.value)
+    }
 
     private fun loopStatement() = forLoop() ?: whileLoop()
 

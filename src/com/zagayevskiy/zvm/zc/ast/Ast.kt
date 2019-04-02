@@ -78,6 +78,8 @@ class AstFunctionReference(val function: AstDefinedFunction) : AstExpr(type = fu
 
 sealed class AstStatement : Ast(type = ZcType.Void)
 
+data class AstAsmBlock(val body: String): AstStatement()
+
 class AstBlock(statements: List<AstStatement> = emptyList()) : AstStatement() {
     val statements by childList(statements)
 
