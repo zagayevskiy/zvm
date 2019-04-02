@@ -1,5 +1,7 @@
 package com.zagayevskiy.zvm.zc
 
+import com.zagayevskiy.zvm.vm.asmFibonacciIterativeFunctionBody
+
 //run with one int argument (n) and get n's Fibonacci number
 internal val zcFibonacciIterative = """
     fn main(n: int): int {
@@ -12,6 +14,21 @@ internal val zcFibonacciIterative = """
             currentStep = temp;
         }
         return currentStep;
+    }
+""".trimIndent()
+
+internal val zcFibonacciIterativeByAsmInsert = """
+    fn fibonacciAsm(n: int): int {
+        var x: int = 0;
+        var y: int = 0;
+        var z: int = 0;
+        asm {"
+            $asmFibonacciIterativeFunctionBody
+        "}
+    }
+
+    fn main(n: int): int {
+        return fibonacciAsm(n);
     }
 """.trimIndent()
 
@@ -73,4 +90,69 @@ internal val zcIsPrime = """
         }
         return true;
     }
+""".trimIndent()
+
+//run with two arguments (int) - size of array and multiplier. Allocate int[size] array, fill it with index*multiplier and then sum all elements/   
+internal val zcSumArrayOverAsmInsert = """
+    ${intArrayAsmInserts()}
+
+    fn main(size: int, multiplier: int): int {
+        val array = createIntArray(size);
+        for(var i = 0; i < size; i = i + 1) {
+            put(array, i, i*multiplier);
+        }
+        var result = 0;
+        for(var j = 0; j < size; j = j + 1) {
+            result = result + get(array, j);
+        }
+        free(array);
+
+        return result;
+    }
+""".trimIndent()
+
+private fun intArrayAsmInserts() = """
+    fn createIntArray(size: int): int {
+        asm{"
+            aloadi 0
+            consti 4
+            muli
+            alloc
+            ret
+        "}
+    }
+
+    fn get(array: int, index: int): int {
+        asm{"
+            aloadi 0
+            aloadi 1
+            consti 4
+            muli
+            mloadi
+            ret
+        "}
+    }
+
+    fn put(array: int, index: int, value: int): int {
+        asm{"
+            aloadi 0
+            aloadi 1
+            consti 4
+            muli
+            aloadi 2
+            mstori
+            consti 0
+            ret
+        "}
+    }
+
+    fn free(array: int): int {
+        asm{"
+            aloadi 0
+            free
+            consti 0
+            ret
+        "}
+    }
+
 """.trimIndent()

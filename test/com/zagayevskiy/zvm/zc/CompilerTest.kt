@@ -6,6 +6,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import org.omg.CORBA.INTERNAL
 
 internal data class CompilerTestData(val name: String, val text: String, val expectedResult: StackEntry, val runArgs: List<StackEntry>, val heapSize: Int)
 
@@ -16,6 +17,15 @@ private fun entries(vararg values: Int) = values.map { it.toStackEntry() }
 private val True = 1.toByte().toStackEntry()
 private val False = 0.toByte().toStackEntry()
 
+private fun arraySum(size: Int, multiplier: Int) = (0 until size).map { it * multiplier }.reduce { acc, i -> acc + i }
+
+private fun testArraySumOverAsmInsert(size: Int, multiplier: Int) = test(
+        "array($size, $multiplier)",
+        zcSumArrayOverAsmInsert,
+        entries(size, multiplier),
+        arraySum(size, multiplier).toStackEntry(),
+        heapSize = size * 4 + 4)
+
 @RunWith(Parameterized::class)
 internal class CompilerTest(private val test: CompilerTestData) {
     companion object {
@@ -23,6 +33,9 @@ internal class CompilerTest(private val test: CompilerTestData) {
         @JvmStatic
         @Parameterized.Parameters(name = "{index}: {0}")
         fun data() = listOf(
+                testArraySumOverAsmInsert(10, 123),
+                testArraySumOverAsmInsert(100, 123),
+                testArraySumOverAsmInsert(1000, 213456),
                 test("f(-100)", zcFibonacciIterative, entries(-100), 1.toStackEntry()),
                 test("f(1)", zcFibonacciIterative, entries(1), 1.toStackEntry()),
                 test("f(5)", zcFibonacciIterative, entries(5), 5.toStackEntry()),
@@ -30,6 +43,14 @@ internal class CompilerTest(private val test: CompilerTestData) {
                 test("f(12)", zcFibonacciIterative, entries(12), 144.toStackEntry()),
                 test("f(33)", zcFibonacciIterative, entries(33), 3524578.toStackEntry()),
                 test("f(41)", zcFibonacciIterative, entries(41), 165580141.toStackEntry()),
+
+                test("f_asm(-100)", zcFibonacciIterativeByAsmInsert, entries(-100), 1.toStackEntry()),
+                test("f_asm(1)", zcFibonacciIterativeByAsmInsert, entries(1), 1.toStackEntry()),
+                test("f_asm(5)", zcFibonacciIterativeByAsmInsert, entries(5), 5.toStackEntry()),
+                test("f_asm(9)", zcFibonacciIterativeByAsmInsert, entries(9), 34.toStackEntry()),
+                test("f_asm(12)", zcFibonacciIterativeByAsmInsert, entries(12), 144.toStackEntry()),
+                test("f_asm(33)", zcFibonacciIterativeByAsmInsert, entries(33), 3524578.toStackEntry()),
+                test("f_asm(41)", zcFibonacciIterativeByAsmInsert, entries(41), 165580141.toStackEntry()),
 
                 test("f_rec(-100)", zcFibonacciRecursive, entries(-100), 1.toStackEntry()),
                 test("f_rec(1)", zcFibonacciRecursive, entries(1), 1.toStackEntry()),
@@ -60,7 +81,7 @@ internal class CompilerTest(private val test: CompilerTestData) {
                 test("isPrime(5)", zcIsPrime, entries(5), True),
                 test("isPrime(35)", zcIsPrime, entries(35), False),
                 test("isPrime(104729)", zcIsPrime, entries(104729), True),
-                test("isPrime(7919*7919)", zcIsPrime, entries(7919*7919), False)
+                test("isPrime(7919*7919)", zcIsPrime, entries(7919 * 7919), False)
         )
 
     }

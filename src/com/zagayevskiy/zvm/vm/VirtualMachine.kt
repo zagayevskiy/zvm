@@ -136,7 +136,7 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
     private val mainIndex = info.mainIndex
     private val bytecode = info.bytecode
 
-    private val globals = (0..info.globalsCount).map { VMNull as StackEntry }.toMutableList()
+    private val globals = (0 until info.globalsCount).map { VMNull as StackEntry }.toMutableList()
 
     private var ip: Int = functions[mainIndex].address
 
@@ -151,7 +151,6 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
         args.forEach { push(it) }
         call(mainIndex)
         loop()
-        log("Program finished")
         return pop()
     }
 
@@ -345,19 +344,15 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
     //region control flow
     private fun call(functionIndex: Int) {
         val function = functions[functionIndex]
-        log("call from $ip function #$functionIndex: $function")
         val args = (0 until function.args).map { pop() }.reversed()
         val locals = (0 until function.locals).map { VMNull }.toMutableList<StackEntry>()
         callStack.push(StackFrame(args, locals, ip))
         ip = function.address
-        log("args = $args")
-        log("locals = $locals")
     }
 
     private fun ret() {
         val frame = callStack.pop()
         ip = frame.returnAddress
-        log("ret (${peek()}) to $ip")
     }
 
     private fun jcall(operandsCount: Int) {

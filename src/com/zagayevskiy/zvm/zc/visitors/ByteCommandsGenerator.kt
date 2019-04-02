@@ -5,7 +5,7 @@ import com.zagayevskiy.zvm.zc.ZcToken
 import com.zagayevskiy.zvm.zc.ast.*
 import com.zagayevskiy.zvm.zc.types.ZcType
 
-class ByteCommandsGenerator(private val program: AstProgram) {
+class ByteCommandsGenerator(private val program: AstProgram, private val asmParserFactory: (String) -> AsmParser) {
 
     private val commands = mutableListOf<Command>()
     private var nextId: Int = 0
@@ -65,7 +65,13 @@ class ByteCommandsGenerator(private val program: AstProgram) {
     }
 
     private fun generate(asm: AstAsmBlock) {
-        TODO("Asm insertion not implemented yet")
+        val asmParser = asmParserFactory(asm.body)
+        val asmParseResult = asmParser.program()
+        val asmCommands = when(asmParseResult) {
+            is ParseResult.Failure -> error("Failed to insert asm ${asmParseResult.message}")
+            is ParseResult.Success -> asmParseResult.commands
+        }
+        commands.addAll(asmCommands)
     }
 
     private fun generate(loop: AstForLoop) {

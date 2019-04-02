@@ -46,9 +46,8 @@ internal val asmMulByRecursiveAdd = """
 
 """.trimIndent()
 
-//run with one int argument (n) and get n's Fibonacci number
-internal val asmFibonacciIterative = """
-    .fun main: args=1, locals=3
+//Function body. Expects 1 arg and 3 locals declared. Return n's Fibonacci number
+internal val asmFibonacciIterativeFunctionBody = """
     aloadi 0
     cmpic 2
     lstorb 0
@@ -85,6 +84,12 @@ internal val asmFibonacciIterative = """
     ret
 """.trimIndent()
 
+//run with one int argument (n) and get n's Fibonacci number
+internal val asmFibonacciIterative = """
+    .fun main: args=1, locals=3
+    $asmFibonacciIterativeFunctionBody
+""".trimIndent()
+
 //run with one int argument (n) and get n's Fibonacci number (computed by recursive way)
 internal val asmFibonacciRecursive = """
 
@@ -114,6 +119,7 @@ internal val asmFibonacciRecursive = """
     ret
 
 """.trimIndent()
+
 
 //run with one int argument(n) and get n! (computed by iterative way)
 internal val asmFactorialIterative = """
