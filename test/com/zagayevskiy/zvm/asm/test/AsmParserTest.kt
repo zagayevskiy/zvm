@@ -13,6 +13,8 @@ internal class TestData(val text: String, val expected: ParseResult)
 
 private infix fun String.expects(expected: List<Command>) = TestData(this, ParseResult.Success(expected))
 private fun String.func(args: Int = 0, locals: Int = 0) = Func(this, args, locals)
+private val Int.globals
+    get() = Command.GlobalsDefinition(this)
 private val Int.op
     get() = Operand.Integer(this)
 private val String.id
@@ -61,12 +63,38 @@ internal class AsmParserTest(private val test: TestData) {
                 ),
 
                 """
+                    globals = 100
+                    .fun main
+                    ret
+                """.trimIndent() expects listOf(
+                        100.globals,
+                        "main".func(),
+                        RetT.instr()
+                ),
+
+                """
                     .fun f: args = 3
                     iload1 0
                     iload2 1, 2
                     sum 3
                     ret
                 """.trimIndent() expects listOf(
+                        "f".func(args = 3),
+                        ILoad1T.instr(0.op),
+                        ILoad2T.instr(1.op, 2.op),
+                        SumT.instr(3.op),
+                        RetT.instr()
+                ),
+
+                """
+                    globals = 17
+                    .fun f: args = 3
+                    iload1 0
+                    iload2 1, 2
+                    sum 3
+                    ret
+                """.trimIndent() expects listOf(
+                        17.globals,
                         "f".func(args = 3),
                         ILoad1T.instr(0.op),
                         ILoad2T.instr(1.op, 2.op),

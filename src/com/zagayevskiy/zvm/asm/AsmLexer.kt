@@ -10,9 +10,10 @@ object AsmToken {
     object Assign : Token
     object Colon : Token
     object Comma : Token
+    object Minus : Token
     object Fun : Token
     object Locals : Token
-    object Minus : Token
+    object Globals: Token
 }
 
 private val symbolsMap = mapOf(
@@ -26,7 +27,8 @@ private val symbolsMap = mapOf(
 private val keywordsMap = mapOf(
         ".fun" to AsmToken.Fun,
         "args" to AsmToken.Args,
-        "locals" to AsmToken.Locals
+        "locals" to AsmToken.Locals,
+        "globals" to AsmToken.Globals
 )
 
 class AsmSequenceLexer(sequence: Sequence<Char>) : Lexer by SequenceLexer(

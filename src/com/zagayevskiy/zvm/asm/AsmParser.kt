@@ -5,6 +5,7 @@ import com.zagayevskiy.zvm.asm.AsmToken.Arrow
 import com.zagayevskiy.zvm.asm.AsmToken.Assign
 import com.zagayevskiy.zvm.asm.AsmToken.Comma
 import com.zagayevskiy.zvm.asm.AsmToken.Fun
+import com.zagayevskiy.zvm.asm.AsmToken.Globals
 import com.zagayevskiy.zvm.asm.AsmToken.Locals
 import com.zagayevskiy.zvm.asm.AsmToken.Minus
 import com.zagayevskiy.zvm.common.Lexer
@@ -14,6 +15,7 @@ import com.zagayevskiy.zvm.asm.Command.Instruction.Operand
 import com.zagayevskiy.zvm.asm.Command.*
 
 sealed class Command {
+    data class GlobalsDefinition(val count: Int) : Command()
     data class Func(val name: String, val args: Int = 0, val locals: Int = 0) : Command()
     data class Label(val label: String) : Command()
     data class Instruction(val opcode: Opcode, val operands: List<Operand> = emptyList()) : Command() {
@@ -67,7 +69,17 @@ class AsmParser(private val lexer: Lexer, supportedOpcodes: Iterable<Opcode>) {
         return ParseResult.Success(commands)
     }
 
-    private fun command() = (func() ?: label() ?: instruction())?.also { command ->
+    private fun globals(): GlobalsDefinition? {
+        if (token != Globals) return null
+        nextToken()
+        if (token != Assign) error()
+        nextToken()
+        val count = (token as? Integer) ?: error()
+        nextToken()
+        return GlobalsDefinition(count.value)
+    }
+
+    private fun command() = (globals() ?: func() ?: label() ?: instruction())?.also { command ->
         commands.add(command)
     }
 

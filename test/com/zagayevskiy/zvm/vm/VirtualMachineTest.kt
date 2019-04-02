@@ -63,7 +63,9 @@ internal class VirtualMachineProgramsTest(private val test: Tst) {
                 Tst("rmem 0x0a1b2c3d", asmReverseIntBytesViaMemory, entries(0x0a1b2c3d), 0x3d2c1b0a.toStackEntry(), 4),
                 Tst("rmem 0b01010101_11110000_00001111_00110011", asmReverseIntBytesViaMemory, entries(0b01010101_11110000_00001111_00110011), 0b00110011_00001111_11110000_01010101.toStackEntry(), 4),
 
-                Tst("rev 0b01010101_11110000_00001111_11001100", asmReverseIntBits, entries(0b01010101_11110000_11100110_11001100), 0b00110011_01100111_00001111_10101010.toStackEntry())
+                Tst("rev 0b01010101_11110000_00001111_11001100", asmReverseIntBits, entries(0b01010101_11110000_11100110_11001100), 0b00110011_01100111_00001111_10101010.toStackEntry()),
+
+                Tst("globals", countersInGlobals, emptyList(), ((1 + 1 * 3) * (1 + 2 * 3)).toStackEntry())
         )
     }
 

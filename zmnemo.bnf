@@ -1,5 +1,7 @@
 program ::= command {EOL{EOL} command}
-command ::= (fun | label | instruction)
+command ::= (globals | fun | label | instruction)
+
+globals ::= "globals" "=" natural
 
 fun ::= ".fun" identifier [":" (fun_args["," fun_locals])|fun_locals]
 fun_args ::= "args" "=" natural

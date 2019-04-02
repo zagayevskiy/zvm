@@ -345,3 +345,59 @@ internal val asmReverseIntBits = """
 
     ret
 """.trimIndent()
+
+internal val countersInGlobals = """
+    globals = 2
+
+    .fun counterInt0
+    gloadi 0
+    inci
+    gstori 0
+
+    consti 0
+    ret
+
+    .fun counterByte1
+    gloadb 1
+    constb 2
+    addb
+    gstorb 1
+
+    consti 0
+    ret
+
+    .fun main
+    call init
+    pop
+
+    call counterInt0
+    call counterByte1
+    pop
+    pop
+
+    call counterInt0
+    call counterByte1
+    pop
+    pop
+
+    call counterInt0
+    pop
+    call counterByte1
+    pop
+
+    gloadb 1
+    btoi
+    gloadi 0
+    muli
+    ret
+
+    .fun init
+    constb 1
+    consti 1
+    gstori 0
+    gstorb 1
+
+    consti 0
+    ret
+
+""".trimIndent()

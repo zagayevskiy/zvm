@@ -25,6 +25,8 @@ object OpcodesMapping {
             Dup to Opcodes.DUP,
 
 
+            GlobalLoadInt to Opcodes.GLOADI,
+            GlobalStoreInt to Opcodes.GSTORI,
             ArgLoadInt to Opcodes.ALOADI,
             LocalStoreInt to Opcodes.LSTORI,
             LocalLoadInt to Opcodes.LLOADI,
@@ -55,6 +57,8 @@ object OpcodesMapping {
             IntNotEq to Opcodes.NEQI,
             RandomInt to Opcodes.RNDI,
 
+            GlobalLoadByte to Opcodes.GLOADB,
+            GlobalStoreByte to Opcodes.GSTORB,
             ArgLoadByte to Opcodes.ALOADB,
             LocalStoreByte to Opcodes.LSTORB,
             LocalLoadByte to Opcodes.LLOADB,
@@ -114,6 +118,8 @@ object Push : OpcodeImpl(name = "push", operandCount = 1)
 object Pop : OpcodeImpl(name = "pop")
 object Dup : OpcodeImpl(name = "dup")
 
+object GlobalLoadInt: OpcodeImpl(name = "gloadi", operandCount = 1)
+object GlobalStoreInt: OpcodeImpl(name = "gstori", operandCount = 1)
 object ArgLoadInt : OpcodeImpl(name = "aloadi", operandCount = 1)
 object LocalStoreInt : OpcodeImpl(name = "lstori", operandCount = 1)
 object LocalLoadInt : OpcodeImpl(name = "lloadi", operandCount = 1)
@@ -144,6 +150,8 @@ object IntEq : OpcodeImpl(name = "eqi")
 object IntNotEq : OpcodeImpl(name = "neqi")
 object RandomInt : OpcodeImpl(name = "rndi")
 
+object GlobalLoadByte: OpcodeImpl(name = "gloadb", operandCount = 1)
+object GlobalStoreByte: OpcodeImpl(name = "gstorb", operandCount = 1)
 object ArgLoadByte : OpcodeImpl(name = "aloadb", operandCount = 1)
 object LocalStoreByte : OpcodeImpl(name = "lstorb", operandCount = 1)
 object LocalLoadByte : OpcodeImpl(name = "lloadb", operandCount = 1)

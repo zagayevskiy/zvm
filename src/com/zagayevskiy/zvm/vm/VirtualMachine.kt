@@ -26,10 +26,14 @@ import com.zagayevskiy.zvm.common.Opcodes.DUP
 import com.zagayevskiy.zvm.common.Opcodes.EQB
 import com.zagayevskiy.zvm.common.Opcodes.EQI
 import com.zagayevskiy.zvm.common.Opcodes.FREE
+import com.zagayevskiy.zvm.common.Opcodes.GLOADB
+import com.zagayevskiy.zvm.common.Opcodes.GLOADI
 import com.zagayevskiy.zvm.common.Opcodes.GREATB
 import com.zagayevskiy.zvm.common.Opcodes.GREATI
 import com.zagayevskiy.zvm.common.Opcodes.GREQB
 import com.zagayevskiy.zvm.common.Opcodes.GREQI
+import com.zagayevskiy.zvm.common.Opcodes.GSTORB
+import com.zagayevskiy.zvm.common.Opcodes.GSTORI
 import com.zagayevskiy.zvm.common.Opcodes.INCI
 import com.zagayevskiy.zvm.common.Opcodes.ITOB
 import com.zagayevskiy.zvm.common.Opcodes.ITOJ
@@ -76,8 +80,7 @@ import com.zagayevskiy.zvm.common.Opcodes.SUBI
 import com.zagayevskiy.zvm.common.Opcodes.XORB
 import com.zagayevskiy.zvm.common.Opcodes.XORI
 import com.zagayevskiy.zvm.util.extensions.*
-import com.zagayevskiy.zvm.vm.StackEntry.VMByte
-import com.zagayevskiy.zvm.vm.StackEntry.VMInteger
+import com.zagayevskiy.zvm.vm.StackEntry.*
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import java.util.*
@@ -133,6 +136,8 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
     private val mainIndex = info.mainIndex
     private val bytecode = info.bytecode
 
+    private val globals = (0..info.globalsCount).map { VMNull as StackEntry }.toMutableList()
+
     private var ip: Int = functions[mainIndex].address
 
     private val callStack = stack<StackFrame>()
@@ -171,6 +176,11 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
 
                 CONSTI -> push(decodeNextInt().toStackEntry())
                 CONSTB -> push(nextByte().toStackEntry())
+
+                GLOADI -> globalLoad<VMInteger>()
+                GSTORI -> globalStore<VMInteger>()
+                GLOADB -> globalLoad<VMByte>()
+                GSTORB -> globalStore<VMByte>()
 
                 ALOADI -> argLoadInt()
                 ALOADB -> argLoadByte()
@@ -290,6 +300,21 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
         heap.free(address)
     }
 
+    private inline fun <reified T: StackEntry> globalLoad() {
+        val index = decodeNextInt()
+        checkGlobalIndex(index)
+        val global = globals[index]
+        if (global !is T) error("Invalid global type. Has $global but ${T::class.java.simpleName} wanted.")
+        push(globals[index])
+    }
+
+    private inline fun <reified T: StackEntry> globalStore() {
+        val index = decodeNextInt()
+        checkGlobalIndex(index)
+        val value = pop<T> { "Want to store global ${T::class.java.simpleName} but has $it." }
+        globals[index] = value
+    }
+
     private fun argLoadInt() = callStack.peek().apply {
         val index = decodeNextInt()
         checkArgIndex(index)
@@ -339,7 +364,7 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
         val function = functions[functionIndex]
         log("call from $ip function #$functionIndex: $function")
         val args = (0 until function.args).map { pop() }.reversed()
-        val locals = (0 until function.locals).map { StackEntry.VMNull }.toMutableList<StackEntry>()
+        val locals = (0 until function.locals).map { VMNull }.toMutableList<StackEntry>()
         callStack.push(StackFrame(args, locals, ip))
         ip = function.address
         log("args = $args")
@@ -653,6 +678,10 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
             is VMByte -> println(entry.byteValue)
             is StackEntry.VMNull -> println("null")
         }
+    }
+
+    private fun checkGlobalIndex(index: Int) {
+        if (index < 0 || index >= globals.size) error("Invalid global index: $index. Has ${globals.size} globals.")
     }
 
     private fun StackFrame.checkArgIndex(index: Int) {

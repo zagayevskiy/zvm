@@ -10,7 +10,7 @@ private data class LabelDefinition(val name: String, val defined: Boolean = fals
 
 data class FunctionDefinition(val name: String, val index: Int, val defined: Boolean = false, val address: Int = 0, val args: Int = 0, val locals: Int = 0)
 
-data class GenerationInfo(val functions: List<FunctionDefinition>, val bytecode: ByteArray)
+class GenerationInfo(val globalsCount: Int, val functions: List<FunctionDefinition>, val bytecode: ByteArray)
 
 class BytecodeAssembler(private val commands: List<Command>, private val opcodesMapping: Map<Opcode, Byte>) {
 
@@ -21,6 +21,8 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
     private val functionDefinitionsIndices = mutableMapOf<String, Int>()
     private val functions = mutableListOf<FunctionDefinition>()
 
+    private var globalsCount: Int? = null
+
     private var ip = 0
 
     fun generate(): GenerationInfo {
@@ -29,6 +31,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
                 is Func -> defineFunction(command)
                 is Label -> defineLabel(command)
                 is Instruction -> addInstruction(command)
+                is GlobalsDefinition -> defineGlobals(command.count)
             }
         }
         checkThatAllLabelsDefined()
@@ -36,7 +39,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
 
         val resultBytecode = ByteArray(ip)
         bytecode.copyTo(destination = resultBytecode, count = ip)
-        return GenerationInfo(functions, resultBytecode)
+        return GenerationInfo(globalsCount ?: 0, functions, resultBytecode)
     }
 
     private fun addInstruction(command: Instruction) = command.run {
@@ -109,6 +112,11 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
         }
 
         return existedIndex
+    }
+
+    private fun defineGlobals(count: Int) {
+        if (globalsCount != null) error("Globals count must not be assigned twice")
+        globalsCount = count
     }
 
     private fun write(value: Byte) {

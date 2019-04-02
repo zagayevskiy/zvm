@@ -58,6 +58,8 @@ object Opcodes {
     const val EQI: Byte = 0x59
     const val NEQI: Byte = 0x60
     const val RNDI: Byte = 0x61
+    const val GLOADI: Byte = 0x62
+    const val GSTORI: Byte = 0x63
     //endregion
 
     //region byte opcodes
@@ -85,6 +87,8 @@ object Opcodes {
     const val EQB: Byte = -0x75
     const val NEQB: Byte = -0x76
     const val LNOTB: Byte = -0x77
+    const val GLOADB: Byte = -0x78
+    const val GSTORB: Byte = -0x79
     //endregion
 
     const val OUT: Byte = -0x1

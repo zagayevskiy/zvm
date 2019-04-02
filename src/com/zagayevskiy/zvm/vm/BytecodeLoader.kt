@@ -8,18 +8,20 @@ sealed class LoadingResult {
     class Failure(val message: String) : LoadingResult()
 }
 
-class LoadedInfo(val functions: List<RuntimeFunction>, val mainIndex: Int, val bytecode: ByteArray)
+class LoadedInfo(val globalsCount: Int, val functions: List<RuntimeFunction>, val mainIndex: Int, val bytecode: ByteArray)
 
 class BytecodeLoader(private val rawBytecode: ByteArray) {
 
     fun load(): LoadingResult {
-        val serviceInfoSize = 8 //FIXME hardcode
+        val serviceInfoSize = 12 //FIXME hardcode
         val functionRowSize = 12 //FIXME hardcode
         val rawBytecodeSize = rawBytecode.size
 
         if (rawBytecodeSize < serviceInfoSize + 1) return LoadingResult.Failure("Bytecode too small: ${rawBytecode.size} bytes")
+
         val mainIndex = rawBytecode.copyToInt(0)
         val functionsCount = rawBytecode.copyToInt(4)
+        val globalsCount = rawBytecode.copyToInt(8)
 
         if (functionsCount <= 0) return LoadingResult.Failure("Functions count must be positive. Has $functionsCount.")
         if (mainIndex < 0 || mainIndex >= functionsCount) return LoadingResult.Failure("Invalid main index ($mainIndex). Has $functionsCount} functions")
@@ -47,7 +49,7 @@ class BytecodeLoader(private val rawBytecode: ByteArray) {
         val bytecode = ByteArray(bytecodeSize)
         rawBytecode.copyTo(destination = bytecode, sourceIndex = bytecodeStart, count = bytecodeSize)
 
-        return LoadingResult.Success(LoadedInfo(functions, mainIndex, bytecode))
+        return LoadingResult.Success(LoadedInfo(globalsCount, functions, mainIndex, bytecode))
     }
 
 
