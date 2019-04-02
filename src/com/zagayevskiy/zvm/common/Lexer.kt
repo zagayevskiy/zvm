@@ -8,6 +8,7 @@ interface Token {
     data class Error(val lineNumber: Int, val sequence: String) : Token
     data class Identifier(val name: String) : Token
     data class Integer(val value: Int) : Token
+    data class StringConst(val value: String): Token
 }
 
 interface Lexer {
@@ -22,7 +23,8 @@ class SequenceLexer(private val sequence: Sequence<Char>,
                     private val whitespace: Char.() -> Boolean = { isWhitespace() },
                     private val idStart: Char.() -> Boolean = { isJavaIdentifierStart() },
                     private val idPart: Char.() -> Boolean = { isJavaIdentifierPart() },
-                    private val eolAsToken: Boolean = true) : Lexer {
+                    private val eolAsToken: Boolean = true,
+                    private val stringConstValidator: (Char) -> Char? = { null }) : Lexer {
 
     override var currentLine = 0
 
@@ -73,6 +75,17 @@ class SequenceLexer(private val sequence: Sequence<Char>,
             return keywordOrId(builder.toString())
         }
 
+        val stringEnd = stringConstValidator(current)
+        if (stringEnd != null) {
+            val builder = StringBuilder()
+            current = nextChar() ?: error("""Unexpected eof, string constant not finished. Has "$builder"""")
+            while (current != stringEnd) {
+                builder.append(current)
+                current = nextChar() ?: error("""Unexpected eof, string constant not finished. Has "$builder"""")
+            }
+            nextChar()
+            return Token.StringConst(builder.toString())
+        }
 
         return Token.Error(currentLine, current.toString())
     }

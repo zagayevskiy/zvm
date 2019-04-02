@@ -83,7 +83,37 @@ internal class SequenceLexerTest(private val test: TestData) {
                     1
                     2
                     3
-                """.trimIndent() expects listOf(1.tkn, 2.tkn, 3.tkn, Eof)).copy(eolAsToken = false)
+                """.trimIndent() expects listOf(1.tkn, 2.tkn, 3.tkn, Eof)).copy(eolAsToken = false),
+                """
+                    %123%%234567%987%qwe%asdf"%%%"
+                """.trimIndent() expects listOf("123".tkn, "234567".tkn, 987.tkn, "qwe".tkn, "asdf".id, "%%%".tkn, Eof),
+                ("""
+                    "this is a string"
+                    %this is a string too%
+                    "%%"
+                    %""%
+                    notastring
+                """.trimIndent() expects listOf(
+                        "this is a string".tkn,
+                        "this is a string too".tkn,
+                        "%%".tkn,
+                        """""""".tkn,
+                        "notastring".id,
+                        Eof)).copy(eolAsToken = false),
+                """
+                    "this
+                    is
+                    a
+                    multiline
+                    string
+                    constant"
+                """.trimIndent() expects listOf("""
+                    this
+                    is
+                    a
+                    multiline
+                    string
+                    constant""".trimIndent().tkn, Eof)
         )
 
     }
@@ -97,7 +127,8 @@ internal class SequenceLexerTest(private val test: TestData) {
                 whitespace = { isWhitespace() || this == '#' },
                 idStart = { isLetter() },
                 idPart = { isLetterOrDigit() || this == '-' },
-                eolAsToken = test.eolAsToken)
+                eolAsToken = test.eolAsToken,
+                stringConstValidator = { it.takeIf { limiter -> limiter == '%' || limiter == '"' } })
         val actual = lexer.toSequence().toList()
         assertEquals(actual, test.expected)
     }
@@ -108,7 +139,8 @@ val String.id
     get() = Identifier(this)
 val Int.tkn
     get() = toToken()
-
+val String.tkn
+    get() = StringConst(this)
 
 internal data class TestData(val text: String, val expected: List<Token>, val eolAsToken: Boolean = true)
 
