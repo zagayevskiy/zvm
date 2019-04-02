@@ -182,13 +182,13 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
                 GLOADB -> globalLoad<VMByte>()
                 GSTORB -> globalStore<VMByte>()
 
-                ALOADI -> argLoadInt()
-                ALOADB -> argLoadByte()
+                ALOADI -> argLoad<VMInteger>()
+                ALOADB -> argLoad<VMByte>()
 
-                LLOADI -> localLoadInt()
-                LSTORI -> localStoreInt()
-                LLOADB -> localLoadByte()
-                LSTORB -> localStoreByte()
+                LLOADI -> localLoad<VMInteger>()
+                LSTORI -> localStore<VMInteger>()
+                LLOADB -> localLoad<VMByte>()
+                LSTORB -> localStore<VMByte>()
 
                 MSTORI -> memoryStoreInt()
                 MLOADI -> memoryLoadInt()
@@ -315,44 +315,27 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
         globals[index] = value
     }
 
-    private fun argLoadInt() = callStack.peek().apply {
+    private inline fun <reified T: StackEntry> argLoad() = callStack.peek().apply {
         val index = decodeNextInt()
         checkArgIndex(index)
-        push(args[index])
+        val arg = args[index]
+        if (arg !is T) error("Invalid arg type. Has $arg but ${T::class.java.simpleName} wanted.")
+        push(arg)
     }
 
-    private fun argLoadByte() = callStack.peek().apply {
-        //TODO check type
-        val index = decodeNextInt()
-        checkArgIndex(index)
-        push(args[index])
-    }
-
-    private fun localLoadInt() = callStack.peek().apply {
-        val index = decodeNextInt()
-        checkLocalIndex(index)
-        push(locals[index])
-    }
-
-    private fun localStoreInt() = callStack.peek().apply {
-        val index = decodeNextInt()
-        checkLocalIndex(index)
-        locals[index] = pop()
-    }
-
-    private fun localLoadByte() = callStack.peek().apply {
+    private inline fun <reified T: StackEntry> localLoad() = callStack.peek().apply {
         val index = decodeNextInt()
         checkLocalIndex(index)
         val local = locals[index]
-        //TODO check type
+        if (local !is T) error("Invalid local type. Has $local but ${T::class.java.simpleName} wanted.")
         push(local)
     }
 
-    private fun localStoreByte() = callStack.peek().apply {
+    private inline fun <reified T: StackEntry> localStore() = callStack.peek().apply {
         val index = decodeNextInt()
         checkLocalIndex(index)
-        //TODO check type
-        locals[index] = pop()
+        val value = pop<T> { "Want to store local ${T::class.java.simpleName} but has $it." }
+        locals[index] = value
     }
 
     private fun decodeNextInt(): Int = bytecode.copyToInt(startIndex = ip).also { ip += 4 }

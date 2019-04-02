@@ -51,10 +51,10 @@ internal val asmFibonacciIterative = """
     .fun main: args=1, locals=3
     aloadi 0
     cmpic 2
-    lstori 0
-    lloadi 0
+    lstorb 0
+    lloadb 0
     jneg ret1
-    lloadi 0
+    lloadb 0
     jz ret1
     aloadi 0
     lstori 2
