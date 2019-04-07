@@ -1,7 +1,8 @@
 package com.zagayevskiy.zvm.vm
 
+import com.zagayevskiy.zvm.common.BackingStruct
+import com.zagayevskiy.zvm.common.sizeOf
 import com.zagayevskiy.zvm.util.extensions.copyTo
-import com.zagayevskiy.zvm.util.extensions.copyToInt
 
 sealed class LoadingResult {
     class Success(val info: LoadedInfo) : LoadingResult()
@@ -10,18 +11,31 @@ sealed class LoadingResult {
 
 class LoadedInfo(val globalsCount: Int, val functions: List<RuntimeFunction>, val mainIndex: Int, val bytecode: ByteArray)
 
+private class ServiceInfoStruct(array: ByteArray, offset: Int) : BackingStruct(array, offset) {
+    var mainIndex by int
+    var functionsCount by int
+    var globalsCount by int
+}
+
+private class FunctionTableRowStruct(array: ByteArray, offset: Int) : BackingStruct(array, offset) {
+    var address by int
+    var argsCount by int
+    var localsCount by int
+}
+
 class BytecodeLoader(private val rawBytecode: ByteArray) {
 
     fun load(): LoadingResult {
-        val serviceInfoSize = 12 //FIXME hardcode
-        val functionRowSize = 12 //FIXME hardcode
+        val serviceInfoSize = sizeOf(::ServiceInfoStruct)
+        val functionRowSize = sizeOf(::FunctionTableRowStruct)
         val rawBytecodeSize = rawBytecode.size
 
         if (rawBytecodeSize < serviceInfoSize + 1) return LoadingResult.Failure("Bytecode too small: ${rawBytecode.size} bytes")
 
-        val mainIndex = rawBytecode.copyToInt(0)
-        val functionsCount = rawBytecode.copyToInt(4)
-        val globalsCount = rawBytecode.copyToInt(8)
+        val serviceInfo = ServiceInfoStruct(rawBytecode, 0)
+        val mainIndex = serviceInfo.mainIndex
+        val functionsCount = serviceInfo.functionsCount
+        val globalsCount = serviceInfo.globalsCount
 
         if (functionsCount <= 0) return LoadingResult.Failure("Functions count must be positive. Has $functionsCount.")
         if (mainIndex < 0 || mainIndex >= functionsCount) return LoadingResult.Failure("Invalid main index ($mainIndex). Has $functionsCount} functions")
@@ -32,12 +46,12 @@ class BytecodeLoader(private val rawBytecode: ByteArray) {
         @Suppress("UnnecessaryVariable")
         val functionTableStart = serviceInfoSize
 
-
         val functions = (0 until functionsCount).map { index ->
+            val functionInfo = FunctionTableRowStruct(rawBytecode, functionTableStart + index * functionRowSize)
             RuntimeFunction(
-                    address = rawBytecode.copyToInt(functionTableStart + index * functionRowSize),
-                    args = rawBytecode.copyToInt(functionTableStart + index * functionRowSize + 4),
-                    locals = rawBytecode.copyToInt(functionTableStart + index * functionRowSize + 8))
+                    address = functionInfo.address,
+                    args = functionInfo.argsCount,
+                    locals = functionInfo.localsCount)
         }
 
         val bytecodeStart = functionTableStart + functionsCount * functionRowSize
