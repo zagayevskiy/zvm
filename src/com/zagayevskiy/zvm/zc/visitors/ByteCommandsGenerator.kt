@@ -138,6 +138,8 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             is AstArrayIndexing -> {
                 generate(expression.array)
                 generate(expression.index)
+                commands.add(IntConst.instruction((expression.array.type as ZcType.Array).itemType.sizeOf.op))
+                commands.add(IntMul.instruction())
                 commands.add(instructionByType(expression.type, MemoryLoadInt, MemoryLoadByte))
             }
             is AstStructFieldDereference -> {
@@ -210,9 +212,11 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             is AstArrayIndexing -> {
                 generate(left.array)
                 generate(left.index)
+                commands.add(IntConst.instruction((left.array.type as ZcType.Array).itemType.sizeOf.op))
+                commands.add(IntMul.instruction())
                 generate(assignment.assignation)
-                commands.add(Dup.instruction()) //FIXME may be we don't need to do that?
                 commands.add(instructionByType(left.type, MemoryStoreInt, MemoryStoreByte))
+                commands.add(ByteConst.instruction(0.op)) //TODO just to pop
             }
             is AstStructFieldDereference -> {
                 val field = left.structType.findField(left.name) ?: error("Field must be resolved before.")
@@ -262,6 +266,7 @@ private fun instructionByType(type: ZcType, int: () -> Command.Instruction, byte
 private fun instructionByType(type: ZcType, intOpcode: Opcode, byteOpcode: Opcode): Command.Instruction = when (type) {
     ZcType.Integer -> intOpcode.instruction()
     is ZcType.Array -> intOpcode.instruction()
+    is ZcType.Struct -> intOpcode.instruction()
     ZcType.Byte -> byteOpcode.instruction()
     ZcType.Boolean -> byteOpcode.instruction()
     else -> error("Unwanted type $type")

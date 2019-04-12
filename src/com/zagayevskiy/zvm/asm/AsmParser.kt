@@ -31,6 +31,8 @@ sealed class Command {
             data class Integer(val value: Int) : Operand()
             data class Id(val name: String) : Operand()
         }
+
+        override fun toString() = "$opcode [${operands.joinToString()}]"
     }
 }
 

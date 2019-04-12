@@ -3,6 +3,7 @@ package com.zagayevskiy.zvm.zc.visitors
 import com.zagayevskiy.zvm.zc.types.ZcType
 import com.zagayevskiy.zvm.zc.ast.*
 import com.zagayevskiy.zvm.zc.types.UnresolvedType
+import com.zagayevskiy.zvm.zc.types.resolveType
 
 class TopLevelDeclarationsResolver(private val ast: Ast) {
 
@@ -59,10 +60,7 @@ class TopLevelDeclarationsResolver(private val ast: Ast) {
         return globalScope.declareStruct(struct.name, ZcType.Struct(fields)) //TODO
     }
 
-    private fun resolveType(unresolved: UnresolvedType): ZcType {
-        val name = (unresolved as? UnresolvedType.Simple)?.name ?: error("Unknown type $unresolved")
-        return ZcType.byName(name) ?: globalScope.lookupStruct(name)?.type ?: error("Unknown type $name")
-    }
+    private fun resolveType(unresolved: UnresolvedType): ZcType = globalScope.resolveType(unresolved)
 
     private fun error(message: String): Nothing = throw RuntimeException(message)
 }

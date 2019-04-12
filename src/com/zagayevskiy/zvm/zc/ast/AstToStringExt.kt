@@ -94,7 +94,7 @@ private object AstToStringVisitor : AstVisitor<String> {
 
     override fun visit(ast: AstFunctionArgument) = "arg(${ast.index}) ${ast.name}"
 
-    override fun visit(ast: AstFunctionReference) = "fn ref"
+    override fun visit(ast: AstFunctionReference) = "fn ref ${ast.function.name}"
 
     override fun visit(ast: AstIdentifier) = "id ${ast.name}"
 

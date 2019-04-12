@@ -11,6 +11,8 @@ sealed class ZcType(val name: String, val sizeOf: Int) {
         class Field(val name: String, val type: ZcType, val offset: Int)
 
         fun findField(name: String): Field? = fields.firstOrNull { it.name == name }
+
+        override fun toString() = "struct $name"
     }
 
     class Array(val itemType: ZcType) : ZcType("array", 4) {

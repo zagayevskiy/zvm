@@ -2,7 +2,9 @@ package com.zagayevskiy.zvm.asm
 
 import com.zagayevskiy.zvm.common.Opcodes
 
-abstract class OpcodeImpl(override val name: String, override val operandCount: Int = 0) : Opcode
+abstract class OpcodeImpl(override val name: String, override val operandCount: Int = 0) : Opcode {
+    override fun toString() = "${javaClass.simpleName} (operands: $operandCount)"
+}
 
 object OpcodesMapping {
 

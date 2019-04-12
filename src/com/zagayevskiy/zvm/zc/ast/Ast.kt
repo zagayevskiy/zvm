@@ -43,9 +43,9 @@ sealed class Ast(var type: ZcType = ZcType.Unknown) : MutableIterable<Ast> {
     override fun iterator(): MutableListIterator<Ast> = children.listIterator()
 
     override fun toString() = if (children.isEmpty()) {
-        "${stringValue()}: $type"
+        "${stringValue()}"
     } else {
-        "(${stringValue()}: $type children=$children)"
+        "(${stringValue()}, children=$children)"
     }
 
     override fun equals(other: Any?) = other is Ast && this eq other

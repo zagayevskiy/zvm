@@ -5,6 +5,7 @@ import com.zagayevskiy.zvm.zc.types.ZcType
 import com.zagayevskiy.zvm.zc.ast.*
 import com.zagayevskiy.zvm.zc.types.UnresolvedType
 import com.zagayevskiy.zvm.zc.types.relations.*
+import com.zagayevskiy.zvm.zc.types.resolveType
 
 class TypesProcessor(private val program: AstProgram) {
 
@@ -110,8 +111,10 @@ class TypesProcessor(private val program: AstProgram) {
                 type = ZcType.Boolean
             }
             is AstArrayIndexing -> ast.apply {
-                if (array.type is ZcType.Void) error("Array of ${ZcType.Void} can't be unreferenced.")
-                type = array.type
+                val arrayType = (ast.array.type as? ZcType.Array) ?: error("${ast.array} isn't array and can't be indexed.")
+                val arrayItemType = arrayType.itemType
+                if (arrayItemType is ZcType.Void) error("Array of ${ZcType.Void} can't be indexed.")
+                type = arrayItemType
                 index = index.tryAutoPromoteTo(ZcType.Integer) ?: error("$index used as array index can't be promoted to ${ZcType.Integer}.")
             }
             is AstStructFieldDereference -> ast.apply {
@@ -176,10 +179,10 @@ class TypesProcessor(private val program: AstProgram) {
         else -> findEnclosingFunction(scope.enclosingScope)
     }
 
-    private fun AstExpr.tryAutoPromoteTo(promotedType: ZcType) = if (type.canBeAutoPromotedTo(promotedType)) {
-        promoteTo(promotedType)
-    } else {
-        null
+    private fun AstExpr.tryAutoPromoteTo(promotedType: ZcType): AstExpr? = when {
+        type == promotedType -> this
+        type.canBeAutoPromotedTo(promotedType) -> promoteTo(promotedType)
+        else -> null
     }
 
     private fun AstExpr.promoteTo(promotedType: ZcType) = if (type == promotedType) {
@@ -188,8 +191,5 @@ class TypesProcessor(private val program: AstProgram) {
         AstCastExpr(this, promotedType)
     }
 
-    private fun resolveType(unresolved: UnresolvedType): ZcType {
-        val name = (unresolved as? UnresolvedType.Simple)?.name ?: error("Unknown type $unresolved.")
-        return ZcType.byName(name) ?: scopes.peek().lookupStruct(name)?.type ?: error("Unknown type $name.")
-    }
+    private fun resolveType(unresolved: UnresolvedType): ZcType = scopes.peek().resolveType(unresolved)
 }
