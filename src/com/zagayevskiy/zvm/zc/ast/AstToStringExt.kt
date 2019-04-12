@@ -6,7 +6,7 @@ import com.zagayevskiy.zvm.zc.visitors.visit
 private object AstToStringVisitor : AstVisitor<String> {
     override fun visit(ast: AstProgram) = "program"
 
-    override fun visit(ast: AstFunctionDeclaration) = "fn ${ast.name} : ${ast.returnTypeName}"
+    override fun visit(ast: AstFunctionDeclaration) = "fn ${ast.name} : ${ast.returnType}"
 
     override fun visit(ast: AstStructDeclaration) = "struct ${ast.name}"
 

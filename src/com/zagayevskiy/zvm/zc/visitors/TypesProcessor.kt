@@ -3,6 +3,7 @@ package com.zagayevskiy.zvm.zc.visitors
 import com.zagayevskiy.zvm.util.extensions.*
 import com.zagayevskiy.zvm.zc.types.ZcType
 import com.zagayevskiy.zvm.zc.ast.*
+import com.zagayevskiy.zvm.zc.types.UnresolvedType
 import com.zagayevskiy.zvm.zc.types.relations.*
 
 class TypesProcessor(private val program: AstProgram) {
@@ -25,7 +26,7 @@ class TypesProcessor(private val program: AstProgram) {
     private fun onTopDown(ast: Ast): Ast = when (ast) {
         is Scope -> ast.also { scopes.push(ast) }
         is AstValDecl -> {
-            var type = ZcType.byName(ast.typeName)
+            var type = ast.unresolvedType?.let { resolveType(it) }
             var initializer = ast.initializer
             if (type == null) {
                 initializer = resolveSymbolsAndTypes(initializer) as AstExpr
@@ -36,7 +37,7 @@ class TypesProcessor(private val program: AstProgram) {
 
         }
         is AstVarDecl -> {
-            var type = ZcType.byName(ast.typeName)
+            var type = ast.unresolvedType?.let { resolveType(it) }
             var initializer = ast.initializer
             if (type == null) {
                 if (initializer == AstConst.Undefined) error("At least type or initializer must be specified for var declaration.")
@@ -187,4 +188,8 @@ class TypesProcessor(private val program: AstProgram) {
         AstCastExpr(this, promotedType)
     }
 
+    private fun resolveType(unresolved: UnresolvedType): ZcType {
+        val name = (unresolved as? UnresolvedType.Simple)?.name ?: error("Unknown type $unresolved.")
+        return ZcType.byName(name) ?: scopes.peek().lookupStruct(name)?.type ?: error("Unknown type $name.")
+    }
 }

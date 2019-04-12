@@ -45,7 +45,8 @@ fun main(args: Array<String>) {
             p.x = 123;
             p.y = 456;
             freePoint(p);
-            return p.x + p.y;
+            val p1: point = createPoint(0, 0);
+            return p1.x + p1.y;
         }
 
         fn createPoint(x: int, y: int): point {

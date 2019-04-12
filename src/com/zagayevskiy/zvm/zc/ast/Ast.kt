@@ -25,7 +25,7 @@ sealed class Ast(var type: ZcType = ZcType.Unknown) : MutableIterable<Ast> {
         }
     }
 
-    protected class ChildListDelegate<T : Ast, L : List<T>>(defaultValue: L, private val list: MutableList<Ast>) {
+    protected class ChildListDelegate<T : Ast, L : List<T>>(defaultValue: L, list: MutableList<Ast>) {
         private val beginIndex = list.size
 
         init {
@@ -63,7 +63,7 @@ sealed class TopLevelDeclaration(type: ZcType = ZcType.Unknown) : Ast(type)
 
 data class FunctionArgumentDeclaration(val name: String, val type: UnresolvedType)
 
-class AstFunctionDeclaration(val name: String, val args: List<FunctionArgumentDeclaration>, val returnTypeName: String?, body: Ast) : TopLevelDeclaration() {
+class AstFunctionDeclaration(val name: String, val args: List<FunctionArgumentDeclaration>, val returnType: UnresolvedType?, body: Ast) : TopLevelDeclaration() {
     val body by child(body)
 }
 
@@ -92,11 +92,11 @@ class AstBlock(statements: List<AstStatement> = emptyList()) : AstStatement() {
     }
 }
 
-class AstVarDecl(val varName: String, val typeName: String?, initializer: AstExpr?) : AstStatement() {
+class AstVarDecl(val varName: String, val unresolvedType: UnresolvedType?, initializer: AstExpr?) : AstStatement() {
     var initializer by child(initializer ?: AstConst.Undefined)
 }
 
-class AstValDecl(val valName: String, val typeName: String?, initializer: AstExpr) : AstStatement() {
+class AstValDecl(val valName: String, val unresolvedType: UnresolvedType?, initializer: AstExpr) : AstStatement() {
     var initializer by child(initializer)
 }
 

@@ -14,7 +14,7 @@ internal data class TestData(val text: String, val expected: AstProgram)
 
 private infix fun String.expect(expected: AstProgram) = TestData(this, expected)
 private val String.type
-    get() = this
+    get() = UnresolvedType.Simple(this)
 
 private val Int.const
     get() = AstConst.Integer(this)
@@ -23,7 +23,7 @@ private val String.id
     get() = AstIdentifier(this)
 
 private fun program(vararg declarations: TopLevelDeclaration) = AstProgram(mutableListOf(*declarations))
-private fun fn(name: String, args: List<FunctionArgumentDeclaration>, returnType: String? = null, body: AstStatement) = AstFunctionDeclaration(name, args, returnType, body)
+private fun fn(name: String, args: List<FunctionArgumentDeclaration>, returnType: UnresolvedType? = null, body: AstStatement) = AstFunctionDeclaration(name, args, returnType, body)
 
 private inline class Arg(val name: String)
 

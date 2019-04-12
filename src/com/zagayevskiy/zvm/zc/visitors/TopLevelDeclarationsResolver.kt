@@ -25,7 +25,7 @@ class TopLevelDeclarationsResolver(private val ast: Ast) {
                 AstFunctionArgument(argDecl.name, index, resolveType(argDecl.type))
             }
 
-            val resolvedRetType = resolveReturnType(returnTypeName, body)
+            val resolvedRetType = returnType?.let { resolveType(it) } ?: resolveReturnType(body)
 
             globalScope.declareFunction(name, resolvedArgs, resolvedRetType, body)
         }
@@ -39,12 +39,11 @@ class TopLevelDeclarationsResolver(private val ast: Ast) {
         }
     }
 
-    private fun resolveReturnType(returnTypeName: String?, functionBody: Ast): ZcType {
-        return if (returnTypeName == null) {
-            if (functionBody is AstExpr) error("Expression body not supported yet")
-            ZcType.Void
+    private fun resolveReturnType(functionBody: Ast): ZcType {
+        return if (functionBody is AstExpr) {
+            error("Expression body not supported yet")
         } else {
-            resolveType(returnTypeName)
+            ZcType.Void
         }
     }
 
@@ -62,10 +61,6 @@ class TopLevelDeclarationsResolver(private val ast: Ast) {
 
     private fun resolveType(unresolved: UnresolvedType): ZcType {
         val name = (unresolved as? UnresolvedType.Simple)?.name ?: error("Unknown type $unresolved")
-        return resolveType(name)
-    }
-
-    private fun resolveType(name: String): ZcType {
         return ZcType.byName(name) ?: globalScope.lookupStruct(name)?.type ?: error("Unknown type $name")
     }
 

@@ -67,7 +67,7 @@ class ZcParser(private val lexer: Lexer) {
         expect<ZcToken.ParenthesisOpen>()
         val args = functionArgsList()
         expect<ZcToken.ParenthesisClose>()
-        val returnType = maybe<ZcToken.Colon>()?.andThan { functionReturnType() ?: error("Return type expected.") }?.name
+        val returnType = maybe<ZcToken.Colon>()?.andThan { functionReturnType() ?: error("Return type expected.") }
         val body = functionBody() ?: error("Function body expected.")
 
         return AstFunctionDeclaration(name, args, returnType, body)
@@ -93,7 +93,7 @@ class ZcParser(private val lexer: Lexer) {
         return FunctionArgumentDeclaration(name, type)
     }
 
-    private fun functionReturnType() = maybe<Identifier>()
+    private fun functionReturnType() = type()
 
     private fun functionBody() = functionBlockBody() ?: functionExpressionBody()
 
@@ -142,13 +142,13 @@ class ZcParser(private val lexer: Lexer) {
 
         val name = expect<Identifier>().name
 
-        val typeName = maybe<ZcToken.Colon>()?.andThan { expect<Identifier>() }?.name
+        val type = maybe<ZcToken.Colon>()?.andThan { type() ?: error("Type expected after ':'.") }
 
         val initializer = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Expression expected.") }
 
-        if (typeName == null && initializer == null) error("type or assignment expected")
+        if (type == null && initializer == null) error("Type or assignment expected.")
 
-        return AstVarDecl(varName = name, typeName = typeName, initializer = initializer)
+        return AstVarDecl(varName = name, unresolvedType = type, initializer = initializer)
     }
 
 
@@ -157,12 +157,12 @@ class ZcParser(private val lexer: Lexer) {
 
         val name = expect<Identifier>().name
 
-        val typeName = maybe<ZcToken.Colon>()?.andThan { expect<Identifier>() }?.name
+        val type = maybe<ZcToken.Colon>()?.andThan { type() ?: error("Type expected after ':'.") }
 
         expect<ZcToken.Assign>()
         val initializer = expression() ?: error("Valid expression expected after assignment")
 
-        return AstValDecl(valName = name, typeName = typeName, initializer = initializer)
+        return AstValDecl(valName = name, unresolvedType = type, initializer = initializer)
     }
 
     private fun block(): AstBlock? {

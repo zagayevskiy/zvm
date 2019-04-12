@@ -9,7 +9,7 @@ private class AstEqualityVisitor(private val other: Ast) : AstVisitor<Boolean> {
 
     override fun visit(ast: AstProgram) = ast.check()
 
-    override fun visit(ast: AstFunctionDeclaration) = ast.check { ast.name == it.name && ast.returnTypeName == it.returnTypeName && ast.args == it.args }
+    override fun visit(ast: AstFunctionDeclaration) = ast.check { ast.name == it.name && ast.returnType == it.returnType && ast.args == it.args }
 
     override fun visit(ast: AstStructDeclaration) = ast.check { ast.name == it.name }
 
@@ -23,9 +23,9 @@ private class AstEqualityVisitor(private val other: Ast) : AstVisitor<Boolean> {
 
     override fun visit(ast: AstAsmBlock) = ast.check { ast.body == it.body }
 
-    override fun visit(ast: AstVarDecl) = ast.check { ast.varName == it.varName && ast.typeName == it.typeName }
+    override fun visit(ast: AstVarDecl) = ast.check { ast.varName == it.varName && ast.unresolvedType == it.unresolvedType }
 
-    override fun visit(ast: AstValDecl) = ast.check { ast.valName == it.valName && ast.typeName == it.typeName }
+    override fun visit(ast: AstValDecl) = ast.check { ast.valName == it.valName && ast.unresolvedType == it.unresolvedType }
 
     override fun visit(ast: AstForLoop) = ast.check()
 

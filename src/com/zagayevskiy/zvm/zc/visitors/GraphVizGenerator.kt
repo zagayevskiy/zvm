@@ -26,7 +26,7 @@ class GraphVizGenerator(private val ast: Ast) {
 
         override fun visit(ast: AstFunctionArgument) = "arg: ${ast.name}:${ast.type.name}" to ++id
 
-        override fun visit(ast: AstFunctionDeclaration) = "decl fun ${ast.name}(${ast.args.map { it.type }}): ${ast.returnTypeName}" to ++id
+        override fun visit(ast: AstFunctionDeclaration) = "decl fun ${ast.name}(${ast.args.map { it.type }}): ${ast.returnType}" to ++id
 
         override fun visit(ast: AstStructDeclaration) = "decl struct ${ast.name}" to ++id
 
@@ -40,9 +40,9 @@ class GraphVizGenerator(private val ast: Ast) {
 
         override fun visit(ast: AstAsmBlock) = "asm { ${ast.body} }" to ++id
 
-        override fun visit(ast: AstVarDecl) = "decl var ${ast.varName}: ${ast.typeName}" to ++id
+        override fun visit(ast: AstVarDecl) = "decl var ${ast.varName}: ${ast.unresolvedType}" to ++id
 
-        override fun visit(ast: AstValDecl) = "decl val ${ast.valName}: ${ast.typeName}" to ++id
+        override fun visit(ast: AstValDecl) = "decl val ${ast.valName}: ${ast.unresolvedType}" to ++id
 
         override fun visit(ast: AstForLoop) = "loop-for" to ++id
 
