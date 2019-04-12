@@ -111,7 +111,12 @@ class TypesProcessor(private val program: AstProgram) {
             is AstArrayIndexing -> ast.apply {
                 if (array.type is ZcType.Void) error("Array of ${ZcType.Void} can't be unreferenced.")
                 type = array.type
-                index = index.tryAutoPromoteTo(ZcType.Integer) ?: error("$index used as array index can't be promoted to ${ZcType.Integer}")
+                index = index.tryAutoPromoteTo(ZcType.Integer) ?: error("$index used as array index can't be promoted to ${ZcType.Integer}.")
+            }
+            is AstStructFieldDereference -> ast.apply {
+                val structType = (structInstance.type as? ZcType.Struct) ?: error("Not struct ${ast.structInstance} can't be dereferenced.")
+                val resolvedField = structType.findField(name) ?: error("Struct $structType has no field named $name. Processed $ast.")
+                type = resolvedField.type
             }
 
             is AstFunctionReturn -> ast.apply {

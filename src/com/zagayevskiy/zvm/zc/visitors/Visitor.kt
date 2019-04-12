@@ -93,6 +93,8 @@ interface AstVisitor<R> {
     fun visit(ast: AstVal): R
     fun visit(ast: AstCastExpr): R
     fun visit(ast: AstValInitialization): R
+    fun visit(ast: AstDefinedStruct): R
+    fun visit(ast: AstStructFieldDereference): R
 }
 
 fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
@@ -144,4 +146,6 @@ fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
     is AstVal -> visitor.visit(ast)
     is AstCastExpr -> visitor.visit(ast)
     is AstValInitialization -> visitor.visit(ast)
+    is AstDefinedStruct -> visitor.visit(ast)
+    is AstStructFieldDereference -> visitor.visit(ast)
 }

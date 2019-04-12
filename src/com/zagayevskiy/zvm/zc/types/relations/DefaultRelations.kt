@@ -20,6 +20,7 @@ fun ZcType.canBeAutoPromotedTo(other: ZcType) = when (this) {
     is ZcType.Array -> {
         (other is ZcType.Array) && (other.itemType is ZcType.Void)
     }
+    is ZcType.Struct,
     ZcType.Void,
     ZcType.Unknown -> false
 }

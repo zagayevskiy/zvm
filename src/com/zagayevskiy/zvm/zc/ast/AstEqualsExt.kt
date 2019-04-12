@@ -5,13 +5,17 @@ import com.zagayevskiy.zvm.zc.visitors.AstVisitor
 import com.zagayevskiy.zvm.zc.visitors.visit
 
 private class AstEqualityVisitor(private val other: Ast) : AstVisitor<Boolean> {
-    override fun visit(ast: AstValInitialization) = ast.check{ ast.valToInit == it.valToInit && ast.initializer == it.initializer }
+    override fun visit(ast: AstValInitialization) = ast.check { ast.valToInit == it.valToInit && ast.initializer == it.initializer }
 
     override fun visit(ast: AstProgram) = ast.check()
 
     override fun visit(ast: AstFunctionDeclaration) = ast.check { ast.name == it.name && ast.returnTypeName == it.returnTypeName && ast.args == it.args }
 
     override fun visit(ast: AstStructDeclaration) = ast.check { ast.name == it.name }
+
+    override fun visit(ast: AstDefinedStruct) = ast.check { ast.name == it.name && ast.structType == it.structType }
+
+    override fun visit(ast: AstStructFieldDereference) = ast.check { ast.name == it.name }
 
     override fun visit(ast: AstDefinedFunction) = ast.check { ast.args.zipWithCondition(it) { left, right -> left == right } }
 

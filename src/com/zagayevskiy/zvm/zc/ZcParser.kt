@@ -46,11 +46,11 @@ class ZcParser(private val lexer: Lexer) {
 
         expect<ZcToken.CurlyBracketOpen>()
 
-        structDeclarationList()
+        val fieldsDeclarations = structDeclarationList()
 
         expect<ZcToken.CurlyBracketClose>()
 
-        return AstStructDeclaration(name)
+        return AstStructDeclaration(name, fieldsDeclarations)
     }
 
     private fun structDeclarationList(): List<Ast> = mutableListOf<Ast>().apply {
@@ -498,7 +498,12 @@ class ZcParser(private val lexer: Lexer) {
 
     // struct_field_dereference ::= "." identifier ("=" expression | [chain])
     private fun structFieldDereference(leftSide: AstExpr): AstExpr? {
-        return NotMatched //TODO
+        maybe<ZcToken.Dot>() ?: return NotMatched
+        val fieldName = expect<Identifier>().name
+
+        val dereference = AstStructFieldDereference(leftSide, fieldName)
+
+        return chain(dereference)
     }
 
     private fun nextToken() {

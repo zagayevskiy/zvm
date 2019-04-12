@@ -14,9 +14,9 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
     fun generate(): List<Command> {
         program.declarations.forEach { topLevelSymbol ->
             return@forEach when (topLevelSymbol) {
-
                 is AstFunctionDeclaration -> error("All functions must be resolved before")
-                is AstStructDeclaration -> TODO("Structs not supported yet.")
+                is AstStructDeclaration, is AstDefinedStruct -> {
+                }//TODO("Structs not supported yet.")
                 is AstDefinedFunction -> generate(topLevelSymbol)
             }
         }
@@ -67,7 +67,7 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
     private fun generate(asm: AstAsmBlock) {
         val asmParser = asmParserFactory(asm.body)
         val asmParseResult = asmParser.program()
-        val asmCommands = when(asmParseResult) {
+        val asmCommands = when (asmParseResult) {
             is ParseResult.Failure -> error("Failed to insert asm ${asmParseResult.message}")
             is ParseResult.Success -> asmParseResult.commands
         }
@@ -140,6 +140,12 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                 generate(expression.index)
                 commands.add(instructionByType(expression.type, MemoryLoadInt, MemoryLoadByte))
             }
+            is AstStructFieldDereference -> {
+                val resolvedField = expression.structType.findField(expression.name) ?: error("Field must be resolved before.")
+                generate(expression.structInstance)
+                commands.add(IntConst.instruction(resolvedField.offset.op))
+                commands.add(instructionByType(expression.type, MemoryLoadInt, MemoryLoadByte))
+            }
 
             is AstAssignment -> generate(expression)
             is AstFunctionCall -> generate(expression)
@@ -196,6 +202,7 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                 generate(assignment.assignation)
                 commands.add(Dup.instruction())
                 val index = left.varIndex.op
+
                 commands.add(instructionByType(left.type,
                         int = { LocalStoreInt.instruction(index) },
                         byte = { LocalStoreByte.instruction(index) }))
@@ -204,9 +211,15 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                 generate(left.array)
                 generate(left.index)
                 generate(assignment.assignation)
-                commands.add(Dup.instruction())
+                commands.add(Dup.instruction()) //FIXME may be we don't need to do that?
                 commands.add(instructionByType(left.type, MemoryStoreInt, MemoryStoreByte))
-
+            }
+            is AstStructFieldDereference -> {
+                val field = left.structType.findField(left.name) ?: error("Field must be resolved before.")
+                generate(left.structInstance)
+                commands.add(IntConst.instruction(field.offset.op))
+                generate(assignment.assignation)
+                commands.add(instructionByType(left.type, MemoryStoreInt, MemoryStoreByte))
             }
         }
     }
@@ -239,6 +252,7 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
 private fun instructionByType(type: ZcType, int: () -> Command.Instruction, byte: () -> Command.Instruction): Command.Instruction = when (type) {
     ZcType.Integer -> int()
     is ZcType.Array -> int()
+    is ZcType.Struct -> int()
     ZcType.Byte -> byte()
     ZcType.Boolean -> byte()
     else -> error("Unwanted type $type")

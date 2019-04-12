@@ -10,6 +10,7 @@ interface Scope {
     fun declareVal(name: String, type: ZcType): AstVal?
 
     fun lookupFunction(name: String): List<AstDefinedFunction>
+    fun lookupStruct(name: String): AstDefinedStruct?
     fun lookup(name: String, deep: Boolean = true): AstExpr?
 }
 
@@ -32,6 +33,8 @@ open class BaseScope(override val enclosingScope: Scope?) : Scope {
 
     override fun lookupFunction(name: String) = enclosingScope?.lookupFunction(name) ?: emptyList()
 
+    override fun lookupStruct(name: String) = enclosingScope?.lookupStruct(name)
+
     override fun lookup(name: String, deep: Boolean): AstExpr? {
         return variables[name] ?: enclosingScope?.takeIf { deep }?.lookup(name, deep = true)
     }
@@ -42,6 +45,7 @@ open class BaseScope(override val enclosingScope: Scope?) : Scope {
 class GlobalScope : BaseScope(null) {
 
     private val functions = mutableMapOf<String, MutableList<AstDefinedFunction>>()
+    private val structs = mutableMapOf<String, AstDefinedStruct>()
 
     fun declareFunction(name: String, args: List<AstFunctionArgument>, retType: ZcType, body: Ast): AstDefinedFunction? {
         val argTypes = args.map { it.type }
@@ -62,7 +66,16 @@ class GlobalScope : BaseScope(null) {
         return function
     }
 
+    fun declareStruct(name: String, type: ZcType.Struct): AstDefinedStruct? {
+        if (structs.containsKey(name)) return null
+
+        return AstDefinedStruct(name, type).also { structs[name] = it }
+    }
+
     override fun lookupFunction(name: String) = functions[name] ?: emptyList<AstDefinedFunction>()
+
+
+    override fun lookupStruct(name: String) = structs[name]
 
     private fun List<AstFunctionArgument>.typesEquals(types: List<ZcType>) = mapIndexed { index, arg -> arg.type == types[index] }.all { it }
 }

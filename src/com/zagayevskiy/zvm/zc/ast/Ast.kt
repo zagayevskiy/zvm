@@ -59,7 +59,7 @@ class AstProgram(declarations: MutableList<TopLevelDeclaration>) : Ast() {
     val declarations by childList(declarations)
 }
 
-sealed class TopLevelDeclaration(type: ZcType = ZcType.Unknown) : Ast()
+sealed class TopLevelDeclaration(type: ZcType = ZcType.Unknown) : Ast(type)
 
 data class FunctionArgumentDeclaration(val name: String, val type: UnresolvedType)
 
@@ -67,18 +67,22 @@ class AstFunctionDeclaration(val name: String, val args: List<FunctionArgumentDe
     val body by child(body)
 }
 
-class AstStructDeclaration(val name: String) : TopLevelDeclaration()
+class AstStructDeclaration(val name: String, fieldsDeclarations: List<Ast>) : TopLevelDeclaration() {
+    val fieldsDeclarations by childList(fieldsDeclarations)
+}
 
 class AstDefinedFunction(val name: String, val args: List<AstFunctionArgument>, val retType: ZcType, body: Ast, enclosingScope: Scope)
     : TopLevelDeclaration(), FunctionScope by FunctionScopeDelegate(enclosingScope, args) {
     val body by child(body)
 }
 
+class AstDefinedStruct(val name: String, val structType: ZcType.Struct) : TopLevelDeclaration(structType)
+
 class AstFunctionReference(val function: AstDefinedFunction) : AstExpr(type = function.retType)
 
 sealed class AstStatement : Ast(type = ZcType.Void)
 
-data class AstAsmBlock(val body: String): AstStatement()
+data class AstAsmBlock(val body: String) : AstStatement()
 
 class AstBlock(statements: List<AstStatement> = emptyList()) : AstStatement() {
     val statements by childList(statements)
@@ -146,6 +150,13 @@ class AstVal(val valName: String, val valIndex: Int, type: ZcType) : AstExpr(typ
 class AstArrayIndexing(array: AstExpr, index: AstExpr) : AstExpr() {
     var array by child(array)
     var index by child(index)
+}
+
+class AstStructFieldDereference(structInstance: AstExpr, val name: String) : AstExpr() {
+    var structInstance by child(structInstance)
+
+    val structType: ZcType.Struct
+        get() = structInstance.type as ZcType.Struct
 }
 
 class AstFunctionCall(function: AstExpr, params: List<AstExpr>) : AstExpr() {

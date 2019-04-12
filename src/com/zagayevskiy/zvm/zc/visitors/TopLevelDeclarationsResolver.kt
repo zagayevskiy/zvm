@@ -10,8 +10,8 @@ class TopLevelDeclarationsResolver(private val ast: Ast) {
     fun resolve(): Ast {
         return ast.walk(topDownVisitor = { ast ->
             when (ast) {
-                is AstFunctionDeclaration -> declare(ast) ?: error("Function ${ast.name} with arguments ${ast.args.map { it.type }} already defined. ")
-
+                is AstFunctionDeclaration -> declare(ast) ?: error("Function ${ast.name} with arguments ${ast.args.map { it.type }} already defined.")
+                is AstStructDeclaration -> declare(ast) ?: error("Struct ${ast.name} already defined.")
                 else -> ast
             }
         })
@@ -22,7 +22,7 @@ class TopLevelDeclarationsResolver(private val ast: Ast) {
         return with(function) {
             val resolvedArgs = args.mapIndexed { index, argDecl ->
                 //TODO other types
-                AstFunctionArgument(argDecl.name, index, ZcType.byName((argDecl.type as? UnresolvedType.Simple)?.name) ?: error("Unknown type ${argDecl.type}"))
+                AstFunctionArgument(argDecl.name, index, resolveType(argDecl.type))
             }
 
             val resolvedRetType = resolveReturnType(returnTypeName, body)
@@ -44,12 +44,29 @@ class TopLevelDeclarationsResolver(private val ast: Ast) {
             if (functionBody is AstExpr) error("Expression body not supported yet")
             ZcType.Void
         } else {
-            ZcType.byName(returnTypeName) ?: error("Unknown type $returnTypeName")
+            resolveType(returnTypeName)
         }
     }
 
+    private fun declare(struct: AstStructDeclaration): AstDefinedStruct? {
+        val fields = struct.fieldsDeclarations.map {
+            //TODO!!!
+            when (it) {
+                is AstVarDecl -> it.varName
+                is AstValDecl -> it.valName
+                else -> error("$it is not field declaration.")
+            }
+        }.mapIndexed { index, name -> ZcType.Struct.Field(name, ZcType.Integer, index * 4) }
+        return globalScope.declareStruct(struct.name, ZcType.Struct(fields)) //TODO
+    }
+
     private fun resolveType(unresolved: UnresolvedType): ZcType {
-        TODO()
+        val name = (unresolved as? UnresolvedType.Simple)?.name ?: error("Unknown type $unresolved")
+        return resolveType(name)
+    }
+
+    private fun resolveType(name: String): ZcType {
+        return ZcType.byName(name) ?: globalScope.lookupStruct(name)?.type ?: error("Unknown type $name")
     }
 
     private fun error(message: String): Nothing = throw RuntimeException(message)

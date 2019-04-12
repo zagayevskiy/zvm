@@ -35,37 +35,30 @@ class ZcCompiler {
 
 fun main(args: Array<String>) {
     val text = """
-        fn initGlobals() { asm {"globals = 1"} }
+        struct point {
+            var x: int;
+            var y: int;
+        }
 
         fn main(): int {
-            var x = asmInsert(123);
-            x = x + asmInsert(1000);
-
-
-            return getGlobal0() + x;
+            val p: point = createPoint(0, 0);
+            p.x = 123;
+            p.y = 456;
+            return p.x + p.y;
         }
 
-        fn getGlobal0(): int {
-            asm {"
-                gloadi 0
+        fn createPoint(x: int, y: int): point {
+            asm{"
+                consti 8
+                alloc
                 ret
             "}
         }
 
-        fn asmInsert(x: int): int {
-            asm {"
-                aloadi 0
-                consti 2
-                muli
-                dup
-                gstori 0
-                ret
-            "}
-        }
     """.trimIndent()
 
     val compiler = ZcCompiler()
     val loader = BytecodeLoader(compiler.compile(text))
-    val vm = VirtualMachine((loader.load() as LoadingResult.Success).info)
+    val vm = VirtualMachine((loader.load() as LoadingResult.Success).info, heapSize = 1024)
     println(vm.run(emptyList()))
 }
