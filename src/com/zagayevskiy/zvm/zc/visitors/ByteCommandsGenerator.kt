@@ -220,6 +220,7 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                 commands.add(IntConst.instruction(field.offset.op))
                 generate(assignment.assignation)
                 commands.add(instructionByType(left.type, MemoryStoreInt, MemoryStoreByte))
+                commands.add(ByteConst.instruction(0.op)) //TODO just to pop
             }
         }
     }

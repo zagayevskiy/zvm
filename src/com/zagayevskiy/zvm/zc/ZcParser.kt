@@ -487,10 +487,9 @@ class ZcParser(private val lexer: Lexer) {
 
         val indexedArray = AstArrayIndexing(array = array, index = expression)
 
-        val assignmentExpr = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Right side of assignment expected.") }
-
-        if (assignmentExpr != null) {
-            return AstAssignment(assigned = indexedArray, assignation = assignmentExpr)
+        val assignation = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Right side of assignment expected.") }
+        if (assignation != NotMatched) {
+            return AstAssignment(assigned = indexedArray, assignation = assignation)
         }
 
         return chain(indexedArray)
@@ -502,6 +501,11 @@ class ZcParser(private val lexer: Lexer) {
         val fieldName = expect<Identifier>().name
 
         val dereference = AstStructFieldDereference(leftSide, fieldName)
+
+        val assignation = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Right side of assignment expected.") }
+        if(assignation != NotMatched) {
+            return AstAssignment(assigned = dereference, assignation = assignation)
+        }
 
         return chain(dereference)
     }

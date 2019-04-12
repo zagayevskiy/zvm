@@ -44,6 +44,7 @@ fun main(args: Array<String>) {
             val p: point = createPoint(0, 0);
             p.x = 123;
             p.y = 456;
+            freePoint(p);
             return p.x + p.y;
         }
 
@@ -51,6 +52,15 @@ fun main(args: Array<String>) {
             asm{"
                 consti 8
                 alloc
+                ret
+            "}
+        }
+
+        fn freePoint(p: point): int {
+            asm{"
+                aloadi 0
+                free
+                consti 0
                 ret
             "}
         }
