@@ -51,7 +51,11 @@ fun main(args: Array<String>) {
                 result = result + matrix[i][i].x + matrix[i][i].y + matrix[i][i].z;
             }
 
-            return result;
+            return sizeof<(int, [int], [[point]]) -> int>;
+        }
+
+        fn map(value: int, callback: (int) -> int): int {
+            return 0;
         }
 
         fn pointMatrix(size: int): [[point]] {

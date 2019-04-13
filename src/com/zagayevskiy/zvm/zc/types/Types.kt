@@ -17,6 +17,10 @@ sealed class ZcType(open val name: String, val sizeOf: Int) {
 
     data class Array(val itemType: ZcType) : ZcType("[$itemType]", 4)
 
+    data class Function(val argTypes: List<ZcType>, val retType: ZcType) : ZcType("fnref", 4) {
+        override fun toString() = "(${argTypes.joinToString()}) -> $retType"
+    }
+
     companion object {
         fun byName(name: String?) = when (name) {
             Integer.name -> Integer

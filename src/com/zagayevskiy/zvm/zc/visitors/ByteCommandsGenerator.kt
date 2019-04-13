@@ -250,6 +250,7 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                 else -> error("${cast.expression} can't be casted to ${cast.type}")
             }
 
+            is ZcType.Function,
             is ZcType.Array,
             is ZcType.Struct,
             ZcType.Void,
