@@ -1,12 +1,13 @@
 package com.zagayevskiy.zvm.zc
 
 import com.zagayevskiy.zvm.MemoryBitTable
+import com.zagayevskiy.zvm.assertEquals
 import com.zagayevskiy.zvm.vm.*
-import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import kotlin.test.assertEquals
 
 internal data class LLT(val count: Int)
 
@@ -19,6 +20,7 @@ internal class ZcLinkedListTest(private val test: LLT) {
         @Parameterized.Parameters(name = "{index}: {0}")
         fun data() = listOf(
                 LLT(1),
+                LLT(2),
                 LLT(10),
                 LLT(100)
         )
@@ -34,7 +36,7 @@ internal class ZcLinkedListTest(private val test: LLT) {
     }
 
     @Test
-    fun test() {
+    fun testReverse() {
         val text = """
         $linkedList
 
@@ -58,13 +60,12 @@ internal class ZcLinkedListTest(private val test: LLT) {
         val buffer = ByteArray(test.count)
         heap.copyOut(resultAddr, buffer, test.count)
 
-        Assert.assertEquals(expectedValue, buffer.toList())
+        assertEquals(expectedValue, buffer.toList())
 
-        //TODO assert heap corruption
-    }
-
-    @Test
-    fun testReverse() {
+        //ensure that heap not corrupted
+        for (i in (resultAddr + test.count until heap.size)) {
+            assertEquals(0.toByte(), heap[i])
+        }
     }
 
 }
