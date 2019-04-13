@@ -67,7 +67,7 @@ class AstFunctionDeclaration(val name: String, val args: List<FunctionArgumentDe
     val body by child(body)
 }
 
-class AstStructDeclaration(val name: String, fieldsDeclarations: List<Ast>) : TopLevelDeclaration() {
+class AstStructDeclaration(val name: String, fieldsDeclarations: List<AstVarDecl>) : TopLevelDeclaration() {
     val fieldsDeclarations by childList(fieldsDeclarations)
 }
 

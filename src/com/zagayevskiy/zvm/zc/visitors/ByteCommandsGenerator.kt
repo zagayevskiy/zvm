@@ -68,7 +68,7 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
         val asmParser = asmParserFactory(asm.body)
         val asmParseResult = asmParser.program()
         val asmCommands = when (asmParseResult) {
-            is ParseResult.Failure -> error("Failed to insert asm ${asmParseResult.message}")
+            is ParseResult.Failure -> error("Failed to insert asm: ${asmParseResult.message}")
             is ParseResult.Success -> asmParseResult.commands
         }
         commands.addAll(asmCommands)
@@ -235,9 +235,9 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
 
     private fun generate(cast: AstCastExpr) {
         generate(cast.expression)
-        when (cast.expression.type) {
+        val castInstruction = when (cast.expression.type) {
             ZcType.Integer -> when (cast.type) {
-                ZcType.Integer -> Unit
+                ZcType.Integer -> null
                 ZcType.Byte,
                 ZcType.Boolean -> IntToByte.instruction()
                 else -> error("${cast.expression} can't be casted to ${cast.type}")
@@ -246,15 +246,16 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             ZcType.Boolean -> when (cast.type) {
                 ZcType.Integer -> ByteToInt.instruction()
                 ZcType.Byte,
-                ZcType.Boolean -> Unit
+                ZcType.Boolean -> null
                 else -> error("${cast.expression} can't be casted to ${cast.type}")
             }
 
-            is ZcType.Array -> Unit
-
+            is ZcType.Array,
+            is ZcType.Struct,
             ZcType.Void,
             ZcType.Unknown -> error("${cast.expression} can't be casted to ${cast.type}")
         }
+        castInstruction?.let { commands.add(it) }
     }
 }
 

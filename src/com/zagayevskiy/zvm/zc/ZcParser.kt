@@ -53,12 +53,15 @@ class ZcParser(private val lexer: Lexer) {
         return AstStructDeclaration(name, fieldsDeclarations)
     }
 
-    private fun structDeclarationList(): List<Ast> = mutableListOf<Ast>().apply {
+    private fun structDeclarationList(): List<AstVarDecl> = mutableListOf<AstVarDecl>().apply {
         while (true) {
-            add(variableDeclStatement() ?: break)
+            add(structFieldDeclaration() ?: break)
+            expect<ZcToken.Semicolon>()
         }
-        if (isEmpty()) error("At least one variable declaration expected.")
+        if (isEmpty()) error("At least one field declaration expected.")
     }
+
+    private fun structFieldDeclaration() = varDecl()
 
     //"fn" identifier "(" function_args_list ")" [":" return_type] function_body
     private fun function(): AstFunctionDeclaration? {
@@ -503,7 +506,7 @@ class ZcParser(private val lexer: Lexer) {
         val dereference = AstStructFieldDereference(leftSide, fieldName)
 
         val assignation = maybe<ZcToken.Assign>()?.andThan { expression() ?: error("Right side of assignment expected.") }
-        if(assignation != NotMatched) {
+        if (assignation != NotMatched) {
             return AstAssignment(assigned = dereference, assignation = assignation)
         }
 

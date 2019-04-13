@@ -48,16 +48,20 @@ class TopLevelDeclarationsResolver(private val ast: Ast) {
         }
     }
 
-    private fun declare(struct: AstStructDeclaration): AstDefinedStruct? {
-        val fields = struct.fieldsDeclarations.map {
-            //TODO!!!
-            when (it) {
-                is AstVarDecl -> it.varName
-                is AstValDecl -> it.valName
-                else -> error("$it is not field declaration.")
-            }
-        }.mapIndexed { index, name -> ZcType.Struct.Field(name, ZcType.Integer, index * 4) }
-        return globalScope.declareStruct(struct.name, ZcType.Struct(fields)) //TODO
+    private fun declare(structDecl: AstStructDeclaration): AstDefinedStruct? {
+        val fields = mutableListOf<ZcType.Struct.Field>()
+        var currentOffset = 0
+
+        structDecl.fieldsDeclarations.forEach { varDecl ->
+            val fieldType = varDecl.unresolvedType?.let { resolveType(it) } ?: TODO("Fields initializer not supported yet.")
+            val declaredInitializer = varDecl.initializer
+            if (declaredInitializer != AstConst.Undefined) TODO("Fields initializer not supported yet.")
+
+            fields += ZcType.Struct.Field(varDecl.varName, fieldType, currentOffset)
+            currentOffset += fieldType.sizeOf
+        }
+
+        return globalScope.declareStruct(structDecl.name, ZcType.Struct(structDecl.name, fields))
     }
 
     private fun resolveType(unresolved: UnresolvedType): ZcType = globalScope.resolveType(unresolved)

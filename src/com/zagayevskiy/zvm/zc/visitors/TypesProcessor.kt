@@ -184,6 +184,8 @@ class TypesProcessor(private val program: AstProgram) {
     private fun AstExpr.tryAutoPromoteTo(promotedType: ZcType): AstExpr? = when {
         type == promotedType -> this
         type.canBeAutoPromotedTo(promotedType) -> promoteTo(promotedType)
+        //TODO looks bad& Hack for byte constant.
+        promotedType is ZcType.Byte && this is AstConst.Integer && value in (Byte.MIN_VALUE..Byte.MAX_VALUE) -> AstConst.Byte(value.toByte())
         else -> null
     }
 

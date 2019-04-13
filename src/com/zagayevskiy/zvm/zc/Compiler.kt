@@ -35,32 +35,49 @@ class ZcCompiler {
 
 fun main(args: Array<String>) {
     val text = """
+
         struct point {
             var x: int;
+            var z: byte;
             var y: int;
         }
 
         fn main(): int {
-            val matrix: [[int]] = intMatrix(10);
-            return matrix[0][0];
+            val matrix: [[point]] = pointMatrix(10);
+
+            var result = 0;
+            for (var i = 0; i < 10; i = i + 1) {
+                result = result + matrix[i][i].x + matrix[i][i].y + matrix[i][i].z;
+            }
+
+            return result;
         }
 
-        fn intMatrix(size: int): [[int]] {
-            asm {"
-                consti 123456
-                pop
-            "}
-            var matrix: [[int]];
+        fn pointMatrix(size: int): [[point]] {
+            var matrix: [[point]];
 
-            matrix = allocMatrix(size);
+             asm{"
+                aloadi 0
+                consti 4
+                muli
+                alloc
+                lstori 0
+            "}
+
             for (var i = 0; i < size; i = i + 1) {
-                matrix[i] = arrayOfInt(size);
+                matrix[i] = arrayOfPoint(size);
+                for (var j = 0; j < size; j = j + 1) {
+                    matrix[i][j] = createPoint();
+                    matrix[i][j].x = i;
+                    matrix[i][j].y = j;
+                    matrix[i][j].z = 17;
+                }
             }
 
             return matrix;
         }
 
-        fn allocMatrix(size: int): [[int]] {
+        fn arrayOfPoint(size: int): [point]{
             asm{"
                 aloadi 0
                 consti 4
@@ -70,48 +87,17 @@ fun main(args: Array<String>) {
             "}
         }
 
-
-        fn arrayOfInt(size: int): [int]{
+        fn createPoint(): point {
             asm{"
-                aloadi 0
-                consti 4
-                muli
+                consti 9
                 alloc
                 ret
             "}
         }
-
-        fn createPoint(): [[point]] {
-            asm{"
-                consti 8
-                alloc
-                ret
-            "}
-        }
-
-        fn createPointsArray(size: int): [point] {
-            asm{"
-                aloadi 0
-                consti 4
-                muli
-                alloc
-                ret
-            "}
-        }
-
-        fn freePoint(p: point): int {
-            asm{"
-                aloadi 0
-                free
-                consti 0
-                ret
-            "}
-        }
-
     """.trimIndent()
 
     val compiler = ZcCompiler()
     val loader = BytecodeLoader(compiler.compile(text))
-    val vm = VirtualMachine((loader.load() as LoadingResult.Success).info, heapSize = 1024)
+    val vm = VirtualMachine((loader.load() as LoadingResult.Success).info, heapSize = 1000000)
     println(vm.run(emptyList()))
 }

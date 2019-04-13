@@ -3,7 +3,8 @@ program ::= top_level_definition { top_level_definition }
 top_level_definition ::= struct | function
 
 struct ::= "struct" "{" struct_declaration_list "}"
-struct_declaration_list ::= variable_declaration { variable_declaration }
+struct_declaration_list ::= struct_field_declaration { struct_field_declaration }
+struct_field_declaration ::= var_declaration ";"
 
 function ::= "fn" identifier "(" function_args_list ")" [":" function_return_type] function_body
 function_body ::= function_block_body | function_expression_body
