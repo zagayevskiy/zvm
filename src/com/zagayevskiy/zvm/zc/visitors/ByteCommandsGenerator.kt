@@ -229,6 +229,7 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                 commands.add(instructionByType(left.type, MemoryStoreInt, MemoryStoreByte))
                 commands.add(ByteConst.instruction(0.op)) //TODO just to pop
             }
+            else -> error("$left isn't lvalue.")
         }
     }
 

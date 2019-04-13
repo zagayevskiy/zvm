@@ -135,7 +135,7 @@ class TypesProcessor(private val program: AstProgram) {
                     is AstArrayIndexing,
                     is AstStructFieldDereference -> assignation = assignation.tryAutoPromoteTo(assignable.type) ?: error("Can't auto promote $assignation to ${assignable.type} for assignment.")
 
-                    else -> "$assignable isn't assignable."
+                    else -> error("$assignable isn't assignable.")
                 }
             }
 
