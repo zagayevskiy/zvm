@@ -131,7 +131,7 @@ private object DisabledJavaInterop : JavaInterop {
     override fun remove(index: Int) = Unit
 }
 
-class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaInterop: JavaInterop = DisabledJavaInterop) {
+class VirtualMachine(info: LoadedInfo, private val heap: Memory = MemoryBitTable(0), private val javaInterop: JavaInterop = DisabledJavaInterop) {
     private val functions = info.functions
     private val mainIndex = info.mainIndex
     private val bytecode = info.bytecode
@@ -143,7 +143,6 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
     private val callStack = stack<StackFrame>()
     private val operandsStack = stack<StackEntry>()
 
-    private val heap: Memory = MemoryBitTable(heapSize)
     private val random = Random()
 
 
@@ -299,7 +298,7 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
         heap.free(address)
     }
 
-    private inline fun <reified T: StackEntry> globalLoad() {
+    private inline fun <reified T : StackEntry> globalLoad() {
         val index = decodeNextInt()
         checkGlobalIndex(index)
         val global = globals[index]
@@ -307,14 +306,14 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
         push(globals[index])
     }
 
-    private inline fun <reified T: StackEntry> globalStore() {
+    private inline fun <reified T : StackEntry> globalStore() {
         val index = decodeNextInt()
         checkGlobalIndex(index)
         val value = pop<T> { "Want to store global ${T::class.java.simpleName} but has $it." }
         globals[index] = value
     }
 
-    private inline fun <reified T: StackEntry> argLoad() = callStack.peek().apply {
+    private inline fun <reified T : StackEntry> argLoad() = callStack.peek().apply {
         val index = decodeNextInt()
         checkArgIndex(index)
         val arg = args[index]
@@ -322,7 +321,7 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
         push(arg)
     }
 
-    private inline fun <reified T: StackEntry> localLoad() = callStack.peek().apply {
+    private inline fun <reified T : StackEntry> localLoad() = callStack.peek().apply {
         val index = decodeNextInt()
         checkLocalIndex(index)
         val local = locals[index]
@@ -330,7 +329,7 @@ class VirtualMachine(info: LoadedInfo, heapSize: Int = 0, private val javaIntero
         push(local)
     }
 
-    private inline fun <reified T: StackEntry> localStore() = callStack.peek().apply {
+    private inline fun <reified T : StackEntry> localStore() = callStack.peek().apply {
         val index = decodeNextInt()
         checkLocalIndex(index)
         val value = pop<T> { "Want to store local ${T::class.java.simpleName} but has $it." }

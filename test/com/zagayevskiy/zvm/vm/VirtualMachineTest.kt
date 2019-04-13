@@ -1,5 +1,6 @@
 package com.zagayevskiy.zvm.vm
 
+import com.zagayevskiy.zvm.MemoryBitTable
 import com.zagayevskiy.zvm.asm.*
 import org.junit.Assert.*
 import org.junit.Before
@@ -84,7 +85,7 @@ internal class VirtualMachineProgramsTest(private val test: Tst) {
         val loader = BytecodeLoader(bytecode)
         val loaded = loader.load() as LoadingResult.Success
 
-        vm = VirtualMachine(loaded.info, test.heapSize)
+        vm = VirtualMachine(loaded.info, MemoryBitTable(test.heapSize))
     }
 
     @Test

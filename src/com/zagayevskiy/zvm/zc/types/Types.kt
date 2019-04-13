@@ -26,6 +26,7 @@ sealed class ZcType(open val name: String, val sizeOf: Int) {
             Integer.name -> Integer
             Byte.name -> Byte
             Boolean.name -> Boolean
+            Void.name -> Void
             else -> null
         }
     }
