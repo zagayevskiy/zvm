@@ -28,26 +28,15 @@ class TypesProcessor(private val program: AstProgram) {
         is Scope -> ast.also { scopes.push(ast) }
         is AstValDecl -> {
             var type = ast.unresolvedType?.let { resolveType(it) }
-            var initializer = ast.initializer
+            val initializer = resolveSymbolsAndTypes(ast.initializer) as AstExpr
             if (type == null) {
-                initializer = resolveSymbolsAndTypes(initializer) as AstExpr
                 type = initializer.type
             }
             val astVal = currentScope.declareVal(ast.valName, type) ?: error("Name ${ast.valName} already declared.")
-            AstValInitialization(astVal, initializer)
+            AstValInitialization(astVal, initializer.tryAutoPromoteTo(type) ?: error("Can't auto promote $initializer to $type for val-initialization."))
 
         }
-        is AstVarDecl -> {
-            var type = ast.unresolvedType?.let { resolveType(it) }
-            var initializer = ast.initializer
-            if (type == null) {
-                if (initializer == AstConst.Undefined) error("At least type or initializer must be specified for var declaration.")
-                initializer = resolveSymbolsAndTypes(initializer) as AstExpr
-                type = initializer.type
-            }
-            val astVar = currentScope.declareVar(ast.varName, type) ?: error("Name ${ast.varName} already declared.")
-            createAssignment(astVar, initializer)
-        }
+        is AstVarDecl -> resolveVarDecl(ast)
         is AstFunctionCall -> resolveFunctionCall(ast)
         is AstIdentifier -> currentScope.lookup(ast.name) ?: error("Unknown identifier '${ast.name}'")
         else -> ast
@@ -154,6 +143,27 @@ class TypesProcessor(private val program: AstProgram) {
         }
     }
 
+    private fun resolveVarDecl(varDecl: AstVarDecl): AstStatement {
+        var type = varDecl.unresolvedType?.let { resolveType(it) }
+
+        val declaredInitializer = varDecl.initializer
+
+        val initializer: AstExpr = when {
+            type == null && declaredInitializer is AstConst.Undefined -> error("At least type or initializer must be specified for var declaration.")
+            type == null -> resolveSymbolsAndTypes(declaredInitializer) as AstExpr
+            declaredInitializer is AstConst.Undefined -> AstConst.DefaultValue(type)
+            else -> {
+                val temp = resolveSymbolsAndTypes(declaredInitializer) as AstExpr
+                temp.tryAutoPromoteTo(type) ?: error("Can't auto promote $temp to $type for var-initialization.")
+            }
+        }
+
+        type = initializer.type
+
+        val astVar = currentScope.declareVar(varDecl.varName, type) ?: error("Name ${varDecl.varName} already declared.")
+        return AstExpressionStatement(AstAssignment(astVar, initializer))
+    }
+
     private fun resolveFunctionCall(call: AstFunctionCall) = call.apply {
         when (val func = call.function) {
             is AstIdentifier -> {
@@ -162,14 +172,6 @@ class TypesProcessor(private val program: AstProgram) {
                 function = AstFunctionReference(definedFunction)
                 type = definedFunction.retType
             }
-        }
-    }
-
-    private fun createAssignment(left: AstExpr, right: AstExpr): AstStatement {
-        return if (right is AstConst.Undefined) {
-            AstExpressionStatement(left)
-        } else {
-            AstExpressionStatement(AstAssignment(left, right))
         }
     }
 

@@ -84,6 +84,8 @@ interface AstVisitor<R> {
 
     fun visit(ast: AstConst.Void): R
 
+    fun visit(ast: AstConst.DefaultValue): R
+
     fun visit(ast: AstLogicalNot): R
 
     fun visit(ast: AstBitNot): R
@@ -138,6 +140,7 @@ fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
     is AstConst.Boolean -> visitor.visit(ast)
     is AstConst.Undefined -> visitor.visit(ast)
     is AstConst.Void -> visitor.visit(ast)
+    is AstConst.DefaultValue -> visitor.visit(ast)
     is AstLogicalNot -> visitor.visit(ast)
     is AstBitNot -> visitor.visit(ast)
     is AstFunctionArgument -> visitor.visit(ast)

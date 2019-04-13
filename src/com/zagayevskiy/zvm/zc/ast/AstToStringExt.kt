@@ -88,6 +88,8 @@ private object AstToStringVisitor : AstVisitor<String> {
 
     override fun visit(ast: AstConst.Void) = "void"
 
+    override fun visit(ast: AstConst.DefaultValue) = "default value for ${ast.type}"
+
     override fun visit(ast: AstLogicalNot) = "!"
 
     override fun visit(ast: AstBitNot) = "~"

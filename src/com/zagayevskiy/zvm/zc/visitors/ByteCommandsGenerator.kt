@@ -154,6 +154,9 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             is AstConst.Integer -> commands.add(IntConst.instruction(expression.value.op))
             is AstConst.Byte -> commands.add(ByteConst.instruction(expression.value.op))
             is AstConst.Boolean -> commands.add(ByteConst.instruction((if (expression.value) 1 else 0).op))
+            is AstConst.DefaultValue -> commands.add(instructionByType(expression.type,
+                    int = { IntConst.instruction(0.op) },
+                    byte = { ByteConst.instruction(0.op) }))
             AstConst.Undefined -> TODO("What to do with undefined?")
             AstConst.Void -> TODO("What to do with void?")
             is AstLogicalNot -> commands.add(ByteLogicalNot.instruction())

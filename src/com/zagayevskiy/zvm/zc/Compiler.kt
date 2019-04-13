@@ -41,24 +41,26 @@ fun main(args: Array<String>) {
         }
 
         fn main(): int {
-            val ints: [int] = arrayOfInt(10);
-            val points = createPointsArray(10);
-            for (var i = 0; i < 10; i = i + 1) {
-                ints[i] = i;
-                points[i] = createPoint();
-                points[i].x = ints[i];
-                points[i].y = ints[i];
-            }
-
-            var result = 0;
-            for (var j = 0; j < 10; j = j + 1) {
-                result = result + (points[j].x + points[j].y);
-            }
-
-            return result;
+            val matrix: [[int]] = intMatrix(10);
+            return matrix[0][0];
         }
 
-        fn arrayOfInt(size: int): [int] {
+        fn intMatrix(size: int): [[int]] {
+            asm {"
+                consti 123456
+                pop
+            "}
+            var matrix: [[int]];
+
+            matrix = allocMatrix(size);
+            for (var i = 0; i < size; i = i + 1) {
+                matrix[i] = arrayOfInt(size);
+            }
+
+            return matrix;
+        }
+
+        fn allocMatrix(size: int): [[int]] {
             asm{"
                 aloadi 0
                 consti 4
@@ -68,7 +70,18 @@ fun main(args: Array<String>) {
             "}
         }
 
-        fn createPoint(): point {
+
+        fn arrayOfInt(size: int): [int]{
+            asm{"
+                aloadi 0
+                consti 4
+                muli
+                alloc
+                ret
+            "}
+        }
+
+        fn createPoint(): [[point]] {
             asm{"
                 consti 8
                 alloc
@@ -96,19 +109,6 @@ fun main(args: Array<String>) {
         }
 
     """.trimIndent()
-
-    /*
-
-       for (val i = 0; i < 10; i = i + 1) {
-                points[i].x = i;
-                points[i].y = 0 - i;
-            }
-      var result = 0;
-            for (val j = 0; j < 10; j = j + 1) {
-                result = result + points[j].y * points[j].x;
-            }
-
-     */
 
     val compiler = ZcCompiler()
     val loader = BytecodeLoader(compiler.compile(text))

@@ -106,6 +106,8 @@ class GraphVizGenerator(private val ast: Ast) {
 
         override fun visit(ast: AstConst.Void) = "void" to ++id
 
+        override fun visit(ast: AstConst.DefaultValue) = "default value for ${ast.type}" to ++id
+
         override fun visit(ast: AstLogicalNot) = "!" to ++id
 
         override fun visit(ast: AstBitNot) = "~" to ++id

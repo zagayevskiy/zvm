@@ -167,9 +167,10 @@ class AstFunctionCall(function: AstExpr, params: List<AstExpr>) : AstExpr() {
 class AstFunctionArgument(val name: String, val index: Int, type: ZcType) : AstExpr(type = type)
 
 sealed class AstConst(type: ZcType) : AstExpr(type) {
-    class Integer(val value: Int) : AstConst(ZcType.Integer)
-    class Byte(val value: kotlin.Byte) : AstConst(ZcType.Byte)
-    class Boolean(val value: kotlin.Boolean) : AstConst(ZcType.Boolean)
+    data class Integer(val value: Int) : AstConst(ZcType.Integer)
+    data class Byte(val value: kotlin.Byte) : AstConst(ZcType.Byte)
+    data class Boolean(val value: kotlin.Boolean) : AstConst(ZcType.Boolean)
+    class DefaultValue(type: ZcType): AstConst(type)
     object Undefined : AstConst(ZcType.Unknown)
     object Void : AstConst(ZcType.Void)
 }

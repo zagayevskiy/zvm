@@ -91,6 +91,8 @@ private class AstEqualityVisitor(private val other: Ast) : AstVisitor<Boolean> {
 
     override fun visit(ast: AstConst.Void) = ast.check()
 
+    override fun visit(ast: AstConst.DefaultValue) = ast.check()
+
     override fun visit(ast: AstLogicalNot) = ast.check()
 
     override fun visit(ast: AstBitNot) = ast.check()
