@@ -39,6 +39,12 @@ class TypesProcessor(private val program: AstProgram) {
         is AstVarDecl -> resolveVarDecl(ast)
         is AstFunctionCall -> resolveFunctionCall(ast)
         is AstIdentifier -> currentScope.lookup(ast.name) ?: error("Unknown identifier '${ast.name}'")
+        is AstSizeOf -> AstConst.Integer(resolveType(ast.unresolvedType).let {
+            when (it) {
+                is ZcType.Struct -> it.allocSize
+                else -> it.sizeOf
+            }
+        })
         else -> ast
     }
 

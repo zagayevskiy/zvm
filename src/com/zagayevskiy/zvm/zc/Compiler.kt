@@ -39,6 +39,7 @@ fun main(args: Array<String>) {
         struct point {
             var x: int;
             var z: byte;
+            var array: [[[[int]]]];
             var y: int;
         }
 
@@ -88,8 +89,9 @@ fun main(args: Array<String>) {
         }
 
         fn createPoint(): point {
+            val size = sizeof<point>;
             asm{"
-                consti 9
+                lloadi 0
                 alloc
                 ret
             "}

@@ -17,6 +17,8 @@ private class AstEqualityVisitor(private val other: Ast) : AstVisitor<Boolean> {
 
     override fun visit(ast: AstStructFieldDereference) = ast.check { ast.name == it.name }
 
+    override fun visit(ast: AstSizeOf) = ast.check { ast.unresolvedType == it.unresolvedType }
+
     override fun visit(ast: AstDefinedFunction) = ast.check { ast.args.zipWithCondition(it) { left, right -> left == right } }
 
     override fun visit(ast: AstBlock) = ast.check()

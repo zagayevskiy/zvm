@@ -56,6 +56,7 @@ object ZcToken {
     object If : Token
     object Else : Token
     object When : Token
+    object SizeOf: Token
 }
 
 private val symbolsMap = mapOf(
@@ -111,7 +112,8 @@ private val keywordsMap = mapOf(
         "return" to ZcToken.Return,
         "if" to ZcToken.If,
         "else" to ZcToken.Else,
-        "when" to ZcToken.When
+        "when" to ZcToken.When,
+        "sizeof" to ZcToken.SizeOf
 )
 
 class ZcSequenceLexer(sequence: Sequence<Char>) : Lexer by SequenceLexer(

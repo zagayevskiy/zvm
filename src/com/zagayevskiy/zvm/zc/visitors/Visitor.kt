@@ -97,6 +97,7 @@ interface AstVisitor<R> {
     fun visit(ast: AstValInitialization): R
     fun visit(ast: AstDefinedStruct): R
     fun visit(ast: AstStructFieldDereference): R
+    fun visit(ast: AstSizeOf): R
 }
 
 fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
@@ -111,6 +112,7 @@ fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
     is AstForLoop -> visitor.visit(ast)
     is AstWhileLoop -> visitor.visit(ast)
     is AstIfElse -> visitor.visit(ast)
+    is AstSizeOf -> visitor.visit(ast)
     is AstFunctionReturn -> visitor.visit(ast)
     is AstExpressionStatement -> visitor.visit(ast)
     is AstAssignment -> visitor.visit(ast)

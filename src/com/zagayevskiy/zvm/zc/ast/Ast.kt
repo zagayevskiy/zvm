@@ -215,6 +215,8 @@ class AstCastExpr(expression: AstExpr, castType: ZcType) : AstExpr(type = castTy
     val expression by child(expression)
 }
 
+class AstSizeOf(val unresolvedType: UnresolvedType): AstExpr(ZcType.Integer)
+
 private val emptyVisitor: (Ast) -> Ast = { it }
 
 fun Ast.walk(topDownVisitor: (Ast) -> Ast = emptyVisitor, bottomUpVisitor: (Ast) -> Ast = emptyVisitor): Ast {
