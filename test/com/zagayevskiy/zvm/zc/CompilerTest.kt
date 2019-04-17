@@ -2,12 +2,11 @@ package com.zagayevskiy.zvm.zc
 
 import com.zagayevskiy.zvm.MemoryBitTable
 import com.zagayevskiy.zvm.vm.*
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import org.omg.CORBA.INTERNAL
 
 internal data class CompilerTestData(val name: String, val text: String, val expectedResult: StackEntry, val runArgs: List<StackEntry>, val heapSize: Int)
 

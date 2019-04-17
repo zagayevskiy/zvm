@@ -54,6 +54,14 @@ class TypesProcessor(private val program: AstProgram) {
 
         return when (ast) {
             is Scope -> ast.also { scopes.pop() }
+            is AstSum -> ast.apply {
+                val promotedType = arithmeticTypesPromotion(left.type, right.type)
+                        ?: arraySumTypesPromotion(left.type, right.type)
+                        ?: error("${left.type} and ${right.type} can't be used in arithmetic expressions.")
+                left = left.promoteTo(promotedType)
+                right = right.promoteTo(promotedType)
+                type = promotedType
+            }
             is AstArithmeticBinary -> ast.apply {
                 val promotedType = arithmeticTypesPromotion(left.type, right.type) ?: error("${left.type} and ${right.type} can't be used in arithmetic expressions.")
                 left = left.promoteTo(promotedType)

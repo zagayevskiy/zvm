@@ -36,6 +36,8 @@ class MemoryBitTable(desirableSize: Int, private val blockSize: Int = 64) : Memo
     override val size = computeActualSize(desirableSize)
 
     private val table = BitTable(size / blockSize)
+
+    //visible just for tests
     private val memory = ByteArray(size)
 
     override fun allocate(size: Int): Address {

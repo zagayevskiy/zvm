@@ -11,13 +11,13 @@ sealed class LoadingResult {
 
 class LoadedInfo(val globalsCount: Int, val functions: List<RuntimeFunction>, val mainIndex: Int, val bytecode: ByteArray)
 
-private class ServiceInfoStruct(array: ByteArray, offset: Int) : BackingStruct(array, offset) {
+internal class ServiceInfoStruct(array: ByteArray, offset: Int) : BackingStruct(array, offset) {
     var mainIndex by int
     var functionsCount by int
     var globalsCount by int
 }
 
-private class FunctionTableRowStruct(array: ByteArray, offset: Int) : BackingStruct(array, offset) {
+internal class FunctionTableRowStruct(array: ByteArray, offset: Int) : BackingStruct(array, offset) {
     var address by int
     var argsCount by int
     var localsCount by int

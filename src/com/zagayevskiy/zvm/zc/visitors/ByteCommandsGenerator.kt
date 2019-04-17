@@ -1,7 +1,6 @@
 package com.zagayevskiy.zvm.zc.visitors
 
 import com.zagayevskiy.zvm.asm.*
-import com.zagayevskiy.zvm.zc.ZcToken
 import com.zagayevskiy.zvm.zc.ast.*
 import com.zagayevskiy.zvm.zc.types.ZcType
 
@@ -240,13 +239,15 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                 ZcType.Integer -> null
                 ZcType.Byte,
                 ZcType.Boolean -> IntToByte.instruction()
+                is ZcType.Array -> null
                 else -> error("${cast.expression} can't be casted to ${cast.type}")
             }
             ZcType.Byte,
             ZcType.Boolean -> when (cast.type) {
                 ZcType.Integer -> ByteToInt.instruction()
                 ZcType.Byte,
-                ZcType.Boolean -> null
+                ZcType.Boolean,
+                is ZcType.Array -> null
                 else -> error("${cast.expression} can't be casted to ${cast.type}")
             }
 
