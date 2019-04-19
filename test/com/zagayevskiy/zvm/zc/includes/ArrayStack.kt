@@ -21,7 +21,7 @@ internal fun includeStack() = """
 
     fn pushInt(stack: Stack, value: int): int {
         if (stack.top >= stack.size) return 1;
-        (cast<[int]>(stack.stack))[stack.top] = value;
+        cast<[int]>(stack.stack)[stack.top] = value;
         stack.top = stack.top + 1;
         return 0;
     }
@@ -30,7 +30,7 @@ internal fun includeStack() = """
         if (stack.top == 0) return 1;
         val newTop = stack.top - 1;
         stack.top = newTop;
-        return (cast<[int]>(stack.stack))[newTop];
+        return cast<[int]>(stack.stack)[newTop];
     }
 
     fn pushByte(stack: Stack, value: byte): int {

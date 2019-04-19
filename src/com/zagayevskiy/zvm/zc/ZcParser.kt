@@ -480,7 +480,7 @@ class ZcParser(private val lexer: Lexer) {
         return AstSizeOf(type)
     }
 
-    private fun castOperator(): AstHardCastExpr? {
+    private fun castOperator(): AstExpr? {
         maybe<ZcToken.Cast>() ?: return NotMatched
         expect<ZcToken.Less>()
 
@@ -491,7 +491,7 @@ class ZcParser(private val lexer: Lexer) {
         val expression = expression() ?: error("Expression expected for cast")
         expect<ZcToken.ParenthesisClose>()
 
-        return AstHardCastExpr(expression, type)
+        return chain(AstHardCastExpr(expression, type))
     }
 
     // chain ::= function_call | array_indexing | struct_field_dereference
