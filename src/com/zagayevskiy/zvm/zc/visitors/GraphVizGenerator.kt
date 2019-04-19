@@ -14,6 +14,8 @@ class GraphVizGenerator(private val ast: Ast) {
 
         override fun visit(ast: AstCastExpr) = "cast from ${ast.expression.type} to ${ast.type}" to ++id
 
+        override fun visit(ast: AstHardCastExpr) = "hard cast to ${ast.unresolvedCastType}" to ++id
+
         override fun visit(ast: AstFunctionReference) = "ref ${ast.function}:${ast.type}" to ++id
 
         override fun visit(ast: AstIdentifier) = "id: ${ast.name}" to ++id

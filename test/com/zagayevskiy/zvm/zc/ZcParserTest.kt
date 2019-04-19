@@ -43,7 +43,7 @@ internal class ZcParserTest(private val test: TestData) {
                 """fn f(){ asm{ "hello, asm!" } }""" expect program(fn("f", emptyList(), body = AstBlock(listOf(AstAsmBlock("hello, asm!"))))),
                 "fn g(): int {}" expect program(fn("g", args = emptyList(), returnType = "int".type, body = AstBlock.Empty)),
                 "fn f() { sizeof<int>; }" expect program(fn("f", args = emptyList(), body = AstBlock(listOf(AstExpressionStatement(AstSizeOf(UnresolvedType.Simple("int"))))))),
-                "fn f(i: int): byte { return cast<byte>(i); }" expect program(fn("f", args = listOf(Arg("i") withType "int"), body = AstBlock(listOf(AstFunctionReturn(AstHardCastExpr("i".id, UnresolvedType.Simple("byte"))))))),
+                "fn f(i: int): byte { return cast<byte>(i); }" expect program(fn("f", args = listOf(Arg("i") withType "int"), returnType = "byte".type, body = AstBlock(listOf(AstFunctionReturn(AstHardCastExpr("i".id, UnresolvedType.Simple("byte"))))))),
                 "fn k(){ 1 + 2; }" expect program(fn("k", args = emptyList(), body = AstBlock(listOf(AstExpressionStatement(
                         AstSum(1.const, 2.const)))))),
                 "fn k(){ 3 * 4 + 0; }" expect program(fn("k", args = emptyList(), body = AstBlock(listOf(AstExpressionStatement(

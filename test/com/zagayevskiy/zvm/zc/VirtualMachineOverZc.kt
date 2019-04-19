@@ -26,7 +26,10 @@ internal val vmOverZc = """
         return 0;
     }
 
+    fn createContext(): VmContext {
+        val result: VmContext = alloc(sizeof<VmContext>);
 
+    }
 
 """
 
@@ -57,14 +60,14 @@ internal fun includeBytecodeParser() = """
         val functionInfoSize = sizeof<FunctionInfo>;
         var cursor: [void] = rawBytecode;
 
-        val serviceInfo: ServiceInfo = cast(cursor);
+        val serviceInfo: ServiceInfo = cursor;
         cursor = cursor + serviceInfoSize;
 
         val bytecodeSize = rawBytecodeSize - (serviceInfoSize + functionInfoSize*serviceInfo.functionsCount);
 
         val functionsTable: [FunctionInfo] = alloc(4*serviceInfo.functionsCount);
         for(var i = 0; i < serviceInfo.functionsCount; i = i + 1) {
-            functionsTable[i] = cast(cursor);
+            functionsTable[i] = cursor;
             cursor = cursor + functionInfoSize;
         }
 
@@ -75,9 +78,5 @@ internal fun includeBytecodeParser() = """
         result.bytecodeSize = bytecodeSize;
 
         return result;
-     }
-
-     fn cast(something: [void]):[void] {
-        return something;
      }
 """

@@ -18,6 +18,8 @@ private object AstToStringVisitor : AstVisitor<String> {
 
     override fun visit(ast: AstSizeOf) = "sizeof ${ast.unresolvedType}"
 
+    override fun visit(ast: AstHardCastExpr) = "hard cast to ${ast.unresolvedCastType}"
+
     override fun visit(ast: AstBlock) = "block"
 
     override fun visit(ast: AstAsmBlock) = "asm ${ast.body}"

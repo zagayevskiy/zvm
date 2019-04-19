@@ -153,7 +153,7 @@ class TypesProcessor(private val program: AstProgram) {
                 }
             }
 
-            is AstHardCastExpr -> AstCastExpr(ast.expression, resolveType(ast.castType))
+            is AstHardCastExpr -> AstCastExpr(ast.expression, resolveType(ast.unresolvedCastType))
 
             else -> ast
         }

@@ -99,6 +99,7 @@ interface AstVisitor<R> {
     fun visit(ast: AstDefinedStruct): R
     fun visit(ast: AstStructFieldDereference): R
     fun visit(ast: AstSizeOf): R
+    fun visit(ast: AstHardCastExpr): R
 }
 
 fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
@@ -154,5 +155,5 @@ fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
     is AstValInitialization -> visitor.visit(ast)
     is AstDefinedStruct -> visitor.visit(ast)
     is AstStructFieldDereference -> visitor.visit(ast)
-    else -> throw RuntimeException("not implemented yet $ast")
+    is AstHardCastExpr -> visitor.visit(ast)
 }
