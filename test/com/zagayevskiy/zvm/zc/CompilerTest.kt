@@ -33,6 +33,7 @@ internal class CompilerTest(private val test: CompilerTestData) {
         @JvmStatic
         @Parameterized.Parameters(name = "{index}: {0}")
         fun data() = listOf(
+                test("stack", stackTest, emptyList(), 0.toStackEntry(), heapSize = 1024),
                 testArraySumOverAsmInsert(10, 123),
                 testArraySumOverAsmInsert(100, 123),
                 testArraySumOverAsmInsert(1000, 213456),

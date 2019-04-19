@@ -3,6 +3,7 @@ package com.zagayevskiy.zvm.zc
 import com.zagayevskiy.zvm.MemoryBitTable
 import com.zagayevskiy.zvm.assertEquals
 import com.zagayevskiy.zvm.vm.*
+import com.zagayevskiy.zvm.zc.includes.includeStdMem
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -70,9 +71,9 @@ internal class ZcLinkedListTest(private val test: LLT) {
 
 }
 
-internal const val linkedList = """
+internal val linkedList = """
 
-    $stdMem
+    ${includeStdMem()}
 
     struct Node {
         var payload: byte;

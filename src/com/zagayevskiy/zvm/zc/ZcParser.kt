@@ -6,6 +6,7 @@ import com.zagayevskiy.zvm.common.Token.Eof
 import com.zagayevskiy.zvm.common.Token.Identifier
 import com.zagayevskiy.zvm.zc.ast.*
 import com.zagayevskiy.zvm.zc.types.UnresolvedType
+import kotlin.math.exp
 
 sealed class ParseResult {
     data class Success(val program: AstProgram) : ParseResult()
@@ -435,7 +436,7 @@ class ZcParser(private val lexer: Lexer) {
 
     private fun unaryDereferencing() = maybe<ZcToken.Asterisk>()?.andThan { expression() ?: error("Dereferencing argument expected.") }
 
-    private fun valueExpr() = constExpr() ?: parenthesisExpr() ?: assignmentExpr() ?: sizeOfOperator()
+    private fun valueExpr() = constExpr() ?: parenthesisExpr() ?: assignmentExpr() ?: sizeOfOperator() ?: castOperator()
 
     private fun constExpr(): AstConst? {
         val constant = maybe<Token.Integer>() ?: return NotMatched
@@ -477,6 +478,20 @@ class ZcParser(private val lexer: Lexer) {
         expect<ZcToken.Great>()
 
         return AstSizeOf(type)
+    }
+
+    private fun castOperator(): AstHardCastExpr? {
+        maybe<ZcToken.Cast>() ?: return NotMatched
+        expect<ZcToken.Less>()
+
+        val type = type() ?: error("Type expected for cast.")
+
+        expect<ZcToken.Great>()
+        expect<ZcToken.ParenthesisOpen>()
+        val expression = expression() ?: error("Expression expected for cast")
+        expect<ZcToken.ParenthesisClose>()
+
+        return AstHardCastExpr(expression, type)
     }
 
     // chain ::= function_call | array_indexing | struct_field_dereference

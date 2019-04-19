@@ -211,6 +211,10 @@ class AstBitNot(expression: AstExpr) : AstExpr() {
     var expression by child(expression)
 }
 
+class AstHardCastExpr(expression: AstExpr, val castType: UnresolvedType) : AstExpr() {
+    val expression by child(expression)
+}
+
 class AstCastExpr(expression: AstExpr, castType: ZcType) : AstExpr(type = castType) {
     val expression by child(expression)
 }

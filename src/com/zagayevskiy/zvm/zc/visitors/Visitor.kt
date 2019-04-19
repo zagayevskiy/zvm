@@ -1,6 +1,7 @@
 package com.zagayevskiy.zvm.zc.visitors
 
 import com.zagayevskiy.zvm.zc.ast.*
+import java.lang.RuntimeException
 
 interface AstVisitor<R> {
 
@@ -153,4 +154,5 @@ fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
     is AstValInitialization -> visitor.visit(ast)
     is AstDefinedStruct -> visitor.visit(ast)
     is AstStructFieldDereference -> visitor.visit(ast)
+    else -> throw RuntimeException("not implemented yet $ast")
 }

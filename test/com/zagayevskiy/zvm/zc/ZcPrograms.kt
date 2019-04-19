@@ -1,6 +1,8 @@
 package com.zagayevskiy.zvm.zc
 
 import com.zagayevskiy.zvm.vm.asmFibonacciIterativeFunctionBody
+import com.zagayevskiy.zvm.zc.includes.includeStack
+import com.zagayevskiy.zvm.zc.includes.includeStdMem
 
 //run with one int argument (n) and get n's Fibonacci number
 internal val zcFibonacciIterative = """
@@ -157,28 +159,26 @@ private fun intArrayAsmInserts() = """
 
 """.trimIndent()
 
-internal const val stdMem = """
-    fn alloc(size: int): [void] {
-        asm{"
-            aloadi 0
-            alloc
-            ret
-        "}
-    }
 
-    fn free(memory: [void]): int {
-        asm {"
-            aloadi 0
-            free
-            consti 0
-            ret
-        "}
-    }
+internal val stackTest = """
+    ${includeStdMem()}
+    ${includeStack()}
 
-    fn null(): [void] {
-        asm {"
-            consti 0
-            ret
-        "}
+    fn main(): int {
+        val stack = createStack(200);
+        val multiplier = 123456;
+        for(var i = 0; i < 100; i = i + 1) {
+            if (pushInt(stack, i*multiplier) != 0) return 1;
+            if (pushInt(stack, i + 10000) != 0) return 11;
+            if (popInt(stack) != i + 10000) return 111;
+            if (pushByte(stack, cast<byte>(i)) != 0) return 2;
+        }
+
+        for(var j = 99; j >= 0; j = j - 1) {
+            if (popByte(stack) != cast<byte>(j)) return 3;
+            if (popInt(stack) != j*multiplier) return 4;
+        }
+        if (stack.top != 0) return 5;
+        return 0;
     }
-"""
+""".trimIndent()

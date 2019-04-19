@@ -1,8 +1,10 @@
 package com.zagayevskiy.zvm.zc
 
 import com.zagayevskiy.zvm.MemoryBitTable
+import com.zagayevskiy.zvm.common.BackingStruct
 import com.zagayevskiy.zvm.common.sizeOf
 import com.zagayevskiy.zvm.vm.*
+import com.zagayevskiy.zvm.zc.includes.includeStdMem
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,6 +42,7 @@ internal class VirtualMachineOverZcTest(private val test: CompilerTestData) {
     fun testBytecodeParsing() {
         val rawParsingBytecode = compiler.compile("""
 
+            ${includeStdMem()}
             ${includeBytecodeParser()}
 
             fn main(rawBytecode: [byte], rawBytecodeSize: int): ProgramInfo {
@@ -58,14 +61,14 @@ internal class VirtualMachineOverZcTest(private val test: CompilerTestData) {
         val readableHeap = ByteArray(heap.size)
         heap.copyOut(source = 0, destination = readableHeap)
 
-        val parsedServiceInfoAddress = heap.readInt(parsedResultAddress + 0) //0 is offset of serviceInfo field in struct ProgramInfo
-        val parsedServiceInfo = ServiceInfoStruct(readableHeap, offset = parsedServiceInfoAddress)
+        val parsedProgramInfo = ProgramInfoStruct(readableHeap, parsedResultAddress)
+        val parsedServiceInfo = ServiceInfoStruct(readableHeap, offset = parsedProgramInfo.serviceInfoPointer)
 
         assertEquals(expected.mainIndex, parsedServiceInfo.mainIndex)
         assertEquals(expected.globalsCount, parsedServiceInfo.globalsCount)
         assertEquals(expected.functions.size, parsedServiceInfo.functionsCount)
 
-        val functionsTableAddress = heap.readInt(parsedResultAddress + 4) //4 is offset of functionsTable field in struct ProgramInfo
+        val functionsTableAddress = parsedProgramInfo.functionsTablePointer
         expected.functions.forEachIndexed { index, expectedFunction ->
             val functionAddress = heap.readInt(functionsTableAddress + 4 * index)
             val parsedFunction = FunctionTableRowStruct(readableHeap, offset = functionAddress)
@@ -75,12 +78,24 @@ internal class VirtualMachineOverZcTest(private val test: CompilerTestData) {
             assertEquals(expectedFunction.locals, parsedFunction.localsCount)
         }
 
-        val bytecodeAddress = heap.readInt(parsedResultAddress + 8) //8 is offset of bytecode field in struct ProgramInfo
-        val bytecodeSize = heap.readInt(parsedResultAddress + 12) //12 is offset of bytecodeSize field in struct ProgramInfo
-
         val expectedBytecodeStart = testProgramStartAddress + sizeOf(::ServiceInfoStruct) + sizeOf(::FunctionTableRowStruct) * expected.functions.size
 
-        assertEquals(expectedBytecodeStart, bytecodeAddress)
-        assertEquals(expected.bytecode.size, bytecodeSize)
+        assertEquals(expectedBytecodeStart, parsedProgramInfo.bytecodeAddress)
+        assertEquals(expected.bytecode.size, parsedProgramInfo.bytecodeSize)
     }
+
+
+    //Same as struct ProgramInfo
+    private class ProgramInfoStruct(array: ByteArray, offset: Int) : BackingStruct(array, offset) {
+        var serviceInfoPointer by int
+        var functionsTablePointer by int
+        var bytecodeAddress by int
+        var bytecodeSize by int
+    }
+
+}
+
+
+class StackTest {
+
 }

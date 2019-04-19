@@ -1,10 +1,27 @@
 package com.zagayevskiy.zvm.zc
 
+import com.zagayevskiy.zvm.zc.includes.includeStack
+import com.zagayevskiy.zvm.zc.includes.includeStdMem
+
 internal val vmOverZc = """
+    ${includeStdMem()}
+    ${includeStack()}
     ${includeBytecodeParser()}
 
-    fn main(rawBytecode: [byte], rawBytecodeSize: int): int {
+    struct VmContext {
+        var operandsStack: Stack;
+        var frames: Stack;
+    }
+
+    fn main(rawBytecode: [byte], rawBytecodeSize: int, args: [void], argsCount: int): int {
         val programInfo = parseBytecode(rawBytecode, rawBytecodeSize);
+        val operandsStackSize = 1024;
+        val operandsStack: [void] = alloc(operandsStackSize);
+
+        val bytecode = programInfo.bytecode;
+        val ip = 0;
+
+
 
         return 0;
     }
@@ -12,6 +29,8 @@ internal val vmOverZc = """
 
 
 """
+
+
 
 internal fun includeBytecodeParser() = """
     struct ServiceInfo {
@@ -61,6 +80,4 @@ internal fun includeBytecodeParser() = """
      fn cast(something: [void]):[void] {
         return something;
      }
-
-     $stdMem
 """
