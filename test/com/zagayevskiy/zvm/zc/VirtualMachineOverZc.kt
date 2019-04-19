@@ -8,27 +8,80 @@ internal val vmOverZc = """
     ${includeStack()}
     ${includeBytecodeParser()}
 
-    struct VmContext {
+    struct Context {
+        var bytecode: [byte];
+        var bytecodeSize: int;
         var operandsStack: Stack;
-        var frames: Stack;
+        var callStack: Stack;
+        var functions: [FunctionInfo];
+        var globals: [void];
+        var ip: int;
     }
 
-    fn main(rawBytecode: [byte], rawBytecodeSize: int, args: [void], argsCount: int): int {
+    struct StackFrame {
+        var args: [void];
+        var locals: [void];
+        var returnAddress: int;
+    }
+
+    fn main(rawBytecode: [byte], rawBytecodeSize: int): int {
         val programInfo = parseBytecode(rawBytecode, rawBytecodeSize);
-        val operandsStackSize = 1024;
-        val operandsStack: [void] = alloc(operandsStackSize);
+        val context = createContext(programInfo);
 
-        val bytecode = programInfo.bytecode;
-        val ip = 0;
+        call(context, programInfo.serviceInfo.mainIndex);
+        loop(context);
 
+        return popInt(context.operandsStack);
+    }
 
-
+    fn loop(context: Context): int {
+        val bytecodeSize = context.bytecodeSize;
+        while(context.ip < bytecodeSize) {
+            val code = nextByte(context);
+        }
         return 0;
     }
 
-    fn createContext(): VmContext {
-        val result: VmContext = alloc(sizeof<VmContext>);
+    fn nextByte(context: Context): byte {
+        val value = context.bytecode[context.ip];
+        context.ip = context.ip + 1;
+        return value;
+    }
 
+    fn call(context: Context, functionIndex: int) {
+        val function = context.functions[functionIndex];
+        pushStackFrame(context.callStack, createStackFrame(context.ip));
+        context.ip = function.address;
+    }
+
+    fn createContext(info: ProgramInfo): Context {
+        val result: Context = alloc(sizeof<Context>);
+        result.bytecode = info.bytecode;
+        result.bytecodeSize = info.bytecodeSize;
+        result.operandsStack = createStack(2048);
+        result.callStack = createStack(1024);
+        result.functions = info.functionsTable;
+        result.ip = 0;
+
+        return result;
+    }
+
+    fn createStackFrame(returnAddress: int): StackFrame {
+        val frame: StackFrame = alloc(sizeof<StackFrame>);
+        frame.returnAddress = returnAddress;
+        return frame;
+    }
+
+    fn deleteStackFrame(frame: StackFrame): int {
+        return free(frame);
+    }
+
+    fn pushStackFrame(stack: Stack, frame: StackFrame): int {
+        return pushInt(stack, cast<int>(frame));
+    }
+
+    fn popStackFrame(stack: Stack): StackFrame {
+        return cast<StackFrame>(popInt(stack));
     }
 
 """

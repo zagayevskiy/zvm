@@ -20,7 +20,6 @@ internal class VirtualMachineOverZcTest(private val test: CompilerTestData) {
     }
 
     private lateinit var compiler: ZcCompiler
-    private lateinit var rawVirtualMachineBytecode: ByteArray
     private lateinit var rawTestBytecode: ByteArray
     private lateinit var heap: MemoryBitTable
     private var testProgramStartAddress: Int = 0
@@ -36,6 +35,16 @@ internal class VirtualMachineOverZcTest(private val test: CompilerTestData) {
         testProgramSize = rawTestBytecode.size
         heap.copyIn(rawTestBytecode, destination = testProgramStartAddress)
         compiler = ZcCompiler()
+    }
+
+    @Test
+    fun testVmOverZc() {
+        val rawVirtualMachineBytecode = compiler.compile(vmOverZc)
+        val loader = BytecodeLoader(rawVirtualMachineBytecode)
+        val info = (loader.load() as LoadingResult.Success).info
+        val vm = VirtualMachine(info, heap)
+
+        vm.run(listOf(testProgramStartAddress.toStackEntry(), testProgramSize.toStackEntry()))
     }
 
     @Test

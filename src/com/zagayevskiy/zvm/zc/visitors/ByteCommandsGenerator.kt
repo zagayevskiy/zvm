@@ -236,10 +236,9 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
         generate(cast.expression)
         val castInstruction = when (cast.expression.type) {
             ZcType.Integer -> when (cast.type) {
-                ZcType.Integer -> null
+                ZcType.Integer, is ZcType.Array, is ZcType.Struct -> null
                 ZcType.Byte,
                 ZcType.Boolean -> IntToByte.instruction()
-                is ZcType.Array -> null
                 else -> error("${cast.expression} can't be casted to ${cast.type}")
             }
             ZcType.Byte,
