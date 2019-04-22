@@ -1,10 +1,15 @@
-package com.zagayevskiy.zvm.zc
+package com.zagayevskiy.zvm.zc.vmoverzc
 
 import com.zagayevskiy.zvm.MemoryBitTable
 import com.zagayevskiy.zvm.common.BackingStruct
 import com.zagayevskiy.zvm.common.sizeOf
 import com.zagayevskiy.zvm.vm.*
+import com.zagayevskiy.zvm.zc.CompilerTest
+import com.zagayevskiy.zvm.zc.CompilerTestData
+import com.zagayevskiy.zvm.zc.ZcCompiler
 import com.zagayevskiy.zvm.zc.includes.includeStdMem
+import com.zagayevskiy.zvm.zc.vmoverzc.src.includeBytecodeParser
+import com.zagayevskiy.zvm.zc.vmoverzc.src.vmOverZc
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
