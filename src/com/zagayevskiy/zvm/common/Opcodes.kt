@@ -79,7 +79,7 @@ object Opcodes {
     const val ORB: Byte = -53
     const val NOTB: Byte = -54
     const val CMPB: Byte = -55
-    const val CMPBC: Byte = 56
+    const val CMPBC: Byte = -56
     const val LESSB: Byte = -57
     const val LEQB: Byte = -58
     const val GREATB: Byte = -59
