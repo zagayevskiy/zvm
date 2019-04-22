@@ -94,6 +94,20 @@ internal val zcIsPrime = """
     }
 """.trimIndent()
 
+internal val whenTest = """
+    fn main(b: byte): int {
+        when(b) {
+            0 -> return 0;
+            1 -> return 100;
+            2 -> return 200;
+            10 -> return 1000;
+            5 -> return 500;
+            -6 -> return -600;
+            else -> return b * 123;
+        }
+    }
+""".trimIndent()
+
 //run with two arguments (int) - size of array and multiplier. Allocate int[size] array, fill it with index*multiplier and then sum all elements/   
 internal val zcSumArrayOverAsmInsert = """
     ${intArrayAsmInserts()}

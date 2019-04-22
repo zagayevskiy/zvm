@@ -155,6 +155,13 @@ class TypesProcessor(private val program: AstProgram) {
 
             is AstHardCastExpr -> AstCastExpr(ast.expression, resolveType(ast.unresolvedCastType))
 
+            is AstWhen -> ast.apply {
+                val checkType = checkValue.type
+                branches.forEach { branch ->
+                    branch.case = branch.case.tryAutoPromoteTo(checkType) ?: error("branch case ${branch.case} can't be auto promoted to $checkType")
+                }
+            }
+
             else -> ast
         }
     }
@@ -200,7 +207,7 @@ class TypesProcessor(private val program: AstProgram) {
     private fun AstExpr.tryAutoPromoteTo(promotedType: ZcType): AstExpr? = when {
         type == promotedType -> this
         type.canBeAutoPromotedTo(promotedType) -> promoteTo(promotedType)
-        //TODO looks bad& Hack for byte constant.
+        //TODO looks bad. Hack for byte constant.
         promotedType is ZcType.Byte && this is AstConst.Integer && value in (Byte.MIN_VALUE..Byte.MAX_VALUE) -> AstConst.Byte(value.toByte())
         else -> null
     }

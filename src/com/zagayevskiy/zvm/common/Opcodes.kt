@@ -2,100 +2,100 @@ package com.zagayevskiy.zvm.common
 
 object Opcodes {
     //region control flow opcodes
-    const val CALL: Byte = 0x10
-    const val RET: Byte = 0x11
-    const val JMP: Byte = 0x12
-    const val JZ: Byte = 0x13
-    const val JNZ: Byte = 0x14
-    const val JPOS: Byte = 0x15
-    const val JNEG: Byte = 0x16
+    const val CALL: Byte = 1
+    const val RET: Byte = 2
+    const val JMP: Byte = 3
+    const val JZ: Byte = 4
+    const val JNZ: Byte = 5
+    const val JPOS: Byte = 6
+    const val JNEG: Byte = 7
     //endregion
 
     //region java interop opcodes
-    const val JCALL: Byte = 0x1A
-    const val JNEW: Byte = 0x1B
-    const val JDEL: Byte = 0x1C
+    const val JCALL: Byte = -1
+    const val JNEW: Byte = -2
+    const val JDEL: Byte = -3
     //endregion
 
-    const val PUSH: Byte = 0x20
-    const val POP: Byte = 0x21
-    const val DUP: Byte = 0x22
+    const val PUSH: Byte = 11
+    const val POP: Byte = 12
+    const val DUP: Byte = 13
 
     //region casts opcodes
-    const val ITOB: Byte = 0x30
-    const val BTOI: Byte = 0x31
-    const val ITOJ: Byte = 0x32
-    const val BTOJ: Byte = 0x33
-    const val STOJ: Byte = 0x34
+    const val ITOB: Byte = 21
+    const val BTOI: Byte = 22
+    const val ITOJ: Byte = 23
+    const val BTOJ: Byte = 24
+    const val STOJ: Byte = 25
     //endregion
 
     //region int opcodes
-    const val ALOADI: Byte = 0x40
-    const val LSTORI: Byte = 0x41
-    const val LLOADI: Byte = 0x42
-    const val MSTORI: Byte = 0x43
-    const val MLOADI: Byte = 0x44
-    const val CONSTI: Byte = 0x45
-    const val ADDI: Byte = 0x46
-    const val SUBI: Byte = 0x47
-    const val INCI: Byte = 0x48
-    const val DECI: Byte = 0x49
-    const val MULI: Byte = 0x4A
-    const val DIVI: Byte = 0x4B
-    const val MODI: Byte = 0x4C
-    const val XORI: Byte = 0x4D
-    const val ANDI: Byte = 0x4E
-    const val ORI: Byte = 0x4F
-    const val NOTI: Byte = 0x50
-    const val SHLI: Byte = 0x51
-    const val SHRI: Byte = 0x52
-    const val CMPI: Byte = 0x53
-    const val CMPIC: Byte = 0x54
-    const val LESSI: Byte = 0x55
-    const val LEQI: Byte = 0x56
-    const val GREATI: Byte = 0x57
-    const val GREQI: Byte = 0x58
-    const val EQI: Byte = 0x59
-    const val NEQI: Byte = 0x60
-    const val RNDI: Byte = 0x61
-    const val GLOADI: Byte = 0x62
-    const val GSTORI: Byte = 0x63
+    const val ALOADI: Byte = 40
+    const val LSTORI: Byte = 41
+    const val LLOADI: Byte = 42
+    const val MSTORI: Byte = 43
+    const val MLOADI: Byte = 44
+    const val CONSTI: Byte = 45
+    const val ADDI: Byte = 46
+    const val SUBI: Byte = 47
+    const val INCI: Byte = 48
+    const val DECI: Byte = 49
+    const val MULI: Byte = 50
+    const val DIVI: Byte = 51
+    const val MODI: Byte = 52
+    const val XORI: Byte = 53
+    const val ANDI: Byte = 54
+    const val ORI: Byte = 55
+    const val NOTI: Byte = 56
+    const val SHLI: Byte = 57
+    const val SHRI: Byte = 58
+    const val CMPI: Byte = 59
+    const val CMPIC: Byte = 60
+    const val LESSI: Byte = 61
+    const val LEQI: Byte = 62
+    const val GREATI: Byte = 63
+    const val GREQI: Byte = 64
+    const val EQI: Byte = 65
+    const val NEQI: Byte = 66
+    const val RNDI: Byte = 67
+    const val GLOADI: Byte = 68
+    const val GSTORI: Byte = 69
     //endregion
 
     //region byte opcodes
-    const val ALOADB: Byte = -0x60
-    const val LSTORB: Byte = -0x61
-    const val LLOADB: Byte = -0x62
-    const val MSTORB: Byte = -0x63
-    const val MLOADB: Byte = -0x64
-    const val CONSTB: Byte = -0x65
-    const val ADDB: Byte = -0x66
-    const val SUBB: Byte = -0x67
-    const val MULB: Byte = -0x68
-    const val DIVB: Byte = -0x69
-    const val MODB: Byte = -0x6A
-    const val XORB: Byte = -0x6B
-    const val ANDB: Byte = -0x6C
-    const val ORB: Byte = -0x6D
-    const val NOTB: Byte = -0x6E
-    const val CMPB: Byte = -0x6F
-    const val CMPBC: Byte = 0x70
-    const val LESSB: Byte = -0x71
-    const val LEQB: Byte = -0x72
-    const val GREATB: Byte = -0x73
-    const val GREQB: Byte = -0x74
-    const val EQB: Byte = -0x75
-    const val NEQB: Byte = -0x76
-    const val LNOTB: Byte = -0x77
-    const val GLOADB: Byte = -0x78
-    const val GSTORB: Byte = -0x79
+    const val ALOADB: Byte = -40
+    const val LSTORB: Byte = -41
+    const val LLOADB: Byte = -42
+    const val MSTORB: Byte = -43
+    const val MLOADB: Byte = -44
+    const val CONSTB: Byte = -45
+    const val ADDB: Byte = -46
+    const val SUBB: Byte = -47
+    const val MULB: Byte = -48
+    const val DIVB: Byte = -49
+    const val MODB: Byte = -50
+    const val XORB: Byte = -51
+    const val ANDB: Byte = -52
+    const val ORB: Byte = -53
+    const val NOTB: Byte = -54
+    const val CMPB: Byte = -55
+    const val CMPBC: Byte = 56
+    const val LESSB: Byte = -57
+    const val LEQB: Byte = -58
+    const val GREATB: Byte = -59
+    const val GREQB: Byte = -60
+    const val EQB: Byte = -61
+    const val NEQB: Byte = -62
+    const val LNOTB: Byte = -63
+    const val GLOADB: Byte = -64
+    const val GSTORB: Byte = -65
     //endregion
 
-    const val OUT: Byte = -0x1
+    const val OUT: Byte = -10
 
     //region memory opcodes
-    const val ALLOC: Byte = -0x2
-    const val FREE: Byte = -0x3
+    const val ALLOC: Byte = -11
+    const val FREE: Byte = -12
     //endregion
 
 }

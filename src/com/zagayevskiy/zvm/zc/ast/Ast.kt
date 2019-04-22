@@ -25,7 +25,7 @@ sealed class Ast(var type: ZcType = ZcType.Unknown) : MutableIterable<Ast> {
         }
     }
 
-    protected class ChildListDelegate<T : Ast, L : List<T>>(defaultValue: L, list: MutableList<Ast>) {
+    protected class ChildListDelegate<T : Ast, L : List<T>>(private val defaultValue: L, private val list: MutableList<Ast>) {
         private val beginIndex = list.size
 
         init {
@@ -33,7 +33,8 @@ sealed class Ast(var type: ZcType = ZcType.Unknown) : MutableIterable<Ast> {
         }
 
         @Suppress("UNCHECKED_CAST")
-        private val delegatedSubList = (list
+        private val delegatedSubList: L
+                get() = (list
                 .takeIf { defaultValue.isNotEmpty() }
                 ?.subList(beginIndex, beginIndex + defaultValue.size) ?: mutableListOf()) as L
 
@@ -116,6 +117,17 @@ class AstIfElse(condition: AstExpr, ifBody: AstStatement, elseBody: AstStatement
     var condition by child(condition)
     var ifBody by child(ifBody)
     var elseBody by child(elseBody ?: AstBlock.Empty)
+}
+
+class AstWhen(checkValue: AstExpr, branches: List<AstWhenBranch>, elseStatement: AstStatement?): AstStatement() {
+    var checkValue by child(checkValue)
+    val branches: MutableList<AstWhenBranch> by childList(branches.toMutableList())
+    var elseStatement by child(elseStatement ?: AstBlock.Empty)
+}
+
+class AstWhenBranch(case: AstExpr, branch: AstStatement): Ast() {
+    var case by child(case)
+    var branch by child(branch)
 }
 
 class AstFunctionReturn(expression: AstExpr?) : AstStatement() {

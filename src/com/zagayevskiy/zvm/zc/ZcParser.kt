@@ -6,7 +6,6 @@ import com.zagayevskiy.zvm.common.Token.Eof
 import com.zagayevskiy.zvm.common.Token.Identifier
 import com.zagayevskiy.zvm.zc.ast.*
 import com.zagayevskiy.zvm.zc.types.UnresolvedType
-import kotlin.math.exp
 
 sealed class ParseResult {
     data class Success(val program: AstProgram) : ParseResult()
@@ -191,6 +190,38 @@ class ZcParser(private val lexer: Lexer) {
             ?: functionReturnStatement()
             ?: expressionStatement()
             ?: asmStatement()
+            ?: whenStatement()
+
+    private fun whenStatement(): AstWhen? {
+        maybe<ZcToken.When>() ?: return NotMatched
+        expect<ZcToken.ParenthesisOpen>()
+        val checkValue = expression() ?: error("Check value expected.")
+        expect<ZcToken.ParenthesisClose>()
+        expect<ZcToken.CurlyBracketOpen>()
+        val branches = mutableListOf<AstWhenBranch>()
+        do {
+            val branch = whenBranch()?.also { branches.add(it) }
+        } while (branch != null)
+        if (branches.isEmpty()) error("At least one branch expected")
+
+        val elseStatement = whenElse()
+
+        expect<ZcToken.CurlyBracketClose>()
+
+        return AstWhen(checkValue, branches, elseStatement)
+    }
+
+    private fun whenBranch(): AstWhenBranch? {
+        val case = expression() ?: return NotMatched
+        val branch = expect<ZcToken.Arrow>().andThan { statement() } ?: error("statement expected after -> ")
+        return AstWhenBranch(case, branch)
+    }
+
+    private fun whenElse(): AstStatement? {
+        maybe<ZcToken.Else>() ?: return NotMatched
+        expect<ZcToken.Arrow>()
+        return statement() ?: error("statement expected after else ->")
+    }
 
     private fun asmStatement(): AstAsmBlock? {
         maybe<ZcToken.Asm>() ?: return NotMatched
@@ -439,9 +470,11 @@ class ZcParser(private val lexer: Lexer) {
     private fun valueExpr() = constExpr() ?: parenthesisExpr() ?: assignmentExpr() ?: sizeOfOperator() ?: castOperator()
 
     private fun constExpr(): AstConst? {
-        val constant = maybe<Token.Integer>() ?: return NotMatched
+        val constant = maybe<Token.Integer>()?.value
+                ?: maybe<ZcToken.Minus>()?.andThan { expect<Token.Integer>().value * -1 }
+                ?: return NotMatched
 
-        return AstConst.Integer(constant.value)
+        return AstConst.Integer(constant)
     }
 
     // parenthesis_expr ::= "(" expression ")" [chain]

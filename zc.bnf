@@ -20,7 +20,7 @@ functional_type ::= "(" [ type { ", " type } ] ")" "->" type
 array_type ::= "[" type "]"
 
 block ::= "{" statement { statement } "}"
-statement ::= block | variable_declaration | loop | if_else | function_return_statement | expression_statement | asm
+statement ::= block | variable_declaration | loop | if_else | function_return_statement | expression_statement | asm | when_statement
 
 asm ::= "asm" "{" asm_body "}"
 asm_body ::= string_const
@@ -81,3 +81,10 @@ function_call ::= "(" expressions_list ")" [chain]
 array_indexing ::= "[" expression "]" ("=" expression | [chain])
 struct_field_dereference ::= "." identifier ("=" expression | [chain])
 string_const ::= "'"*"'" | "\""*"\""
+
+when_statement ::= "when" "(" expression ")" "{"
+   when_branch {when_branch}
+   ["else" "->" statement]
+"}"
+
+when_branch ::= expression "->" statement

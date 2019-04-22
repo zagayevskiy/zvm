@@ -111,6 +111,10 @@ private class AstEqualityVisitor(private val other: Ast) : AstVisitor<Boolean> {
 
     override fun visit(ast: AstCastExpr) = ast.check()
 
+    override fun visit(ast: AstWhen) = ast.check()
+
+    override fun visit(ast: AstWhenBranch) = ast.check()
+
     private inline fun <reified T : Ast> T.check(additionalCondition: (other: T) -> Boolean = { true }): Boolean {
         return other is T && zipWithCondition(other) { left, right -> left eq right } && additionalCondition(other)
     }

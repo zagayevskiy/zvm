@@ -60,7 +60,35 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                 generate(statement.expression)
                 commands.add(Pop.instruction())
             }
+            is AstWhen -> generate(statement)
         }
+    }
+
+    private fun generate(whenStatement: AstWhen) {
+        generate(whenStatement.checkValue)
+        val endLabel = "l_${nextId}_when_end"
+        val thisWhenId = nextId
+
+        fun branchLabel(index: Int) = "l_${thisWhenId}_branch_$index"
+
+        whenStatement.branches.forEachIndexed { index, branch ->
+            val currentBranchLabel = branchLabel(index)
+            val nextBranchLabel = branchLabel(index + 1)
+            commands.add(Command.Label(currentBranchLabel))
+            commands.add(Dup.instruction())
+            generate(branch.case)
+            commands.add(instructionByType(whenStatement.checkValue.type, IntEq, ByteEq))
+            commands.add(JumpZero.instruction(nextBranchLabel.id))
+            generate(branch.branch)
+            commands.add(Jmp.instruction(endLabel.id))
+        }
+        val elseLabel = branchLabel(whenStatement.branches.size)
+        commands.add(Command.Label(elseLabel))
+        commands.add(Pop.instruction())
+        generate(whenStatement.elseStatement)
+        commands.add(Command.Label(endLabel))
+
+
     }
 
     private fun generate(asm: AstAsmBlock) {

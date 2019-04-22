@@ -22,6 +22,10 @@ private object AstToStringVisitor : AstVisitor<String> {
 
     override fun visit(ast: AstBlock) = "block"
 
+    override fun visit(ast: AstWhen) = "when"
+
+    override fun visit(ast: AstWhenBranch) = "when-branch"
+
     override fun visit(ast: AstAsmBlock) = "asm ${ast.body}"
 
     override fun visit(ast: AstVarDecl) = "var decl ${ast.varName}"
