@@ -29,18 +29,17 @@ internal fun includeStack() = """
         return cast<[int]>(stack.stack)[newTop];
     }
 
+    fn peekInt(stack: Stack): int {
+        if (stack.top == 0) return 1;
+        return cast<[int]>(stack.stack)[stack.top];
+    }
+
     fn pushByte(stack: Stack, value: byte): int {
-        if (stack.top >= stack.size) return 1;
-        cast<[byte]>(stack.stack)[stack.top*4] = value;
-        stack.top = stack.top + 1;
-        return 0;
+        return pushInt(stack, cast<int>(value));
     }
 
     fn popByte(stack: Stack): byte {
-        if (stack.top == 0) return 1;
-        val newTop = stack.top - 1;
-        stack.top = newTop;
-        return cast<[byte]>(stack.stack)[newTop*4];
+        return cast<byte>(popInt(stack));
     }
 
 """

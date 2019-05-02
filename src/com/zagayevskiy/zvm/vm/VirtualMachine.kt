@@ -612,8 +612,8 @@ class VirtualMachine(info: LoadedInfo, private val heap: Memory = MemoryBitTable
     }
 
     private inline fun binaryByteExpr(body: (left: Byte, right: Byte) -> Int) {
-        val left = pop<VMByte>(PopByteExprOperandMsg).byteValue
         val right = pop<VMByte>(PopByteExprOperandMsg).byteValue
+        val left = pop<VMByte>(PopByteExprOperandMsg).byteValue
         push(body(left, right).toByte().toStackEntry())
     }
 

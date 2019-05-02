@@ -113,6 +113,7 @@ internal val vmOverZc = """
 
                 -11 -> doAlloc(context);
                 -12 -> doFree(context);
+                else -> return -1;
             }
         }
         return 0;
@@ -137,38 +138,92 @@ internal val vmOverZc = """
         return 0;
     }
 
-    fn jz(context: Context): int { return 0; }
-    fn jnz(context: Context): int { return 0; }
+    fn jz(context: Context): int {
+        val address = nextInt(context);
+        val argument = popInt(context.operandsStack);
+        if (argument == 0) jump(context, address);
+        return 0;
+    }
+    fn jnz(context: Context): int {
+        val address = nextInt(context);
+        val argument = popInt(context.operandsStack);
+        if (argument != 0) jump(context, address);
+        return 0;
+    }
     fn jpos(context: Context): int { return 0; }
     fn jneg(context: Context): int { return 0; }
     fn push(context: Context): int { return 0; }
-    fn pop(context: Context): int { return 0; }
-    fn dup(context: Context): int { return 0; }
-    fn itob(context: Context): int { return 0; }
+    fn pop(context: Context): int { return popInt(context.operandsStack); }
+    fn dup(context: Context): int { return pushInt(context.operandsStack, peekInt(context.operandsStack)); }
+
+    fn itob(context: Context): int {
+        return pushByte(context.operandsStack, cast<byte>(popInt(context.operandsStack)));
+    }
     fn btoi(context: Context): int { return 0; }
+
     fn itoj(context: Context): int { return 0; }
     fn btoj(context: Context): int { return 0; }
     fn stoj(context: Context): int { return 0; }
+
     fn aloadi(context: Context): int { return 0; }
     fn lstori(context: Context): int { return 0; }
     fn lloadi(context: Context): int { return 0; }
     fn mstori(context: Context): int { return 0; }
     fn mloadi(context: Context): int { return 0; }
-    fn consti(context: Context): int { return 0; }
-    fn addi(context: Context): int { return 0; }
-    fn subi(context: Context): int { return 0; }
+    fn consti(context: Context): int { return pushInt(context.operandsStack, nextInt(context)); }
+    fn addi(context: Context): int {
+        val stack = context.operandsStack;
+        return pushInt(stack, popInt(stack) + popInt(stack));
+    }
+    fn subi(context: Context): int {
+        val stack = context.operandsStack;
+        return pushInt(stack, popInt(stack) - popInt(stack));
+    }
     fn inci(context: Context): int { return 0; }
     fn deci(context: Context): int { return 0; }
-    fn muli(context: Context): int { return 0; }
-    fn divi(context: Context): int { return 0; }
-    fn modi(context: Context): int { return 0; }
-    fn xori(context: Context): int { return 0; }
-    fn andi(context: Context): int { return 0; }
-    fn ori(context: Context): int { return 0; }
-    fn noti(context: Context): int { return 0; }
-    fn shli(context: Context): int { return 0; }
-    fn shri(context: Context): int { return 0; }
-    fn cmpi(context: Context): int { return 0; }
+    fn muli(context: Context): int {
+        val stack = context.operandsStack;
+        return pushInt(stack, popInt(stack) * popInt(stack));
+    }
+    fn divi(context: Context): int {
+        val stack = context.operandsStack;
+        return pushInt(stack, popInt(stack) / popInt(stack));
+    }
+    fn modi(context: Context): int {
+        val stack = context.operandsStack;
+        return pushInt(stack, popInt(stack) % popInt(stack));
+    }
+    fn xori(context: Context): int {
+        val stack = context.operandsStack;
+        return pushInt(stack, popInt(stack) ^ popInt(stack));
+    }
+    fn andi(context: Context): int {
+        val stack = context.operandsStack;
+        return pushInt(stack, popInt(stack) & popInt(stack));
+    }
+    fn ori(context: Context): int {
+        val stack = context.operandsStack;
+        return pushInt(stack, popInt(stack) | popInt(stack));
+    }
+    fn noti(context: Context): int {
+        val stack = context.operandsStack;
+        return pushInt(stack, !popInt(stack));
+    }
+
+    fn shli(context: Context): int {
+        val stack = context.operandsStack;
+        return pushInt(stack, popInt(stack) << popInt(stack));
+    }
+    fn shri(context: Context): int {
+        val stack = context.operandsStack;
+        return pushInt(stack, popInt(stack) >> popInt(stack));
+    }
+    fn cmpi(context: Context): int {
+        val stack = context.operandsStack;
+        val right = popInt(stack);
+        val left = popInt(stack);
+        return pushInt(stack, popInt(stack) >> popInt(stack));
+    }
     fn cmpic(context: Context): int { return 0; }
     fn lessi(context: Context): int { return 0; }
     fn leqi(context: Context): int { return 0; }
@@ -184,16 +239,45 @@ internal val vmOverZc = """
     fn lloadb(context: Context): int { return 0; }
     fn mstorb(context: Context): int { return 0; }
     fn mloadb(context: Context): int { return 0; }
-    fn constb(context: Context): int { return 0; }
-    fn addb(context: Context): int { return 0; }
-    fn subb(context: Context): int { return 0; }
-    fn mulb(context: Context): int { return 0; }
-    fn divb(context: Context): int { return 0; }
-    fn modb(context: Context): int { return 0; }
-    fn xorb(context: Context): int { return 0; }
-    fn andb(context: Context): int { return 0; }
-    fn orb(context: Context): int { return 0; }
-    fn notb(context: Context): int { return 0; }
+    fn constb(context: Context): int {
+        return pushByte(context.operandsStack, nextByte(context));
+    }
+    fn addb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, popByte(stack) + popByte(stack));
+    }
+    fn subb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, popByte(stack) - popByte(stack));
+    }
+    fn mulb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, popByte(stack) * popByte(stack));
+    }
+    fn divb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, popByte(stack) / popByte(stack));
+    }
+    fn modb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, popByte(stack) % popByte(stack));
+    }
+    fn xorb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, popByte(stack) ^ popByte(stack));
+    }
+    fn andb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, popByte(stack) & popByte(stack));
+    }
+    fn orb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, popByte(stack) | popByte(stack));
+    }
+    fn notb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, !popByte(stack));
+    }
     fn cmpb(context: Context): int { return 0; }
     fn cmpbc(context: Context): int { return 0; }
     fn lessb(context: Context): int { return 0; }
@@ -205,6 +289,7 @@ internal val vmOverZc = """
     fn lnotb(context: Context): int { return 0; }
     fn gloadb(context: Context): int { return 0; }
     fn gstorb(context: Context): int { return 0; }
+
     fn doAlloc(context: Context): int { return 0; }
     fn doFree(context: Context): int { return 0; }
 
@@ -238,6 +323,30 @@ internal val vmOverZc = """
 
     fn popStackFrame(stack: Stack): StackFrame {
         return cast<StackFrame>(popInt(stack));
+    }
+
+    fn peekStackFrame(stack: Stack): StackFrame {
+        return cast<StackFrame>(peekInt(stack));
+    }
+
+    fn compareBytes(left: byte, right: byte): byte {
+        if (left == right) {
+            return 0;
+        } else if (left < right) {
+            return -1;
+        } else {
+            return 1;
+        }
+    }
+
+    fn compareInts(left: int, right: int): int {
+        if (left == right) {
+            return 0;
+        } else if (left < right) {
+            return -1;
+        } else {
+            return 1;
+        }
     }
 
 """
