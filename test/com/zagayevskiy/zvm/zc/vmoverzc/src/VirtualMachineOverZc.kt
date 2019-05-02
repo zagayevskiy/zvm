@@ -40,10 +40,7 @@ internal val vmOverZc = """
                 3 -> jump(context, nextInt(context));
                 4 -> jz(context);
                 5 -> jnz(context);
-                6 -> jpos(context);
-                7 -> jneg(context);
 
-                11 -> push(context);
                 12 -> pop(context);
                 13 -> dup(context);
 
@@ -150,9 +147,6 @@ internal val vmOverZc = """
         if (argument != 0) jump(context, address);
         return 0;
     }
-    fn jpos(context: Context): int { return 0; }
-    fn jneg(context: Context): int { return 0; }
-    fn push(context: Context): int { return 0; }
     fn pop(context: Context): int { return popInt(context.operandsStack); }
     fn dup(context: Context): int { return pushInt(context.operandsStack, peekInt(context.operandsStack)); }
 
@@ -286,7 +280,7 @@ internal val vmOverZc = """
             ret
         "}
     }
-    
+
     fn gloadi(context: Context): int { return 0; }
     fn gstori(context: Context): int { return 0; }
     fn aloadb(context: Context): int { return 0; }

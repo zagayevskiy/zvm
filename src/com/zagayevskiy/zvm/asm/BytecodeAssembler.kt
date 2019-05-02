@@ -54,7 +54,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
                 }
                 is Instruction.Operand.Id -> when (opcode) {
                     Call -> write(functionIndex(operand.name))
-                    Jmp, JumpZero, JumpNotZero, JumpPositive, JumpNegative -> write(obtainLabel(operand.name))
+                    Jmp, JumpZero, JumpNotZero -> write(obtainLabel(operand.name))
                     else -> error("opcode ${opcode.name} can't operate with $operand")
                 }
             }

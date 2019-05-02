@@ -12,8 +12,6 @@ object OpcodesMapping {
             Jmp to Opcodes.JMP,
             JumpZero to Opcodes.JZ,
             JumpNotZero to Opcodes.JNZ,
-            JumpPositive to Opcodes.JPOS,
-            JumpNegative to Opcodes.JNEG,
 
             Call to Opcodes.CALL,
             Ret to Opcodes.RET,
@@ -22,7 +20,6 @@ object OpcodesMapping {
             JavaNew to Opcodes.JNEW,
             JavaDelete to Opcodes.JDEL,
 
-            Push to Opcodes.PUSH,
             Pop to Opcodes.POP,
             Dup to Opcodes.DUP,
 
@@ -106,8 +103,6 @@ object OpcodesMapping {
 object Jmp : OpcodeImpl(name = "jmp", operandCount = 1)
 object JumpZero : OpcodeImpl(name = "jz", operandCount = 1)
 object JumpNotZero : OpcodeImpl(name = "jnz", operandCount = 1)
-object JumpPositive : OpcodeImpl(name = "jpos", operandCount = 1)
-object JumpNegative : OpcodeImpl(name = "jneg", operandCount = 1)
 
 object Ret : OpcodeImpl(name = "ret")
 object Call : OpcodeImpl(name = "call", operandCount = 1)
@@ -116,7 +111,6 @@ object JavaCall : OpcodeImpl(name = "jcall", operandCount = 1)
 object JavaNew : OpcodeImpl(name = "jnew", operandCount = 1)
 object JavaDelete : OpcodeImpl(name = "jdel")
 
-object Push : OpcodeImpl(name = "push", operandCount = 1)
 object Pop : OpcodeImpl(name = "pop")
 object Dup : OpcodeImpl(name = "dup")
 

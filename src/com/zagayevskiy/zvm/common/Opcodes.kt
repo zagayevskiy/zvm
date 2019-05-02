@@ -7,8 +7,6 @@ object Opcodes {
     const val JMP: Byte = 3
     const val JZ: Byte = 4
     const val JNZ: Byte = 5
-    const val JPOS: Byte = 6
-    const val JNEG: Byte = 7
     //endregion
 
     //region java interop opcodes
@@ -17,7 +15,6 @@ object Opcodes {
     const val JDEL: Byte = -3
     //endregion
 
-    const val PUSH: Byte = 11
     const val POP: Byte = 12
     const val DUP: Byte = 13
 

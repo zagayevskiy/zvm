@@ -9,7 +9,9 @@ internal val asmMulByRecursiveAdd = """
     aloadi 0
     jz retzero
     aloadi 0
-    jpos arg0_already_positive
+    consti 0
+    greqi
+    jnz arg0_already_positive
     aloadi 0
     consti -1
     muli
@@ -20,7 +22,9 @@ internal val asmMulByRecursiveAdd = """
     aloadi 1
     call mulByRecursiveAdd
     aloadi 0
-    jpos finish
+    consti 0
+    greqi
+    jnz finish
     consti -1
     muli
     ->finish
@@ -52,7 +56,9 @@ internal val asmFibonacciIterativeFunctionBody = """
     cmpic 2
     lstorb 0
     lloadb 0
-    jneg ret1
+    constb 0
+    lessb
+    jnz ret1
     lloadb 0
     jz ret1
     aloadi 0
@@ -146,7 +152,9 @@ internal val asmFactorialIterative = """
 internal val asmFactorialRecursive = """
     .fun main: args = 1
     aloadi 0
-    jpos recursion
+    consti 0
+    greati
+    jnz recursion
     consti 1
     ret
     ->recursion
@@ -172,8 +180,8 @@ internal val asmSumOfArray = """
     ->loop
     lloadi 1
     aloadi 0
-    cmpi
-    jneg body
+    lessi
+    jnz body
     jmp finish
     ->body
     lloadi 0
@@ -198,8 +206,8 @@ internal val asmSumOfArray = """
      ->loop
      lloadi 0
      aloadi 1
-     cmpi
-     jpos finish
+     greqi
+     jnz finish
      aloadi 0
      lloadi 0
      consti 4

@@ -40,10 +40,8 @@ import com.zagayevskiy.zvm.common.Opcodes.ITOJ
 import com.zagayevskiy.zvm.common.Opcodes.JCALL
 import com.zagayevskiy.zvm.common.Opcodes.JDEL
 import com.zagayevskiy.zvm.common.Opcodes.JMP
-import com.zagayevskiy.zvm.common.Opcodes.JNEG
 import com.zagayevskiy.zvm.common.Opcodes.JNEW
 import com.zagayevskiy.zvm.common.Opcodes.JNZ
-import com.zagayevskiy.zvm.common.Opcodes.JPOS
 import com.zagayevskiy.zvm.common.Opcodes.JZ
 import com.zagayevskiy.zvm.common.Opcodes.LEQB
 import com.zagayevskiy.zvm.common.Opcodes.LEQI
@@ -169,8 +167,6 @@ class VirtualMachine(info: LoadedInfo, private val heap: Memory = MemoryBitTable
                 JMP -> jump(decodeNextInt())
                 JZ -> jz()
                 JNZ -> jnz()
-                JPOS -> jpos()
-                JNEG -> jneg()
 
                 CONSTI -> push(decodeNextInt().toStackEntry())
                 CONSTB -> push(nextByte().toStackEntry())
@@ -457,22 +453,6 @@ class VirtualMachine(info: LoadedInfo, private val heap: Memory = MemoryBitTable
         when (value) {
             is VMByte -> value.byteValue.toInt() != 0
             is VMInteger -> value.intValue != 0
-            is StackEntry.VMNull -> false
-        }
-    }
-
-    private fun jpos() = conditionalJump { value ->
-        when (value) {
-            is VMByte -> value.byteValue > 0
-            is VMInteger -> value.intValue > 0
-            is StackEntry.VMNull -> false
-        }
-    }
-
-    private fun jneg() = conditionalJump { value ->
-        when (value) {
-            is VMByte -> value.byteValue < 0
-            is VMInteger -> value.intValue < 0
             is StackEntry.VMNull -> false
         }
     }

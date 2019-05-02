@@ -23,7 +23,7 @@ class BytecodeAssemblerTest {
             ret
 
             .fun f
-            push 123
+            consti 123
             call g
             ret
 
@@ -38,7 +38,7 @@ class BytecodeAssemblerTest {
                 Jmp.byte, 10.bytes, //1st lbl
                 Call.byte, 1.bytes, //1st function
                 Ret.byte,
-                Push.byte,
+                IntConst.byte,
                 123.bytes,
                 Call.byte, 2.bytes, //2nd function
                 Ret.byte,
