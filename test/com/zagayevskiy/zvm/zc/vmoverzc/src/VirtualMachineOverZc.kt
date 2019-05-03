@@ -169,8 +169,7 @@ internal val vmOverZc = """
         val frame = peekStackFrame(context.callStack);
         val index = nextInt(context);
         val value = cast<[int]>(frame.args)[index];
-        pushInt(context.operandsStack, value);
-        return 0;
+        return pushInt(context.operandsStack, value);
     }
     fn lstori(context: Context): int {
         cast<[int]>(peekStackFrame(context.callStack).locals)[nextInt(context)] = popInt(context.operandsStack);
@@ -310,9 +309,21 @@ internal val vmOverZc = """
 
     fn gloadi(context: Context): int { return 0; }
     fn gstori(context: Context): int { return 0; }
-    fn aloadb(context: Context): int { return 0; }
-    fn lstorb(context: Context): int { return 0; }
-    fn lloadb(context: Context): int { return 0; }
+
+    fn aloadb(context: Context): int {
+        val frame = peekStackFrame(context.callStack);
+        val index = nextInt(context);
+        val value = cast<[byte]>(frame.args)[index*4];
+        return pushByte(context.operandsStack, value);
+    }
+    fn lstorb(context: Context): int {
+        cast<[int]>(peekStackFrame(context.callStack).locals)[nextInt(context)] = cast<int>(popByte(context.operandsStack));
+        return 0;
+    }
+    fn lloadb(context: Context): int {
+        val value = cast<[int]>(peekStackFrame(context.callStack).locals)[nextInt(context)];
+        return pushByte(context.operandsStack, cast<byte>(value));
+    }
     fn mstorb(context: Context): int { return 0; }
     fn mloadb(context: Context): int { return 0; }
     fn constb(context: Context): int {
@@ -324,7 +335,9 @@ internal val vmOverZc = """
     }
     fn subb(context: Context): int {
         val stack = context.operandsStack;
-        return pushByte(stack, popByte(stack) - popByte(stack));
+        val right = popByte(stack);
+        val left = popByte(stack);
+        return pushByte(stack, left - right);
     }
     fn mulb(context: Context): int {
         val stack = context.operandsStack;
@@ -332,11 +345,15 @@ internal val vmOverZc = """
     }
     fn divb(context: Context): int {
         val stack = context.operandsStack;
-        return pushByte(stack, popByte(stack) / popByte(stack));
+        val right = popByte(stack);
+        val left = popByte(stack);
+        return pushByte(stack, left / right);
     }
     fn modb(context: Context): int {
         val stack = context.operandsStack;
-        return pushByte(stack, popByte(stack) % popByte(stack));
+        val right = popByte(stack);
+        val left = popByte(stack);
+        return pushByte(stack, left % right);
     }
     fn xorb(context: Context): int {
         val stack = context.operandsStack;
@@ -354,20 +371,54 @@ internal val vmOverZc = """
         val stack = context.operandsStack;
         return pushByte(stack, !popByte(stack));
     }
-    fn cmpb(context: Context): int { return 0; }
-    fn cmpbc(context: Context): int { return 0; }
-    fn lessb(context: Context): int { return 0; }
-    fn leqb(context: Context): int { return 0; }
-    fn greatb(context: Context): int { return 0; }
-    fn greqb(context: Context): int { return 0; }
-    fn eqb(context: Context): int { return 0; }
-    fn neqb(context: Context): int { return 0; }
-    fn lnotb(context: Context): int { return 0; }
+    fn cmpb(context: Context): int {
+        val stack = context.operandsStack;
+        val right = popByte(stack);
+        val left = popByte(stack);
+        return pushInt(stack, compareBytes(left, right));
+    }
+    fn cmpbc(context: Context): int {
+        val stack = context.operandsStack;
+        return pushInt(stack, compareBytes(popByte(stack), nextByte(context)));
+    }
+    fn lessb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, cast<byte>(popByte(stack) > popByte(stack)));
+    }
+    fn leqb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, cast<byte>(popByte(stack) >= popByte(stack)));
+    }
+    fn greatb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, cast<byte>(popByte(stack) < popByte(stack)));
+    }
+    fn greqb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, cast<byte>(popByte(stack) <= popByte(stack)));
+    }
+    fn eqb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, cast<byte>(popByte(stack) == popByte(stack)));
+    }
+    fn neqb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, cast<byte>(popByte(stack) != popByte(stack)));
+    }
+    fn lnotb(context: Context): int {
+        val stack = context.operandsStack;
+        return pushByte(stack, cast<byte>(!popByte(stack)));
+    }
     fn gloadb(context: Context): int { return 0; }
     fn gstorb(context: Context): int { return 0; }
 
-    fn doAlloc(context: Context): int { return 0; }
-    fn doFree(context: Context): int { return 0; }
+    fn doAlloc(context: Context): int {
+        val stack = context.operandsStack;
+        return pushInt(stack, cast<int>(alloc(popInt(stack))));
+    }
+    fn doFree(context: Context): int {
+        return free(cast<[void]>(popInt(context.operandsStack)));
+    }
 
     fn nextInt(context: Context): int {
         val bytecode = context.bytecode;

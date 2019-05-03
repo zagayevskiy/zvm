@@ -14,7 +14,7 @@ fun BitTable.checkInterval(begin: Int, end: Int): Int? {
 
 fun BitTable.fill(from: Int, to: Int, value: Boolean) {
     require(0 <= from)
-    require(from < to){ "from($from) must less then to($to)." }
+    require(from < to){ "from($from) must be less then to($to)." }
     require(to <= size)
 
     (from until to).forEach { index -> this[index] = value }

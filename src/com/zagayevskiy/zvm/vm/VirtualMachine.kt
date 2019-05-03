@@ -313,7 +313,8 @@ class VirtualMachine(info: LoadedInfo, private val heap: Memory = MemoryBitTable
         val index = decodeNextInt()
         checkArgIndex(index)
         val arg = args[index]
-        if (arg !is T) error("Invalid arg type. Has $arg but ${T::class.java.simpleName} wanted.")
+        if (arg !is T)
+            error("Invalid arg type. Has $arg but ${T::class.java.simpleName} wanted.")
         push(arg)
     }
 
