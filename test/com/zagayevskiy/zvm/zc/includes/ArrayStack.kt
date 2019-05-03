@@ -31,7 +31,7 @@ internal fun includeStack() = """
 
     fn peekInt(stack: Stack): int {
         if (stack.top == 0) return 1;
-        return cast<[int]>(stack.stack)[stack.top];
+        return cast<[int]>(stack.stack)[stack.top - 1];
     }
 
     fn pushByte(stack: Stack, value: byte): int {

@@ -17,9 +17,14 @@ internal val vmOverZc = """
         var returnAddress: int;
     }
 
-    fn main(rawBytecode: [byte], rawBytecodeSize: int): int {
+    fn main(rawBytecode: [byte], rawBytecodeSize: int, mainArgs: [int], mainArgsCount: int): int {
         val programInfo = parseBytecode(rawBytecode, rawBytecodeSize);
         val context = createContext(programInfo);
+        val stack = context.operandsStack;
+        for(var i = 0; i < mainArgsCount; i = i + 1) {
+            val arg = mainArgs[i];
+            pushInt(stack, arg);
+        }
 
         call(context, programInfo.serviceInfo.mainIndex);
         loop(context);
@@ -118,15 +123,16 @@ internal val vmOverZc = """
 
     fn call(context: Context, functionIndex: int): int {
         val function = context.functions[functionIndex];
-        pushStackFrame(context.callStack, createStackFrame(context.ip));
+        val frame = createStackFrame(context, function.argsCount, function.localsCount);
+        pushStackFrame(context.callStack, frame);
         context.ip = function.address;
 
         return 0;
     }
 
     fn ret(context: Context): int {
-        popStackFrame(context.callStack);
-        return popInt(context.operandsStack);
+        freeStackFrame(popStackFrame(context.callStack));
+        return 0;
     }
 
     fn jump(context: Context, address: int): int {
@@ -159,15 +165,36 @@ internal val vmOverZc = """
     fn btoj(context: Context): int { return 0; }
     fn stoj(context: Context): int { return 0; }
 
-    fn aloadi(context: Context): int { return 0; }
-    fn lstori(context: Context): int { return 0; }
-    fn lloadi(context: Context): int { return 0; }
-    fn mstori(context: Context): int { return 0; }
+    fn aloadi(context: Context): int {
+        val frame = peekStackFrame(context.callStack);
+        val index = nextInt(context);
+        val value = cast<[int]>(frame.args)[index];
+        pushInt(context.operandsStack, value);
+        return 0;
+    }
+    fn lstori(context: Context): int {
+        cast<[int]>(peekStackFrame(context.callStack).locals)[nextInt(context)] = popInt(context.operandsStack);
+        return 0;
+    }
+    fn lloadi(context: Context): int {
+        val value = cast<[int]>(peekStackFrame(context.callStack).locals)[nextInt(context)];
+        return pushInt(context.operandsStack, value);
+    }
+    fn mstori(context: Context): int {
+        return 0;
+    }
     fn mloadi(context: Context): int { return 0; }
     fn consti(context: Context): int { return pushInt(context.operandsStack, nextInt(context)); }
     fn addi(context: Context): int {
         val stack = context.operandsStack;
-        return pushInt(stack, popInt(stack) + popInt(stack));
+        val right = popInt(stack);
+        val left = popInt(stack);
+        val result = left + right;
+        asm {"
+            consti 11223344
+            pop
+        "}
+        return pushInt(stack, result);
     }
     fn subi(context: Context): int {
         val stack = context.operandsStack;
@@ -356,13 +383,21 @@ internal val vmOverZc = """
         return value;
     }
 
-    fn createStackFrame(returnAddress: int): StackFrame {
+    fn createStackFrame(context: Context, argsCount: int, localsCount: int): StackFrame {
         val frame: StackFrame = alloc(sizeof<StackFrame>);
-        frame.returnAddress = returnAddress;
+        val argsAndLocals = alloc(sizeof<int> * (argsCount + localsCount));
+        frame.args = argsAndLocals;
+        val stack = context.operandsStack;
+        for (var i = argsCount - 1; i >= 0; i = i - 1) {
+            cast<[int]>(argsAndLocals)[i] = popInt(stack);
+        }
+        frame.locals = argsAndLocals + (sizeof<int> * argsCount);
+        frame.returnAddress = context.ip;
         return frame;
     }
 
-    fn deleteStackFrame(frame: StackFrame): int {
+    fn freeStackFrame(frame: StackFrame): int {
+        free(frame.args);
         return free(frame);
     }
 

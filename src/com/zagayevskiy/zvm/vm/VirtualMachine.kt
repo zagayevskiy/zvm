@@ -284,7 +284,7 @@ class VirtualMachine(info: LoadedInfo, private val heap: Memory = MemoryBitTable
 
     private fun alloc() {
         val size = pop<VMInteger> { "alloc argument must be int, $it found" }.intValue
-        if (size <= 0) error("alloc argument must be positive int, $size found")
+        if (size < 0) error("alloc argument must be positive int, $size found")
 
         push(heap.allocate(size).toStackEntry())
     }

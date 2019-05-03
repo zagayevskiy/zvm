@@ -10,7 +10,7 @@ import org.junit.runners.Parameterized
 
 internal data class Tst(val name: String, val asmText: String, val runArgs: List<StackEntry>, val expectedResult: StackEntry, val heapSize: Int = 0)
 
-private fun entries(vararg values: Int): List<StackEntry> {
+internal fun entries(vararg values: Int): List<StackEntry> {
     return values.map { it.toStackEntry() }
 }
 

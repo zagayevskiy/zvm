@@ -49,7 +49,18 @@ internal class VirtualMachineOverZcTest(private val test: CompilerTestData) {
         val info = (loader.load() as LoadingResult.Success).info
         val vm = VirtualMachine(info, heap)
 
-        vm.run(listOf(testProgramStartAddress.toStackEntry(), testProgramSize.toStackEntry()))
+        val mainArgsArray = heap.allocate(test.runArgs.size*4)
+        test.runArgs.withIndex().forEach { (index, value) ->
+            heap.writeInt(mainArgsArray + index*4, when(value) {
+                is StackEntry.VMInteger -> value.intValue
+                is StackEntry.VMByte -> value.byteValue.toInt()
+                else -> error("impossible")
+            })
+        }
+
+        val actualResult = vm.run(entries(testProgramStartAddress, testProgramSize, mainArgsArray, test.runArgs.size))
+
+        assertEquals(test.expectedResult, actualResult)
     }
 
     @Test

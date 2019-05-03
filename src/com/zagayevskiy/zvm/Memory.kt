@@ -43,10 +43,11 @@ class MemoryBitTable(desirableSize: Int, private val blockSize: Int = 64) : Memo
     override fun allocate(size: Int): Address {
         val actualSize = computeActualSize(size + allocationInfoSize)
         val blockCount = actualSize / blockSize
-        val firstBlockIndex = findEmptyPiece(blockCount) ?: throw RuntimeException("OOM, sic!")
+        val firstBlockIndex = findEmptyPiece(blockCount) ?: throw RuntimeException("OOM while allocating $size bytes. Memory size: ${memory.size}. Free blocks count: ${table.size - table.cardinality()}. Free memory: ${(table.size - table.cardinality()) * blockSize}. \n ${dump()}")
         val address = firstBlockIndex * blockSize
         writeServiceInfo(address, blockCount)
         table.fill(firstBlockIndex, firstBlockIndex + blockCount, true)
+        table.cardinality()
 
         return address + allocationInfoSize
     }
@@ -82,6 +83,28 @@ class MemoryBitTable(desirableSize: Int, private val blockSize: Int = 64) : Memo
         value.copyToByteArray(memory, startIndex = address)
     }
 
+    private fun dump(): String {
+        val template =
+        """
+        === TABLE:
+        %s
+        === END OF TABLE
+
+        === HEAP
+        %s
+        === END OF HEAP
+
+    """.trimIndent()
+
+        val tableDump = table
+                .chunked(64)
+                .joinToString(separator = "\n") { line -> line.joinToString(separator = " ") { if(it) "1" else "0" } }
+        val heapDump = memory.asIterable()
+                .chunked(blockSize)
+                .joinToString(separator = "\n") { line -> line.joinToString(separator = " ") { it.toString(16) } }
+
+        return template.format(tableDump, heapDump)
+    }
 
     private fun writeServiceInfo(address: Address, blockCount: Int) {
         writeInt(address = address, value = blockCount)
