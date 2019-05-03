@@ -130,6 +130,15 @@ class TypesProcessor(private val program: AstProgram) {
                 type = resolvedField.type
             }
 
+            is AstFunctionCall -> ast.apply {
+                val definedFunction = (function as AstFunctionReference).function
+                if (definedFunction.args.size != params.size) error("${definedFunction.name} has ${definedFunction.args.size} params. But $params given.")
+                definedFunction.args.zip(params) { arg, param ->
+                    params[arg.index] = param.tryAutoPromoteTo(arg.type)
+                            ?: error("$param can't be auto promoted to ${arg.type} for argument ${arg.index}(${arg.name})")
+                }
+            }
+
             is AstFunctionReturn -> ast.apply {
                 val enclosingFunction = findEnclosingFunction() ?: error("Return-statement can be used only inside a function.")
                 expression = expression.tryAutoPromoteTo(enclosingFunction.retType) ?: error("${expression.type} can't be auto promoted to function return type(${enclosingFunction.retType}).")

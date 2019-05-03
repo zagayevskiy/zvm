@@ -42,7 +42,7 @@ internal class VirtualMachineOverZcTest(private val test: CompilerTestData) {
         compiler = ZcCompiler()
     }
 
-    @Test
+    @Test(timeout = 500L)
     fun testVmOverZc() {
         val rawVirtualMachineBytecode = compiler.compile(vmOverZc)
         val loader = BytecodeLoader(rawVirtualMachineBytecode)
