@@ -1,9 +1,8 @@
 package com.zagayevskiy.zvm.zc
 
-import com.zagayevskiy.zvm.MemoryBitTable
-import com.zagayevskiy.zvm.assertEquals
+import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.vm.*
-import com.zagayevskiy.zvm.zc.includes.includeStdMem
+import testsrc.zc.includes.includeStdMem
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -51,7 +50,7 @@ internal class ZcLinkedListTest(private val test: LLT) {
         val bytecode = compiler.compile(text)
         val loader = BytecodeLoader(bytecode)
         val info = (loader.load() as LoadingResult.Success).info
-        val heap = MemoryBitTable(1000000)
+        val heap = BitTableMemory(1000000)
         val vm = VirtualMachine(info, heap)
         val actualResult = vm.run(listOf(test.count.toStackEntry()))
 

@@ -1,12 +1,13 @@
 package com.zagayevskiy.zvm.vm
 
-import com.zagayevskiy.zvm.MemoryBitTable
+import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.asm.*
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import testsrc.asm.*
 
 internal data class Tst(val name: String, val asmText: String, val runArgs: List<StackEntry>, val expectedResult: StackEntry, val heapSize: Int = 0)
 
@@ -61,8 +62,8 @@ internal class VirtualMachineProgramsTest(private val test: Tst) {
                 Tst("rbit 0x0a1b2c3d", asmReverseIntBytesViaBitManipulations, entries(0x0a1b2c3d), 0x3d2c1b0a.toStackEntry()),
                 Tst("rbit 0b01010101_11110000_00001111_00110011", asmReverseIntBytesViaBitManipulations, entries(0b01010101_11110000_00001111_00110011), 0b00110011_00001111_11110000_01010101.toStackEntry()),
 
-                Tst("rmem 0x0a1b2c3d", asmReverseIntBytesViaMemory, entries(0x0a1b2c3d), 0x3d2c1b0a.toStackEntry(), 4),
-                Tst("rmem 0b01010101_11110000_00001111_00110011", asmReverseIntBytesViaMemory, entries(0b01010101_11110000_00001111_00110011), 0b00110011_00001111_11110000_01010101.toStackEntry(), 4),
+                Tst("rmem 0x0a1b2c3d", asmReverseIntBytesViaMemoryManipulations, entries(0x0a1b2c3d), 0x3d2c1b0a.toStackEntry(), 4),
+                Tst("rmem 0b01010101_11110000_00001111_00110011", asmReverseIntBytesViaMemoryManipulations, entries(0b01010101_11110000_00001111_00110011), 0b00110011_00001111_11110000_01010101.toStackEntry(), 4),
 
                 Tst("rev 0b01010101_11110000_00001111_11001100", asmReverseIntBits, entries(0b01010101_11110000_11100110_11001100), 0b00110011_01100111_00001111_10101010.toStackEntry()),
 
@@ -85,7 +86,7 @@ internal class VirtualMachineProgramsTest(private val test: Tst) {
         val loader = BytecodeLoader(bytecode)
         val loaded = loader.load() as LoadingResult.Success
 
-        vm = VirtualMachine(loaded.info, MemoryBitTable(test.heapSize))
+        vm = VirtualMachine(loaded.info, BitTableMemory(test.heapSize))
     }
 
     @Test

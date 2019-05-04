@@ -1,4 +1,4 @@
-package com.zagayevskiy.zvm.zc.includes
+package testsrc.zc.includes
 
 internal fun includeStack() = """
     struct Stack {

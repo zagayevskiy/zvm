@@ -1,6 +1,6 @@
 package com.zagayevskiy.zvm.zc
 
-import com.zagayevskiy.zvm.MemoryBitTable
+import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.asm.*
 import com.zagayevskiy.zvm.vm.BytecodeLoader
 import com.zagayevskiy.zvm.vm.LoadingResult
@@ -162,7 +162,7 @@ fun main(args: Array<String>) {
 
     val compiler = ZcCompiler()
     val loader = BytecodeLoader(compiler.compile(text))
-    val heap = MemoryBitTable(1000000)
+    val heap = BitTableMemory(1000000)
     val vm = VirtualMachine((loader.load() as LoadingResult.Success).info, heap)
     val result = vm.run(emptyList())
     println(result)

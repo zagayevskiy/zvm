@@ -1,6 +1,6 @@
 package com.zagayevskiy.zvm.vm
 
-import com.zagayevskiy.zvm.MemoryBitTable
+import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.asm.*
 import org.junit.Assert
 import org.junit.Before
@@ -68,7 +68,7 @@ internal class VMJavaInteropTest(private val test: TstI) {
         val loaded = loader.load() as LoadingResult.Success
 
         javaInterop = TestJavaInterop()
-        vm = VirtualMachine(loaded.info, MemoryBitTable(65536), javaInterop)
+        vm = VirtualMachine(loaded.info, BitTableMemory(65536), javaInterop)
     }
 
     @Test

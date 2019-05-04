@@ -1,15 +1,12 @@
-package com.zagayevskiy.zvm.zc.vmoverzc
+package com.zagayevskiy.zvm.zc
 
-import com.zagayevskiy.zvm.MemoryBitTable
+import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.common.BackingStruct
 import com.zagayevskiy.zvm.common.sizeOf
 import com.zagayevskiy.zvm.vm.*
-import com.zagayevskiy.zvm.zc.CompilerTest
-import com.zagayevskiy.zvm.zc.CompilerTestData
-import com.zagayevskiy.zvm.zc.ZcCompiler
-import com.zagayevskiy.zvm.zc.includes.includeStdMem
-import com.zagayevskiy.zvm.zc.vmoverzc.src.includeBytecodeParser
-import com.zagayevskiy.zvm.zc.vmoverzc.src.vmOverZc
+import testsrc.zc.includes.includeStdMem
+import testsrc.zc.vmoverzc.includeBytecodeParser
+import testsrc.zc.vmoverzc.vmOverZc
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,7 +23,7 @@ internal class VirtualMachineOverZcTest(private val test: CompilerTestData) {
 
     private lateinit var compiler: ZcCompiler
     private lateinit var rawTestBytecode: ByteArray
-    private lateinit var heap: MemoryBitTable
+    private lateinit var heap: BitTableMemory
     private var testProgramStartAddress: Int = 0
     private var testProgramSize: Int = 0
     private lateinit var vm: VirtualMachine
@@ -35,7 +32,7 @@ internal class VirtualMachineOverZcTest(private val test: CompilerTestData) {
     fun setup() {
         compiler = ZcCompiler()
         rawTestBytecode = compiler.compile(test.text)
-        heap = MemoryBitTable(1024 * 1024)
+        heap = BitTableMemory(1024 * 1024)
         testProgramStartAddress = heap.allocate(rawTestBytecode.size)
         testProgramSize = rawTestBytecode.size
         heap.copyIn(rawTestBytecode, destination = testProgramStartAddress)
@@ -117,10 +114,5 @@ internal class VirtualMachineOverZcTest(private val test: CompilerTestData) {
         var bytecodeAddress by int
         var bytecodeSize by int
     }
-
-}
-
-
-class StackTest {
 
 }

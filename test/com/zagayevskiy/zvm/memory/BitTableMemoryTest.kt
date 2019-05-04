@@ -1,4 +1,4 @@
-package com.zagayevskiy.zvm
+package com.zagayevskiy.zvm.memory
 
 import org.junit.Before
 import org.junit.Test
@@ -6,18 +6,18 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 
-class MemoryBitTableTest {
+class BitTableMemoryTest {
 
-    private lateinit var memory: MemoryBitTable
+    private lateinit var memory: BitTableMemory
 
     @Before
     fun setUp() {
-        memory = MemoryBitTable(16384)
+        memory = BitTableMemory(16384)
     }
 
     @Test
     fun canAllocateOneBigPiece() {
-        val memory = MemoryBitTable(desirableSize = 65536)
+        val memory = BitTableMemory(desirableSize = 65536)
         val address = memory.allocate(memory.size - memory.allocationInfoSize)
         assertEquals(memory.allocationInfoSize, address)
         assertEquals(0, memory.freeMemorySize)
@@ -27,7 +27,7 @@ class MemoryBitTableTest {
     fun canAllocateAllMemoryBlockByBlock() {
         val size = 65536
         val blockSize = 32
-        val memory = MemoryBitTable(desirableSize = size, blockSize = blockSize)
+        val memory = BitTableMemory(desirableSize = size, blockSize = blockSize)
 
         val blockCount = size / blockSize
 
@@ -52,7 +52,7 @@ class MemoryBitTableTest {
 
     @Test
     fun free_leadsTo_freeMemoryIncrease() {
-        val memory = MemoryBitTable(desirableSize = 100000, blockSize = 256)
+        val memory = BitTableMemory(desirableSize = 100000, blockSize = 256)
         val prevFreeMemory = memory.freeMemorySize
         val size = 1000
 
@@ -66,7 +66,7 @@ class MemoryBitTableTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun blockSizeMustBeDivisibleByIntSize() {
-        MemoryBitTable(desirableSize = 10000, blockSize = 123)
+        BitTableMemory(desirableSize = 10000, blockSize = 123)
     }
 
     @Test

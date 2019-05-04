@@ -1,7 +1,7 @@
-package com.zagayevskiy.zvm.zc.vmoverzc.src
+package testsrc.zc.vmoverzc
 
-import com.zagayevskiy.zvm.zc.includes.includeStack
-import com.zagayevskiy.zvm.zc.includes.includeStdMem
+import testsrc.zc.includes.includeStack
+import testsrc.zc.includes.includeStdMem
 
 
 

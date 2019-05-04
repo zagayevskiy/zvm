@@ -1,7 +1,7 @@
 package com.zagayevskiy.zvm.vm
 
-import com.zagayevskiy.zvm.Memory
-import com.zagayevskiy.zvm.MemoryBitTable
+import com.zagayevskiy.zvm.memory.Memory
+import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.common.Address
 import com.zagayevskiy.zvm.common.Opcodes.ADDB
 import com.zagayevskiy.zvm.common.Opcodes.ADDI
@@ -129,7 +129,7 @@ private object DisabledJavaInterop : JavaInterop {
     override fun remove(index: Int) = Unit
 }
 
-class VirtualMachine(info: LoadedInfo, private val heap: Memory = MemoryBitTable(0), private val javaInterop: JavaInterop = DisabledJavaInterop) {
+class VirtualMachine(info: LoadedInfo, private val heap: Memory = BitTableMemory(0), private val javaInterop: JavaInterop = DisabledJavaInterop) {
     private val functions = info.functions
     private val mainIndex = info.mainIndex
     private val bytecode = info.bytecode

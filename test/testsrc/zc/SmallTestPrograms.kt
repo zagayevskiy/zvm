@@ -1,12 +1,12 @@
-package com.zagayevskiy.zvm.zc
+package testsrc.zc
 
-import com.zagayevskiy.zvm.vm.asmFibonacciIterativeFunctionBody
-import com.zagayevskiy.zvm.zc.includes.includeStack
-import com.zagayevskiy.zvm.zc.includes.includeStdMem
+import testsrc.asm.asmFibonacciIterativeFunctionBody
+import testsrc.zc.includes.includeStack
+import testsrc.zc.includes.includeStdMem
 
 fun simpleBinaryInt(operation: String) = """
     fn main(left: int, right: int): int {
-        return (left $operation right);
+        return left $operation right;
     }
 """.trimIndent()
 

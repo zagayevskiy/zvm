@@ -1,4 +1,4 @@
-package com.zagayevskiy.zvm.zc.vmoverzc.src
+package testsrc.zc.vmoverzc
 
 
 internal fun includeBytecodeParser() = """
