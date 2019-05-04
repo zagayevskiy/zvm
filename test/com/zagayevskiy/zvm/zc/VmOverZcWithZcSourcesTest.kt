@@ -1,5 +1,7 @@
 package com.zagayevskiy.zvm.zc
 
+import com.zagayevskiy.zvm.asm.*
+import com.zagayevskiy.zvm.asm.ParseResult
 import com.zagayevskiy.zvm.common.BackingStruct
 import com.zagayevskiy.zvm.common.sizeOf
 import com.zagayevskiy.zvm.entries
@@ -9,48 +11,93 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import testsrc.AsmTestData
 import testsrc.ZcTestData
+import testsrc.asmTestData
 import testsrc.zc.includes.includeStdMem
 import testsrc.zc.vmoverzc.includeBytecodeParser
 import testsrc.zc.vmoverzc.vmOverZc
 import testsrc.zcTestData
 import kotlin.test.assertEquals
 
+private fun compile(text: String): ByteArray {
+    val compiler = ZcCompiler()
+    return compiler.compile(text)
+}
+
 @RunWith(Parameterized::class)
-internal class VirtualMachineOverZcTest(private val test: ZcTestData) {
+internal class VmOverZcWithAsmSourcesTest(private val test: AsmTestData): AbsVirtualMachineOverZtTest() {
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{index}: {0}")
+        fun data() = asmTestData
+    }
+
+    override fun createRawTestBytecode(): ByteArray {
+        val parser = AsmParser(AsmSequenceLexer(test.asmText.asSequence()), OpcodesMapping.opcodes)
+        val result = parser.program()
+        val assembler = BytecodeAssembler((result as ParseResult.Success).commands, OpcodesMapping.mapping)
+        val generator = BytecodeGenerator()
+        return generator.generate(assembler.generate())
+    }
+
+    override val runArgs: List<StackEntry>
+        get() = test.runArgs
+
+    override val expectedResult: StackEntry
+        get() = test.expectedResult
+}
+
+@RunWith(Parameterized::class)
+internal class VmOverZcWithZcSourcesTest(private val test: ZcTestData): AbsVirtualMachineOverZtTest() {
     companion object {
         @JvmStatic
         @Parameterized.Parameters(name = "{index}: {0}")
         fun data() = zcTestData
     }
 
-    private lateinit var compiler: ZcCompiler
-    private lateinit var rawTestBytecode: ByteArray
-    private lateinit var heap: BitTableMemory
+    override fun createRawTestBytecode() = compile(test.text)
+
+    override val runArgs: List<StackEntry>
+        get() = test.runArgs
+
+    override val expectedResult: StackEntry
+        get() = test.expectedResult
+}
+
+internal abstract class AbsVirtualMachineOverZtTest {
+
+    abstract fun createRawTestBytecode(): ByteArray
+    abstract val runArgs: List<StackEntry>
+    abstract val expectedResult: StackEntry
+
     private var testProgramStartAddress: Int = 0
-    private var testProgramSize: Int = 0
+
+    private lateinit var testProgramRawBytecode: ByteArray
+
+    private lateinit var heap: BitTableMemory
+
     private lateinit var vm: VirtualMachine
 
     @Before
-    fun setup() {
-        compiler = ZcCompiler()
-        rawTestBytecode = compiler.compile(test.text)
+    open fun setup() {
         heap = BitTableMemory(1024 * 1024)
-        testProgramStartAddress = heap.allocate(rawTestBytecode.size)
-        testProgramSize = rawTestBytecode.size
-        heap.copyIn(rawTestBytecode, destination = testProgramStartAddress)
-        compiler = ZcCompiler()
+        testProgramRawBytecode = createRawTestBytecode()
+
+        testProgramStartAddress = heap.allocate(testProgramRawBytecode.size)
+        heap.copyIn(testProgramRawBytecode, destination = testProgramStartAddress)
+
+        val rawVirtualMachineBytecode = compile(vmOverZc)
+
+        val loader = BytecodeLoader(rawVirtualMachineBytecode)
+        val info = (loader.load() as LoadingResult.Success).info
+        vm = VirtualMachine(info, heap)
     }
 
     @Test(timeout = 500L)
     fun testVmOverZc() {
-        val rawVirtualMachineBytecode = compiler.compile(vmOverZc)
-        val loader = BytecodeLoader(rawVirtualMachineBytecode)
-        val info = (loader.load() as LoadingResult.Success).info
-        val vm = VirtualMachine(info, heap)
-
-        val mainArgsArray = heap.allocate(test.runArgs.size * 4)
-        test.runArgs.withIndex().forEach { (index, value) ->
+        val mainArgsArray = heap.allocate(runArgs.size * 4)
+        runArgs.withIndex().forEach { (index, value) ->
             heap.writeInt(mainArgsArray + index * 4, when (value) {
                 is StackEntry.VMInteger -> value.intValue
                 is StackEntry.VMByte -> value.byteValue.toInt()
@@ -58,14 +105,15 @@ internal class VirtualMachineOverZcTest(private val test: ZcTestData) {
             })
         }
 
-        val actualResult = vm.run(entries(testProgramStartAddress, testProgramSize, mainArgsArray, test.runArgs.size))
+        val actualResult = vm.run(entries(testProgramStartAddress, testProgramRawBytecode.size, mainArgsArray, runArgs.size))
 
-        assertEquals(test.expectedResult, actualResult)
+        assertEquals(expectedResult, actualResult)
     }
+
 
     @Test
     fun testBytecodeParsing() {
-        val rawParsingBytecode = compiler.compile("""
+        val rawParsingBytecode = compile("""
 
             ${includeStdMem()}
             ${includeBytecodeParser()}
@@ -79,9 +127,9 @@ internal class VirtualMachineOverZcTest(private val test: ZcTestData) {
         val info = (loader.load() as LoadingResult.Success).info
         val vm = VirtualMachine(info, heap)
 
-        val parsedResultAddress = (vm.run(listOf(testProgramStartAddress.toStackEntry(), testProgramSize.toStackEntry())) as StackEntry.VMInteger).intValue
+        val parsedResultAddress = (vm.run(listOf(testProgramStartAddress.toStackEntry(), testProgramRawBytecode.size.toStackEntry())) as StackEntry.VMInteger).intValue
 
-        val expected = (BytecodeLoader(rawTestBytecode).load() as LoadingResult.Success).info
+        val expected = (BytecodeLoader(testProgramRawBytecode).load() as LoadingResult.Success).info
 
         val readableHeap = ByteArray(heap.size)
         heap.copyOut(source = 0, destination = readableHeap)
@@ -117,5 +165,4 @@ internal class VirtualMachineOverZcTest(private val test: ZcTestData) {
         var bytecodeAddress by int
         var bytecodeSize by int
     }
-
 }
