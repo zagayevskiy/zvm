@@ -1,24 +1,27 @@
 package com.zagayevskiy.zvm.zc
 
-import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.common.BackingStruct
 import com.zagayevskiy.zvm.common.sizeOf
+import com.zagayevskiy.zvm.entries
+import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.vm.*
-import testsrc.zc.includes.includeStdMem
-import testsrc.zc.vmoverzc.includeBytecodeParser
-import testsrc.zc.vmoverzc.vmOverZc
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import testsrc.ZcTestData
+import testsrc.zc.includes.includeStdMem
+import testsrc.zc.vmoverzc.includeBytecodeParser
+import testsrc.zc.vmoverzc.vmOverZc
+import testsrc.zcTestData
 import kotlin.test.assertEquals
 
 @RunWith(Parameterized::class)
-internal class VirtualMachineOverZcTest(private val test: CompilerTestData) {
+internal class VirtualMachineOverZcTest(private val test: ZcTestData) {
     companion object {
         @JvmStatic
         @Parameterized.Parameters(name = "{index}: {0}")
-        fun data() = CompilerTest.data()
+        fun data() = zcTestData
     }
 
     private lateinit var compiler: ZcCompiler
@@ -46,9 +49,9 @@ internal class VirtualMachineOverZcTest(private val test: CompilerTestData) {
         val info = (loader.load() as LoadingResult.Success).info
         val vm = VirtualMachine(info, heap)
 
-        val mainArgsArray = heap.allocate(test.runArgs.size*4)
+        val mainArgsArray = heap.allocate(test.runArgs.size * 4)
         test.runArgs.withIndex().forEach { (index, value) ->
-            heap.writeInt(mainArgsArray + index*4, when(value) {
+            heap.writeInt(mainArgsArray + index * 4, when (value) {
                 is StackEntry.VMInteger -> value.intValue
                 is StackEntry.VMByte -> value.byteValue.toInt()
                 else -> error("impossible")
