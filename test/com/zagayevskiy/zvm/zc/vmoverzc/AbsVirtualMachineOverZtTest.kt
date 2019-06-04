@@ -1,68 +1,21 @@
-package com.zagayevskiy.zvm.zc
+package com.zagayevskiy.zvm.zc.vmoverzc
 
-import com.zagayevskiy.zvm.asm.*
-import com.zagayevskiy.zvm.asm.ParseResult
 import com.zagayevskiy.zvm.common.BackingStruct
 import com.zagayevskiy.zvm.common.sizeOf
 import com.zagayevskiy.zvm.entries
 import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.vm.*
+import com.zagayevskiy.zvm.zc.ZcCompiler
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import testsrc.AsmTestData
-import testsrc.ZcTestData
-import testsrc.asmTestData
 import testsrc.zc.includes.includeStdMem
-import testsrc.zc.vmoverzc.includeBytecodeParser
-import testsrc.zc.vmoverzc.vmOverZc
-import testsrc.zcTestData
+import testsrc.zc.vm.includeBytecodeParser
+import testsrc.zc.vm.vmOverZc
 import kotlin.test.assertEquals
 
-private fun compile(text: String): ByteArray {
+internal fun compile(text: String): ByteArray {
     val compiler = ZcCompiler()
     return compiler.compile(text)
-}
-
-@RunWith(Parameterized::class)
-internal class VmOverZcWithAsmSourcesTest(private val test: AsmTestData): AbsVirtualMachineOverZtTest() {
-    companion object {
-        @JvmStatic
-        @Parameterized.Parameters(name = "{index}: {0}")
-        fun data() = asmTestData
-    }
-
-    override fun createRawTestBytecode(): ByteArray {
-        val parser = AsmParser(AsmSequenceLexer(test.asmText.asSequence()), OpcodesMapping.opcodes)
-        val result = parser.program()
-        val assembler = BytecodeAssembler((result as ParseResult.Success).commands, OpcodesMapping.mapping)
-        val generator = BytecodeGenerator()
-        return generator.generate(assembler.generate())
-    }
-
-    override val runArgs: List<StackEntry>
-        get() = test.runArgs
-
-    override val expectedResult: StackEntry
-        get() = test.expectedResult
-}
-
-@RunWith(Parameterized::class)
-internal class VmOverZcWithZcSourcesTest(private val test: ZcTestData): AbsVirtualMachineOverZtTest() {
-    companion object {
-        @JvmStatic
-        @Parameterized.Parameters(name = "{index}: {0}")
-        fun data() = zcTestData
-    }
-
-    override fun createRawTestBytecode() = compile(test.text)
-
-    override val runArgs: List<StackEntry>
-        get() = test.runArgs
-
-    override val expectedResult: StackEntry
-        get() = test.expectedResult
 }
 
 internal abstract class AbsVirtualMachineOverZtTest {
@@ -94,7 +47,7 @@ internal abstract class AbsVirtualMachineOverZtTest {
         vm = VirtualMachine(info, heap)
     }
 
-    @Test(timeout = 500L)
+    @Test//(timeout = 500L)
     fun testVmOverZc() {
         val mainArgsArray = heap.allocate(runArgs.size * 4)
         runArgs.withIndex().forEach { (index, value) ->

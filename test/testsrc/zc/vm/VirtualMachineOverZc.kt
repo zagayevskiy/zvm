@@ -1,11 +1,13 @@
-package testsrc.zc.vmoverzc
+package testsrc.zc.vm
 
+import testsrc.zc.includes.includeCrash
 import testsrc.zc.includes.includeStack
 import testsrc.zc.includes.includeStdMem
 
 
 
 internal val vmOverZc = """
+    ${includeCrash()}
     ${includeStdMem()}
     ${includeStack()}
     ${includeBytecodeParser()}
@@ -131,7 +133,10 @@ internal val vmOverZc = """
     }
 
     fn ret(context: Context): int {
-        freeStackFrame(popStackFrame(context.callStack));
+        val frame = popStackFrame(context.callStack);
+        print(frame);
+        context.ip = frame.returnAddress;
+        freeStackFrame(frame);
         return 0;
     }
 
@@ -186,14 +191,7 @@ internal val vmOverZc = """
     fn consti(context: Context): int { return pushInt(context.operandsStack, nextInt(context)); }
     fn addi(context: Context): int {
         val stack = context.operandsStack;
-        val right = popInt(stack);
-        val left = popInt(stack);
-        val result = left + right;
-        asm {"
-            consti 11223344
-            pop
-        "}
-        return pushInt(stack, result);
+        return pushInt(stack, popInt(stack) + popInt(stack));
     }
     fn subi(context: Context): int {
         val stack = context.operandsStack;
@@ -436,7 +434,13 @@ internal val vmOverZc = """
 
     fn createStackFrame(context: Context, argsCount: int, localsCount: int): StackFrame {
         val frame: StackFrame = alloc(sizeof<StackFrame>);
-        val argsAndLocals = alloc(sizeof<int> * (argsCount + localsCount));
+        val allocSize = sizeof<int> * (argsCount + localsCount);
+        var argsAndLocals: [void];
+        if (allocSize == 0) {
+            argsAndLocals = null();
+        } else {
+            argsAndLocals = alloc(allocSize);
+        }
         frame.args = argsAndLocals;
         val stack = context.operandsStack;
         for (var i = argsCount - 1; i >= 0; i = i - 1) {
@@ -447,8 +451,19 @@ internal val vmOverZc = """
         return frame;
     }
 
+    fn print(arg: [void]): int {
+        asm{"
+            aloadi 0
+            out
+        "}
+        return 0;
+    }
+
     fn freeStackFrame(frame: StackFrame): int {
-        free(frame.args);
+
+        if (frame.args != null()) {
+            free(frame.args);
+        }
         return free(frame);
     }
 

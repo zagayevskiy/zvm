@@ -1,7 +1,5 @@
 package com.zagayevskiy.zvm.vm
 
-import com.zagayevskiy.zvm.memory.Memory
-import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.common.Address
 import com.zagayevskiy.zvm.common.Opcodes.ADDB
 import com.zagayevskiy.zvm.common.Opcodes.ADDI
@@ -19,6 +17,7 @@ import com.zagayevskiy.zvm.common.Opcodes.CMPI
 import com.zagayevskiy.zvm.common.Opcodes.CMPIC
 import com.zagayevskiy.zvm.common.Opcodes.CONSTB
 import com.zagayevskiy.zvm.common.Opcodes.CONSTI
+import com.zagayevskiy.zvm.common.Opcodes.CRASH
 import com.zagayevskiy.zvm.common.Opcodes.DECI
 import com.zagayevskiy.zvm.common.Opcodes.DIVB
 import com.zagayevskiy.zvm.common.Opcodes.DIVI
@@ -77,6 +76,8 @@ import com.zagayevskiy.zvm.common.Opcodes.SUBB
 import com.zagayevskiy.zvm.common.Opcodes.SUBI
 import com.zagayevskiy.zvm.common.Opcodes.XORB
 import com.zagayevskiy.zvm.common.Opcodes.XORI
+import com.zagayevskiy.zvm.memory.BitTableMemory
+import com.zagayevskiy.zvm.memory.Memory
 import com.zagayevskiy.zvm.util.extensions.*
 import com.zagayevskiy.zvm.vm.StackEntry.*
 import java.lang.reflect.Constructor
@@ -132,7 +133,7 @@ private object DisabledJavaInterop : JavaInterop {
 class VirtualMachine(info: LoadedInfo, private val heap: Memory = BitTableMemory(0), private val javaInterop: JavaInterop = DisabledJavaInterop) {
     private val functions = info.functions
     private val mainIndex = info.mainIndex
-    private val bytecode = info.bytecode
+    private val bytecode: ByteArray = info.bytecode
 
     private val globals = (0 until info.globalsCount).map { VMNull as StackEntry }.toMutableList()
 
@@ -159,6 +160,9 @@ class VirtualMachine(info: LoadedInfo, private val heap: Memory = BitTableMemory
                 RET -> {
                     if (callStack.size == 1) return
                     ret()
+                }
+                CRASH -> {
+                    throw RuntimeException("crash ${pop()}")
                 }
                 JCALL -> jcall(decodeNextInt())
                 JNEW -> jnew(decodeNextInt())
@@ -284,7 +288,7 @@ class VirtualMachine(info: LoadedInfo, private val heap: Memory = BitTableMemory
 
     private fun alloc() {
         val size = pop<VMInteger> { "alloc argument must be int, $it found" }.intValue
-        if (size < 0) error("alloc argument must be positive int, $size found")
+        if (size <= 0) error("alloc argument must be positive int, $size found")
 
         push(heap.allocate(size).toStackEntry())
     }
@@ -658,4 +662,3 @@ private val PopAddrMsg = { wrong: StackEntry -> "Address(int) expected at top of
 private val PopOffsetMsg = { wrong: StackEntry -> "Offset(int) expected at top of the stack, $wrong found." }
 private val PopIntExprOperandMsg = { wrong: StackEntry -> "int expected as operand of int expression, $wrong found." }
 private val PopByteExprOperandMsg = { wrong: StackEntry -> "byte expected as operand of byte expression, $wrong found." }
-
