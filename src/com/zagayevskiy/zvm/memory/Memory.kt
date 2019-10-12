@@ -23,3 +23,5 @@ interface Memory {
     fun readInt(address: Address): Int
     fun writeInt(address: Address, value: Int)
 }
+
+class VMOutOfMemory(message: String, cause: VMOutOfMemory? = null): Exception(message, cause)

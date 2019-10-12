@@ -20,7 +20,7 @@ internal class ServiceInfoStruct(array: ByteArray, offset: Int) : BackingStruct(
 internal class FunctionTableRowStruct(array: ByteArray, offset: Int) : BackingStruct(array, offset) {
     var address by int
     var argsCount by int
-    var localsCount by int
+    var argsDescription by long
 }
 
 class BytecodeLoader(private val rawBytecode: ByteArray) {
@@ -50,8 +50,7 @@ class BytecodeLoader(private val rawBytecode: ByteArray) {
             val functionInfo = FunctionTableRowStruct(rawBytecode, functionTableStart + index * functionRowSize)
             RuntimeFunction(
                     address = functionInfo.address,
-                    args = functionInfo.argsCount,
-                    locals = functionInfo.localsCount)
+                    argTypes = functionInfo.readArgsTypes())
         }
 
         val bytecodeStart = functionTableStart + functionsCount * functionRowSize
@@ -66,14 +65,25 @@ class BytecodeLoader(private val rawBytecode: ByteArray) {
         return LoadingResult.Success(LoadedInfo(globalsCount, functions, mainIndex, bytecode))
     }
 
+    //TODO see BytecodeGenerator and may be merge types somehow
+    private fun FunctionTableRowStruct.readArgsTypes(): List<RuntimeType> {
+        val count = argsCount.takeIf { it >= 0 } ?: throw java.lang.IllegalStateException("Arg count negative: $argsCount")
+        val description = argsDescription
+        return (0 until count).map { index ->
+            val arg = (description shr (index*2)) and 0xffL
+            when (arg) {
+                0b01L -> RuntimeType.RuntimeByte
+                0b10L -> RuntimeType.RuntimeInt
+                else -> throw IllegalStateException("Unknown type 0b${arg.toString(2)} in description 0b${description.toString(2)}")
+            }
+        }
+    }
 
     private fun checkFunctions(functions: List<RuntimeFunction>, bytecodeSize: Int): String? = functions
             .mapIndexed { index, f ->
                 when {
                     f.address < 0 -> "Function #$index address is ${f.address}. Must be positive."
                     f.address >= bytecodeSize -> "Function #$index address is ${f.address}. Must be less than size of bytecode($bytecodeSize)."
-                    f.args < 0 -> "Function #$index arguments count(${f.args}) must be not less than 0."
-                    f.locals < 0 -> "Function #$index locals count(${f.locals}) must be not less than 0."
                     else -> null
                 }
             }

@@ -25,6 +25,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
 
     private val functionDefinitionsIndices = mutableMapOf<String, Int>()
     private val functions = mutableListOf<FunctionDefinition>()
+    private var lastDefinedFunction: FunctionDefinition? = null
 
     private var globalsCount: Int? = null
 
@@ -60,6 +61,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
                 is Instruction.Operand.Id -> when (opcode) {
                     Call -> write(functionIndex(operand.name))
                     Jmp, JumpZero, JumpNotZero -> write(obtainLabel(operand.name))
+                    IntConst -> write(obtainFuncArgumentOffset(operand.name) ?: TODO("May be global?"))
                     else -> error("opcode ${opcode.name} can't operate with $operand")
                 }
             }
@@ -84,6 +86,11 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
         return 0
     }
 
+    private fun obtainFuncArgumentOffset(argName: String): Int? {
+        val currentFunc = lastDefinedFunction ?: throw IllegalStateException("No function defined but offset for $argName arg wanted")
+        return currentFunc.args.firstOrNull { it.name == argName }?.offset
+    }
+
     private fun defineLabel(label: Label) {
         val labelAddress = ip
         labelDefinitions[label.label]?.let { oldDefinition ->
@@ -104,7 +111,9 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
         if (existed.defined) error("Function ${func.name} already defined!")
         checkThatAllLabelsDefined()
         labelDefinitions.clear()
-        functions[index] = existed.copy(defined = true, address = ip, args =  func.args.toDefinitionArgs())
+        val defined = existed.copy(defined = true, address = ip, args =  func.args.toDefinitionArgs())
+        functions[index] = defined
+        lastDefinedFunction = defined
     }
 
     private fun functionIndex(name: String): Int {

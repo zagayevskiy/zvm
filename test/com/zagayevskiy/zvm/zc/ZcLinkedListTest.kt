@@ -51,7 +51,7 @@ internal class ZcLinkedListTest(private val test: LLT) {
         val loader = BytecodeLoader(bytecode)
         val info = (loader.load() as LoadingResult.Success).info
         val heap = BitTableMemory(1000000)
-        val vm = VirtualMachine(info, heap)
+        val vm = VirtualMachine(info, heap = heap)
         val actualResult = vm.run(listOf(test.count.toStackEntry()))
 
         val resultAddr = (actualResult as StackEntry.VMInteger).intValue

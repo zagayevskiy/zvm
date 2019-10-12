@@ -33,7 +33,7 @@ internal class CompilerTest(private val test: ZcTestData) {
         val bytecode = compiler.compile(test.text)
         val loader = BytecodeLoader(bytecode)
         val info = (loader.load() as LoadingResult.Success).info
-        val vm = VirtualMachine(info, BitTableMemory(test.heapSize))
+        val vm = VirtualMachine(info, heap = BitTableMemory(test.heapSize))
         val actualResult = vm.run(test.runArgs)
 
         assertEquals(test.expectedResult, actualResult)

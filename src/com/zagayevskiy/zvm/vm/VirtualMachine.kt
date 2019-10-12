@@ -78,16 +78,24 @@ import com.zagayevskiy.zvm.common.Opcodes.XORB
 import com.zagayevskiy.zvm.common.Opcodes.XORI
 import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.memory.Memory
+import com.zagayevskiy.zvm.memory.VMOutOfMemory
 import com.zagayevskiy.zvm.util.extensions.*
+import com.zagayevskiy.zvm.vm.RuntimeType.*
 import com.zagayevskiy.zvm.vm.StackEntry.*
+import java.lang.IllegalStateException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import java.util.*
 
+data class RuntimeFunction(val address: Address, val argTypes: List<RuntimeType>) {
+    val argsMemorySize = argTypes.fold(0){ totalSize, arg-> totalSize + arg.size }
+}
 
-data class RuntimeFunction(val address: Address, val args: Int, val locals: Int)
+enum class RuntimeType(val size: Int) {
+    RuntimeInt(4), RuntimeByte(4)
+}
 
-private class StackFrame(val args: List<StackEntry>, val locals: MutableList<StackEntry>, val returnAddress: Address)
+private class StackFrame(val previousStackPointer: Address, val returnAddress: Address)
 
 sealed class StackEntry {
 
@@ -130,12 +138,28 @@ private object DisabledJavaInterop : JavaInterop {
     override fun remove(index: Int) = Unit
 }
 
-class VirtualMachine(info: LoadedInfo, private val heap: Memory = BitTableMemory(0), private val javaInterop: JavaInterop = DisabledJavaInterop) {
+class VMStackOverflow(message: String): Exception(message)
+class VMStackUnderflow(message: String): Exception(message)
+
+class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, private val heap: Memory = BitTableMemory(localsStackSize), private val javaInterop: JavaInterop = DisabledJavaInterop) {
+
     private val functions = info.functions
     private val mainIndex = info.mainIndex
     private val bytecode: ByteArray = info.bytecode
 
     private val globals = (0 until info.globalsCount).map { VMNull as StackEntry }.toMutableList()
+
+    private val localsStackBaseAddress = try {
+        heap.allocate(localsStackSize)
+    } catch (oom: VMOutOfMemory) {
+        throw VMOutOfMemory("No enough memory to create locals stack. Wanted stack size: $localsStackSize", cause = oom)
+    }
+    private var stackPointer: Int = localsStackBaseAddress
+        set(value) {
+            if (value > localsStackBaseAddress + localsStackSize) throw VMStackOverflow("Trying to increase stack size to ${value - localsStackBaseAddress} while max stack size is $localsStackSize")
+            if (value < localsStackBaseAddress) throw VMStackUnderflow("Trying to set sp under the base address")
+            field = value
+        }
 
     private var ip: Int = functions[mainIndex].address
 
@@ -314,27 +338,30 @@ class VirtualMachine(info: LoadedInfo, private val heap: Memory = BitTableMemory
     }
 
     private inline fun <reified T : StackEntry> argLoad() = callStack.peek().apply {
-        val index = decodeNextInt()
-        checkArgIndex(index)
-        val arg = args[index]
-        if (arg !is T)
-            error("Invalid arg type. Has $arg but ${T::class.java.simpleName} wanted.")
-        push(arg)
+//        TODO
+//        val index = decodeNextInt()
+//        checkArgIndex(index)
+//        val arg = args[index]
+//        if (arg !is T)
+//            error("Invalid arg type. Has $arg but ${T::class.java.simpleName} wanted.")
+//        push(arg)
     }
 
     private inline fun <reified T : StackEntry> localLoad() = callStack.peek().apply {
-        val index = decodeNextInt()
-        checkLocalIndex(index)
-        val local = locals[index]
-        if (local !is T) error("Invalid local type. Has $local but ${T::class.java.simpleName} wanted.")
-        push(local)
+//        TODO
+//        val index = decodeNextInt()
+//        checkLocalIndex(index)
+//        val local = locals[index]
+//        if (local !is T) error("Invalid local type. Has $local but ${T::class.java.simpleName} wanted.")
+//        push(local)
     }
 
     private inline fun <reified T : StackEntry> localStore() = callStack.peek().apply {
-        val index = decodeNextInt()
-        checkLocalIndex(index)
-        val value = pop<T> { "Want to store local ${T::class.java.simpleName} but has $it." }
-        locals[index] = value
+//        val index = decodeNextInt()
+//        checkLocalIndex(index)
+//        val value = pop<T> { "Want to store local ${T::class.java.simpleName} but has $it." }
+//     TODO   locals[index] = value
+
     }
 
     private fun decodeNextInt(): Int = bytecode.copyToInt(startIndex = ip).also { ip += 4 }
@@ -344,14 +371,25 @@ class VirtualMachine(info: LoadedInfo, private val heap: Memory = BitTableMemory
     //region control flow
     private fun call(functionIndex: Int) {
         val function = functions[functionIndex]
-        val args = (0 until function.args).map { pop() }.reversed()
-        val locals = (0 until function.locals).map { VMNull }.toMutableList<StackEntry>()
-        callStack.push(StackFrame(args, locals, ip))
+        val sp = stackPointer
+        stackPointer += function.argsMemorySize
+
+        var offset = sp
+        function.argTypes.forEachIndexed { index, type ->
+            offset -= type.size
+            when(type) {
+                RuntimeInt -> heap.writeInt(offset, pop<VMInteger> { "int expected as #$index arg of $function but $it found. " }.intValue)
+                RuntimeByte -> heap[offset] = pop<VMByte> {"byte expected as #$index arg of $function but $it found." }.byteValue
+            }
+
+        }
+        callStack.push(StackFrame(sp, ip))
         ip = function.address
     }
 
     private fun ret() {
         val frame = callStack.pop()
+        stackPointer = frame.previousStackPointer
         ip = frame.returnAddress
     }
 
@@ -644,14 +682,6 @@ class VirtualMachine(info: LoadedInfo, private val heap: Memory = BitTableMemory
 
     private fun checkGlobalIndex(index: Int) {
         if (index < 0 || index >= globals.size) error("Invalid global index: $index. Has ${globals.size} globals.")
-    }
-
-    private fun StackFrame.checkArgIndex(index: Int) {
-        if (index < 0 || index >= args.size) error("Invalid argument index: $index. Has ${args.size} args.")
-    }
-
-    private fun StackFrame.checkLocalIndex(index: Int) {
-        if (index < 0 || index >= locals.size) error("Invalid variable index: $index. Has ${locals.size} locals.")
     }
 
     private fun log(message: String) = println(message)

@@ -163,7 +163,7 @@ fun main(args: Array<String>) {
     val compiler = ZcCompiler()
     val loader = BytecodeLoader(compiler.compile(text))
     val heap = BitTableMemory(1000000)
-    val vm = VirtualMachine((loader.load() as LoadingResult.Success).info, heap)
+    val vm = VirtualMachine((loader.load() as LoadingResult.Success).info, heap = heap)
     val result = vm.run(emptyList())
     println(result)
     val buffer = ByteArray(100)

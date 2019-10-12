@@ -26,7 +26,7 @@ class BitTableMemory(desirableSize: Int, private val blockSize: Int = 64) : Memo
     override fun allocate(size: Int): Address {
         val actualSize = computeActualSize(size + allocationInfoSize)
         val blockCount = actualSize / blockSize
-        val firstBlockIndex = findEmptyPiece(blockCount) ?: throw RuntimeException("OOM while allocating $size bytes. Memory size: ${memory.size}. Free blocks count: ${table.size - table.cardinality()}. Free memory: ${(table.size - table.cardinality()) * blockSize}. \n ${dump()}")
+        val firstBlockIndex = findEmptyPiece(blockCount) ?: throw VMOutOfMemory("OOM while allocating $size bytes. Memory size: ${memory.size}. Free blocks count: ${table.size - table.cardinality()}. Free memory: ${(table.size - table.cardinality()) * blockSize}. \n ${dump()}")
         val address = firstBlockIndex * blockSize
         writeServiceInfo(address, blockCount)
         table.fill(firstBlockIndex, firstBlockIndex + blockCount, true)

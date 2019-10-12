@@ -68,7 +68,7 @@ internal class VMJavaInteropTest(private val test: TstI) {
         val loaded = loader.load() as LoadingResult.Success
 
         javaInterop = TestJavaInterop()
-        vm = VirtualMachine(loaded.info, BitTableMemory(65536), javaInterop)
+        vm = VirtualMachine(loaded.info, heap = BitTableMemory(65536), javaInterop = javaInterop)
     }
 
     @Test

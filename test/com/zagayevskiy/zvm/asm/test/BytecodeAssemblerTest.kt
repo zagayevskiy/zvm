@@ -34,6 +34,7 @@ class BytecodeAssemblerTest {
             ->lbl
             call f
             jmp lbl
+            consti z
             ret
         """.trimIndent()
 
@@ -47,6 +48,8 @@ class BytecodeAssemblerTest {
                 Ret.byte,
                 Call.byte, 1.bytes, //1st function
                 Jmp.byte, 22.bytes, //2nd lbl
+                IntConst.byte,
+                (-4).bytes, //z offset
                 Ret.byte
         ).flatten()
 

@@ -35,7 +35,7 @@ internal class VirtualMachineProgramsTest(private val test: AsmTestData) {
         val loader = BytecodeLoader(bytecode)
         val loaded = loader.load() as LoadingResult.Success
 
-        vm = VirtualMachine(loaded.info, BitTableMemory(test.heapSize))
+        vm = VirtualMachine(loaded.info, heap = BitTableMemory(test.heapSize))
     }
 
     @Test
