@@ -26,9 +26,10 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
     private fun generate(function: AstDefinedFunction) {
         function.apply {
             commands.add(Command.Func(
-                    name = name,
-                    args = args.size,
-                    locals = totalVariablesCount))
+                    name = name, args = emptyList() //TODO
+//                    args = args.size,
+//                    locals = totalVariablesCount
+            ))
             return@apply when (val body = body) {
                 is AstBlock -> generate(body)
                 is AstExpr -> TODO("Expression body not supported yet.")

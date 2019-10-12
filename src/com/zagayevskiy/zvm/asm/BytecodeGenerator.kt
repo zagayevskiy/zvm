@@ -53,8 +53,7 @@ class BytecodeGenerator {
     private fun writeFunctionTableRow(function: FunctionDefinition, array: ByteArray, offset: Int) {
         FunctionTableRowStruct(array, offset).apply {
             address = function.address
-            argsCount = function.args
-            localsCount = function.locals
+            argsCount = 0 //TODO
         }
     }
 

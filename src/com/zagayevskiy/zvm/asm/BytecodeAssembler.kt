@@ -8,7 +8,12 @@ import kotlin.math.max
 
 private data class LabelDefinition(val name: String, val defined: Boolean = false, val address: Int = 0, val deferredUsages: MutableList<Address> = mutableListOf())
 
-data class FunctionDefinition(val name: String, val index: Int, val defined: Boolean = false, val address: Int = 0, val args: Int = 0, val locals: Int = 0)
+data class FunctionDefinition(val name: String, val index: Int, val defined: Boolean = false, val address: Int = 0, val args: List<Arg> = emptyList()) {
+    data class Arg(val name: String, val type: Type, val offset: Int)
+    enum class Type(val size: Int) {
+        DefByte(1), DefInt(4)
+    }
+}
 
 class GenerationInfo(val globalsCount: Int, val functions: List<FunctionDefinition>, val bytecode: ByteArray)
 
@@ -99,7 +104,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
         if (existed.defined) error("Function ${func.name} already defined!")
         checkThatAllLabelsDefined()
         labelDefinitions.clear()
-        functions[index] = existed.copy(defined = true, address = ip, args = func.args, locals = func.locals)
+        functions[index] = existed.copy(defined = true, address = ip, args =  func.args.toDefinitionArgs())
     }
 
     private fun functionIndex(name: String): Int {
@@ -154,3 +159,18 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
 }
 
 class GenerationException(override val message: String) : Exception()
+
+private fun List<Func.Arg>.toDefinitionArgs(): List<FunctionDefinition.Arg> {
+    var offset = 0
+    return asReversed().map { f ->
+        val type = f.type.toDefinitionType()
+        offset -= type.size
+        FunctionDefinition.Arg(f.name, type, offset)
+    }.asReversed()
+}
+
+private fun String.toDefinitionType() = when (this) {
+    "int" -> FunctionDefinition.Type.DefInt
+    "byte" -> FunctionDefinition.Type.DefByte
+    else -> throw IllegalArgumentException("Unknown type name $this")
+}

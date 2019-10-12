@@ -12,7 +12,8 @@ import org.junit.runners.Parameterized
 internal class TestData(val text: String, val expected: ParseResult)
 
 private infix fun String.expects(expected: List<Command>) = TestData(this, ParseResult.Success(expected))
-private fun String.func(args: Int = 0, locals: Int = 0) = Func(this, args, locals)
+private fun String.func(args: List<Func.Arg> = emptyList()) = Func(this, args)
+private operator fun String.minus(type: String) = Func.Arg(this, type)
 private val Int.globals
     get() = Command.GlobalsDefinition(this)
 private val Int.op
@@ -73,13 +74,13 @@ internal class AsmParserTest(private val test: TestData) {
                 ),
 
                 """
-                    .fun f: args = 3
+                    .fun f: i: int, i1: int, i2: int;
                     iload1 0
                     iload2 1, 2
                     sum 3
                     ret
                 """.trimIndent() expects listOf(
-                        "f".func(args = 3),
+                        "f".func(args = listOf("i" - "int", "i1" - "int", "i2" - "int")),
                         ILoad1T.instr(0.op),
                         ILoad2T.instr(1.op, 2.op),
                         SumT.instr(3.op),
@@ -88,14 +89,14 @@ internal class AsmParserTest(private val test: TestData) {
 
                 """
                     globals = 17
-                    .fun f: args = 3
+                    .fun f: i0: int, i1: int, i2: int;
                     iload1 0
                     iload2 1, 2
                     sum 3
                     ret
                 """.trimIndent() expects listOf(
                         17.globals,
-                        "f".func(args = 3),
+                        "f".func(args = listOf("i0" - "int", "i1" - "int", "i2" - "int")),
                         ILoad1T.instr(0.op),
                         ILoad2T.instr(1.op, 2.op),
                         SumT.instr(3.op),
@@ -103,7 +104,7 @@ internal class AsmParserTest(private val test: TestData) {
                 ),
 
                 """
-                    .fun main123: args=20, locals = 1000
+                    .fun main123
                     add1 -1
                     add2 0, -1
                     add3 0, -1, 2
@@ -114,7 +115,7 @@ internal class AsmParserTest(private val test: TestData) {
                     .fun f
                     call -12345
                 """.trimIndent() expects listOf(
-                        "main123".func(args = 20, locals = 1000),
+                        "main123".func(),
                         Add1.instr((-1).op),
                         Add2.instr(0.op, (-1).op),
                         Add3.instr(0.op, (-1).op, 2.op),
@@ -127,19 +128,19 @@ internal class AsmParserTest(private val test: TestData) {
 
                 """
                     .fun f
-                    .fun g: locals = 1
+                    .fun g
                     jmp label1
-                    .fun k: args = 2
-                    .fun t: args = 3, locals = 4
+                    .fun k: x: int;
+                    .fun t: y: int, z: int;
                     ->label1
                     ->label2
                     ->label3
                 """.trimIndent() expects listOf(
                         "f".func(),
-                        "g".func(locals = 1),
+                        "g".func(),
                         JmpT.instr("label1".id),
-                        "k".func(args = 2),
-                        "t".func(args = 3, locals = 4),
+                        "k".func(args = listOf("x" - "int")),
+                        "t".func(args = listOf("y" - "int", "z" - "int")),
                         "label1".label,
                         "label2".label,
                         "label3".label

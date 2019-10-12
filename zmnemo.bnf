@@ -3,16 +3,16 @@ command ::= (globals | fun | label | instruction)
 
 globals ::= "globals" "=" natural
 
-fun ::= ".fun" identifier [":" (fun_args["," fun_locals])|fun_locals]
-fun_args ::= "args" "=" natural
-fun_locals ::= "locals" "=" natural
+fun ::= ".fun" identifier {fun_args}
+fun_args ::= ":" fun_arg ["," fun_arg] ";"
+fun_arg ::= identifier ":" identifier
 
 label ::= "->" identifier
 
 instruction ::= opcode instruction_args
 opcode ::= identifier
-operand ::= identifier | number
 instruction_args ::= [operand {"," operand}]
+operand ::= identifier | number
 
 identifier ::= identifier_begin | {identifier_rest}
 identifier_begin ::= LETTER | "_"

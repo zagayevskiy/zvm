@@ -3,6 +3,7 @@ package com.zagayevskiy.zvm.asm
 import com.zagayevskiy.zvm.asm.AsmToken.Args
 import com.zagayevskiy.zvm.asm.AsmToken.Arrow
 import com.zagayevskiy.zvm.asm.AsmToken.Assign
+import com.zagayevskiy.zvm.asm.AsmToken.Colon
 import com.zagayevskiy.zvm.asm.AsmToken.Comma
 import com.zagayevskiy.zvm.asm.AsmToken.Fun
 import com.zagayevskiy.zvm.asm.AsmToken.Globals
@@ -16,7 +17,9 @@ import com.zagayevskiy.zvm.asm.Command.*
 
 sealed class Command {
     data class GlobalsDefinition(val count: Int) : Command()
-    data class Func(val name: String, val args: Int = 0, val locals: Int = 0) : Command()
+    data class Func(val name: String, val args: List<Arg>) : Command() {
+        data class Arg(val name: String, val type: String)
+    }
     data class Label(val label: String) : Command()
     data class Instruction(val opcode: Opcode, val operands: List<Operand> = emptyList()) : Command() {
         init {
@@ -90,32 +93,33 @@ class AsmParser(private val lexer: Lexer, supportedOpcodes: Iterable<Opcode>) {
         nextToken()
         val name = (token as? Identifier)?.name ?: error()
         nextToken()
-        var argsCount: Int? = null
-        var localsCount: Int? = null
-        if (token == AsmToken.Colon) {
-            nextToken()
-            argsCount = funcArgs()
-            if (argsCount != null) {
-                if (token == Comma) {
-                    nextToken()
-                    localsCount = funcLocals() ?: error()
-                }
-            } else {
-                localsCount = funcLocals() ?: error()
-            }
-        }
 
-        return Func(name, argsCount ?: 0, localsCount ?: 0)
+        val args = funcArgs()
+
+        return Func(name, args)
     }
 
-    private fun funcArgs(): Int? {
-        if (token != Args) return null
+    private fun funcArgs(): List<Func.Arg> {
+        if (token != Colon) return emptyList()
         nextToken()
-        if (token != Assign) error()
+
+        val args = mutableListOf<Func.Arg>()
+
+        while(token is Identifier) {
+            val name = (token as Identifier).name
+            nextToken()
+            if (token != Colon) error()
+            nextToken()
+            val type = (token as? Identifier)?.name ?: error()
+            nextToken()
+            if (token == Comma) nextToken()
+            args.add(Func.Arg(name, type))
+        }
+
+        if (token != AsmToken.Semicolon) error()
         nextToken()
-        val count = (token as? Integer) ?: error()
-        nextToken()
-        return count.value
+
+        return args.takeIf { it.isNotEmpty() } ?: error()
 
     }
 
