@@ -1,5 +1,6 @@
 package com.zagayevskiy.zvm.asm
 
+import com.zagayevskiy.zvm.asm.FunctionDefinition.Type.*
 import com.zagayevskiy.zvm.common.BackingStruct
 import com.zagayevskiy.zvm.common.sizeOf
 import com.zagayevskiy.zvm.util.extensions.copyTo
@@ -13,13 +14,13 @@ private class ServiceInfoStruct(array: ByteArray, offset: Int) : BackingStruct(a
 private class FunctionTableRowStruct(array: ByteArray, offset: Int) : BackingStruct(array, offset) {
     var address by int
     var argsCount by int
-    var localsCount by int
+    var argsDescription by long
 }
 
 class BytecodeGenerator {
 
     val serviceInfoSize = sizeOf(::ServiceInfoStruct)
-    val functionsTableRowSize = sizeOf(::FunctionTableRowStruct)
+    private val functionsTableRowSize = sizeOf(::FunctionTableRowStruct)
 
     fun generate(info: GenerationInfo): ByteArray {
 
@@ -53,7 +54,8 @@ class BytecodeGenerator {
     private fun writeFunctionTableRow(function: FunctionDefinition, array: ByteArray, offset: Int) {
         FunctionTableRowStruct(array, offset).apply {
             address = function.address
-            argsCount = 0 //TODO
+            argsCount = function.args.size
+            argsDescription = function.args.description()
         }
     }
 
@@ -62,3 +64,13 @@ class BytecodeGenerator {
 }
 
 private fun List<FunctionDefinition>.findMain() = firstOrNull { it.name == "main" }
+
+private fun List<FunctionDefinition.Arg>.description(): Long = map {
+    when (it.type) {
+        DefByte -> 0b01
+        DefInt -> 0b10
+    }
+}.foldIndexed(0L) { index, acc, arg ->
+    val movedArg = (arg.toLong() and 0xff) shl (index * 2)
+    acc or movedArg
+}

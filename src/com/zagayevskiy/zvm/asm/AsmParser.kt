@@ -1,6 +1,5 @@
 package com.zagayevskiy.zvm.asm
 
-import com.zagayevskiy.zvm.asm.AsmToken.Args
 import com.zagayevskiy.zvm.asm.AsmToken.Arrow
 import com.zagayevskiy.zvm.asm.AsmToken.Assign
 import com.zagayevskiy.zvm.asm.AsmToken.Colon
@@ -9,11 +8,11 @@ import com.zagayevskiy.zvm.asm.AsmToken.Fun
 import com.zagayevskiy.zvm.asm.AsmToken.Globals
 import com.zagayevskiy.zvm.asm.AsmToken.Locals
 import com.zagayevskiy.zvm.asm.AsmToken.Minus
+import com.zagayevskiy.zvm.asm.Command.*
+import com.zagayevskiy.zvm.asm.Command.Instruction.Operand
 import com.zagayevskiy.zvm.common.Lexer
 import com.zagayevskiy.zvm.common.Token
 import com.zagayevskiy.zvm.common.Token.*
-import com.zagayevskiy.zvm.asm.Command.Instruction.Operand
-import com.zagayevskiy.zvm.asm.Command.*
 
 sealed class Command {
     data class GlobalsDefinition(val count: Int) : Command()

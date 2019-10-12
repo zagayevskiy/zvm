@@ -2,11 +2,19 @@ package com.zagayevskiy.zvm.common
 
 import com.zagayevskiy.zvm.util.extensions.copyToByteArray
 import com.zagayevskiy.zvm.util.extensions.copyToInt
+import com.zagayevskiy.zvm.util.extensions.copyToLong
 import kotlin.reflect.KProperty
 
-abstract class BackingStruct(val array: ByteArray, offset: Int) {
+abstract class BackingStruct(val array: ByteArray, offset: Int) : Sequence<Byte> {
+    private val startOffset = offset
     var offset: Int = offset
-        protected set
+        protected set(value) {
+            if (field > value) throw IllegalArgumentException("Only increasing of offset expected.")
+            field = value
+        }
+
+    val length
+        get() = offset - startOffset
 
     protected val int
         get() = IntFieldDelegate(offset).also { offset += 4 }
@@ -14,9 +22,20 @@ abstract class BackingStruct(val array: ByteArray, offset: Int) {
     protected val byte
         get() = ByteFieldDelegate(offset++)
 
+    protected val long
+        get() = LongFieldDelegate(offset).also { offset += 8 }
+
     fun <S : BackingStruct> arrayOf(size: Int, initializer: BackingStructArray.Indexer.(array: ByteArray, offset: Int) -> S) = BackingStructArray(array, offset, size, initializer)
 
     protected fun <S : BackingStruct> struct(factory: (array: ByteArray, offset: Int) -> S) = StructFieldDelegate(offset, factory).also { offset += sizeOf(factory) }
+
+    protected class LongFieldDelegate(private val offset: Int) {
+        operator fun getValue(parent: BackingStruct, property: KProperty<*>): Long = parent.array.copyToLong(offset)
+
+        operator fun setValue(parent: BackingStruct, property: KProperty<*>, value: Long) {
+            value.copyToByteArray(parent.array, offset)
+        }
+    }
 
     protected class IntFieldDelegate(private val offset: Int) {
         operator fun getValue(parent: BackingStruct, property: KProperty<*>): Int = parent.array.copyToInt(offset)
@@ -25,6 +44,7 @@ abstract class BackingStruct(val array: ByteArray, offset: Int) {
             value.copyToByteArray(parent.array, offset)
         }
     }
+
 
     protected class ByteFieldDelegate(private val offset: Int) {
         operator fun getValue(parent: BackingStruct, property: KProperty<*>): Byte = parent.array[offset]
@@ -41,13 +61,42 @@ abstract class BackingStruct(val array: ByteArray, offset: Int) {
             return field ?: factory(parent.array, offset).also { field = it }
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is BackingStruct) return false
+        if (length != other.length) return false
+
+        return zip(other) { b1, b2 ->
+            b1 == b2
+        }.all { it }
+    }
+
+    override fun hashCode() = foldIndexed(length) { index, hash, byte ->
+        hash * 31 + byte + index
+    }
+
+    override fun toString(): String {
+        return "BackingStruct{ length=$length, bytes=${toList()} }"
+    }
+
+    override fun iterator(): Iterator<Byte> = object : Iterator<Byte> {
+        private var cursor = startOffset
+        override fun hasNext() = cursor != offset
+
+        override fun next(): Byte {
+            if (!hasNext()) throw NoSuchElementException("No $cursor element.")
+
+            return array[cursor++]
+        }
+    }
 }
+
 
 class BackingStructArray<S : BackingStruct>(
         array: ByteArray,
         offset: Int,
         val size: Int,
-        private val initializer: Indexer.(array: ByteArray, offset: Int) -> S) : BackingStruct(array, offset), Iterable<S> {
+        private val initializer: Indexer.(array: ByteArray, offset: Int) -> S) : BackingStruct(array, offset){
 
     private val arrayBeginOffset = offset
     private val indexer = IndexerImpl()
@@ -65,11 +114,12 @@ class BackingStructArray<S : BackingStruct>(
         return elements[index] ?: createElement(index).also { elements[index] = it }
     }
 
-    override fun iterator() = object : Iterator<S> {
-        private var cursor = 0
-        override fun hasNext() = cursor < size
-        override fun next() = get(cursor++)
-    }
+//    TODO
+//    override fun iterator() = object : Iterator<S> {
+//        private var cursor = 0
+//        override fun hasNext() = cursor < size
+//        override fun next() = get(cursor++)
+//    }
 
     private fun createElement(index: Int): S {
         indexer.index = index

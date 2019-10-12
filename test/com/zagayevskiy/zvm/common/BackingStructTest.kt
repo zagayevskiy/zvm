@@ -15,12 +15,19 @@ private class ParentStruct(array: ByteArray, offset: Int): BackingStruct(array, 
     var y by int
 }
 
+private class OtherParentStruct(array: ByteArray, offset: Int): BackingStruct(array, offset) {
+    var otherX by byte
+    var childX by int
+    var childY by byte
+    var childZAndY by long
+}
 class BackingStructTest {
 
     @Test
     fun sizeOf() {
         assertEquals(9, sizeOf(::TestPlainStruct))
         assertEquals(14, sizeOf(::ParentStruct))
+        assertEquals(14, sizeOf(::OtherParentStruct))
     }
 
     @Test
@@ -46,8 +53,7 @@ class BackingStructTest {
     @Test
     fun nestedStruct() {
         val backingArray = ByteArray(14)
-        val parentStruct = ParentStruct(backingArray, 0)
-        parentStruct.apply {
+        val parentStruct = ParentStruct(backingArray, 0).apply {
             x = 17
             y = 878787878
             child.apply {
@@ -63,5 +69,33 @@ class BackingStructTest {
         assertEquals(1234567890, mirror.child.x)
         assertEquals(127.toByte(), mirror.child.y)
         assertEquals(1987654321, mirror.child.z)
+    }
+
+    @Test
+    fun hashAndEquals() {
+        val backingArray = ByteArray(100)
+        val parentStruct1 = ParentStruct(backingArray, 0).apply {
+            x = -123
+            child.apply {
+                x = 905010703
+                y = 127
+                z = 0xabcdef9
+            }
+            y = 0x01234567
+        }
+
+        val otherParentStruct1 = OtherParentStruct(backingArray, 0)
+        assertEquals<BackingStruct>(parentStruct1, otherParentStruct1)
+        assertEquals(parentStruct1.hashCode(), otherParentStruct1.hashCode())
+
+        val otherParentStruct2 = OtherParentStruct(backingArray, 50).apply {
+            otherX = -123
+            childX = 905010703
+            childY = 127
+            childZAndY = 0xabcdef901234567L
+        }
+
+        assertEquals(otherParentStruct1, otherParentStruct2)
+        assertEquals(otherParentStruct1.hashCode(), otherParentStruct2.hashCode())
     }
 }

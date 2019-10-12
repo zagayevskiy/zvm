@@ -1,25 +1,37 @@
 package com.zagayevskiy.zvm.asm.test
 
 import com.zagayevskiy.zvm.asm.*
+import com.zagayevskiy.zvm.common.BackingStruct
+import com.zagayevskiy.zvm.common.sizeOf
 import com.zagayevskiy.zvm.util.extensions.copyToInt
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
-private data class TestRuntimeFunc(val address: Int, val args: Int, val locals: Int)
+private class TestRuntimeFunc(array: ByteArray, offset: Int) : BackingStruct(array, offset) {
+    var address by int
+    var argsCount by int
+    var argsDescription by long
+
+    constructor(addr: Int, count: Int, args: Long) : this(ByteArray(sizeOf(::TestRuntimeFunc)), 0) {
+        address = addr
+        argsCount = count
+        argsDescription = args
+    }
+}
 
 class BytecodeGeneratorTest {
     private val text = """
-            .fun f: args = 11
+            .fun f
             ret
-            .fun main: args = 7, locals=3
-            ret
-            ret
-            .fun g: args = 13
+            .fun main: argc: int, argv: int;
             ret
             ret
+            .fun g: x: int;
             ret
-            .fun k: locals = 5
+            ret
+            ret
+            .fun k: b1: byte, b2: byte, i: int;
             ret
             ret
             .fun last
@@ -27,14 +39,15 @@ class BytecodeGeneratorTest {
         """.trimIndent()
 
     private val expectedFuncs = listOf(
-            TestRuntimeFunc(0, 11, 0),
-            TestRuntimeFunc(1, 7, 3),
-            TestRuntimeFunc(3, 13, 0),
-            TestRuntimeFunc(6, 0, 5),
-            TestRuntimeFunc(8, 0, 0)
+            TestRuntimeFunc(0, 0, 0b0L),
+            TestRuntimeFunc(1, 2, 0b1010L),
+            TestRuntimeFunc(3, 1, 0b10L),
+            TestRuntimeFunc(6, 3, 0b100101L),
+            TestRuntimeFunc(8, 0, 0b0L)
     )
 
     private val retByteCode = 0x17.toByte()
+    private val runtimeFunctionSize = sizeOf(::TestRuntimeFunc)
 
     private lateinit var generator: BytecodeGenerator
     private lateinit var bytecode: ByteArray
@@ -52,7 +65,7 @@ class BytecodeGeneratorTest {
 
     @Test
     fun generatedByteCodeSizeCorrect() {
-        assertEquals(generator.serviceInfoSize + expectedFuncs.size * generator.functionsTableRowSize + 9, //9 ret-s
+        assertEquals(generator.serviceInfoSize + expectedFuncs.size * runtimeFunctionSize + 9, //9 ret-s
                 bytecode.size)
     }
 
@@ -70,10 +83,7 @@ class BytecodeGeneratorTest {
         assertEquals(5, functionsCount)
 
         val actualFuncs = (0 until functionsCount).map { index ->
-            val address = bytecode.copyToInt(generator.serviceInfoSize + index * generator.functionsTableRowSize)
-            val args = bytecode.copyToInt(generator.serviceInfoSize + index * generator.functionsTableRowSize + 4)
-            val locals = bytecode.copyToInt(generator.serviceInfoSize + index * generator.functionsTableRowSize + 8)
-            TestRuntimeFunc(address, args, locals)
+            TestRuntimeFunc(bytecode, generator.serviceInfoSize + index * runtimeFunctionSize)
         }
 
         assertEquals(expectedFuncs, actualFuncs)
@@ -81,7 +91,7 @@ class BytecodeGeneratorTest {
 
     @Test
     fun bytecodeBodyGeneratedCorrect() {
-        val bytecodeStart = generator.serviceInfoSize + generator.functionsTableRowSize * expectedFuncs.size
+        val bytecodeStart = generator.serviceInfoSize + runtimeFunctionSize * expectedFuncs.size
 
         (bytecodeStart until bytecodeStart + 9).forEach { ip ->
             assertEquals(retByteCode, bytecode[ip])
