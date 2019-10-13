@@ -6,9 +6,6 @@ import testdata.sources.zc.includes.includeStdMem
 
 internal fun includeBytecodeParser() = """
 
-    ${includeStdMem()}
-    ${includeCrash()}
-
     struct ServiceInfo {
         var mainIndex: int;
         var functionsCount: int;
