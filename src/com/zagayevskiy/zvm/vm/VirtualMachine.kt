@@ -149,6 +149,7 @@ private object DisabledJavaInterop : JavaInterop {
 class VMStackOverflow(message: String) : Exception(message)
 class VMStackUnderflow(message: String) : Exception(message)
 class VMStackCorrupted(message: String) : Exception(message)
+class VMStackProtected(message: String) : Exception(message)
 
 class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, private val heap: Memory = BitTableMemory(localsStackSize), private val javaInterop: JavaInterop = DisabledJavaInterop) {
 
@@ -302,24 +303,38 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
 
     private fun localLoadInt() {
         val offset = decodeNextInt()
-        push(heap.readInt(callStack.peek().framePointer + offset))
+        val frame = callStack.peek()
+        val address = frame.framePointer + offset
+        if (address >= stackPointer) throw VMStackProtected("Trying to load int from over sp. Address: $address, sp: $stackPointer, decoded offset: $offset, frame: $frame")
+        push(heap.readInt(address))
     }
 
     private fun localStoreInt() {
         val offset = decodeNextInt()
+        val frame = callStack.peek()
+        val address = frame.framePointer + offset
+        if (address + 4 > stackPointer) throw VMStackCorrupted("Trying to store int over sp. Address: $address, sp: $stackPointer, decoded offset: $offset, frame: $frame")
+
         val int = pop<VMInteger>().intValue
-        heap.writeInt(address = callStack.peek().framePointer + offset, value = int)
+        heap.writeInt(address = address, value = int)
     }
 
     private fun localLoadByte() {
         val offset = decodeNextInt()
+        val frame = callStack.peek()
+        val address = frame.framePointer + offset
+        if (address >= stackPointer) throw VMStackProtected("Trying to load byte from over sp. Address: $address, sp: $stackPointer, decoded offset: $offset, frame: $frame")
         push(heap[callStack.peek().framePointer + offset])
     }
 
     private fun localStoreByte() {
         val offset = decodeNextInt()
+        val frame = callStack.peek()
+        val address = frame.framePointer + offset
+        if (address >= stackPointer) throw VMStackCorrupted("Trying to store byte over sp. Address: $address, sp: $stackPointer, decoded offset: $offset, frame: $frame")
+
         val byte = pop<VMByte>().byteValue
-        heap[callStack.peek().framePointer + offset] = byte
+        heap[address] = byte
     }
 
     private fun memoryStoreInt() {
