@@ -18,6 +18,7 @@ object Opcodes {
 
     const val POP: Byte = 12
     const val DUP: Byte = 13
+    const val PUSHFP: Byte = 14
 
     //region casts opcodes
     const val ITOB: Byte = 21

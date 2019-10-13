@@ -23,7 +23,7 @@ object OpcodesMapping {
 
             Pop to Opcodes.POP,
             Dup to Opcodes.DUP,
-
+            PushFramePointer to Opcodes.PUSHFP,
 
             GlobalLoadInt to Opcodes.GLOADI,
             GlobalStoreInt to Opcodes.GSTORI,
@@ -115,6 +115,7 @@ object JavaDelete : OpcodeImpl(name = "jdel")
 
 object Pop : OpcodeImpl(name = "pop")
 object Dup : OpcodeImpl(name = "dup")
+object PushFramePointer : OpcodeImpl(name = "pushfp")
 
 object GlobalLoadInt: OpcodeImpl(name = "gloadi", operandCount = 1)
 object GlobalStoreInt: OpcodeImpl(name = "gstori", operandCount = 1)

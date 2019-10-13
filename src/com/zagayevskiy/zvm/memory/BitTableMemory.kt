@@ -32,7 +32,7 @@ class BitTableMemory(desirableSize: Int, private val blockSize: Int = 64) : Memo
         table.fill(firstBlockIndex, firstBlockIndex + blockCount, true)
         table.cardinality()
 
-        return (address + allocationInfoSize).also { println("allocated $it") }
+        return (address + allocationInfoSize)
     }
 
     override fun free(address: Address) {

@@ -67,6 +67,7 @@ import com.zagayevskiy.zvm.common.Opcodes.ORB
 import com.zagayevskiy.zvm.common.Opcodes.ORI
 import com.zagayevskiy.zvm.common.Opcodes.OUT
 import com.zagayevskiy.zvm.common.Opcodes.POP
+import com.zagayevskiy.zvm.common.Opcodes.PUSHFP
 import com.zagayevskiy.zvm.common.Opcodes.RET
 import com.zagayevskiy.zvm.common.Opcodes.RNDI
 import com.zagayevskiy.zvm.common.Opcodes.SHLI
@@ -95,7 +96,7 @@ enum class RuntimeType(val size: Int) {
     RuntimeInt(4), RuntimeByte(4)
 }
 
-private class StackFrame(val previousStackPointer: Address, val returnAddress: Address)
+private class StackFrame(val framePointer: Address, val previousStackPointer: Address, val returnAddress: Address)
 
 sealed class StackEntry {
 
@@ -219,6 +220,7 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
 
                 POP -> pop()
                 DUP -> push(peek())
+                PUSHFP -> push(callStack.peek().framePointer.toStackEntry())
 
                 ADDI -> addi()
                 SUBI -> subi()
@@ -373,8 +375,8 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
         val function = functions[functionIndex]
         val sp = stackPointer
         stackPointer += function.argsMemorySize
+        var offset = stackPointer
 
-        var offset = sp
         function.argTypes.forEachIndexed { index, type ->
             offset -= type.size
             when(type) {
@@ -383,7 +385,7 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
             }
 
         }
-        callStack.push(StackFrame(sp, ip))
+        callStack.push(StackFrame(framePointer = stackPointer, previousStackPointer = sp, returnAddress = ip))
         ip = function.address
     }
 

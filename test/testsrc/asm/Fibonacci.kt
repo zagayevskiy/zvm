@@ -1,5 +1,52 @@
 package testsrc.asm
 
+import com.zagayevskiy.zvm.vm.Source
+
+object AsmFibonacci {
+    //run with one int argument (n) and get n's Fibonacci number (computed by recursive way)
+    internal val Recursive = Source("fibonacci recursive","""
+        .fun main: number: int;
+        consti 1
+        consti 1
+        pushfp
+        consti number
+        mloadi
+        call fib
+        ret
+
+        .fun fib: f0: int, f1: int, number: int;
+        pushfp
+        consti number
+        mloadi
+        cmpic 1
+        jz finish
+
+        pushfp
+        consti f1
+        mloadi
+        pushfp
+        consti f0
+        mloadi
+        pushfp
+        consti f1
+        mloadi
+        addi
+        pushfp
+        consti number
+        mloadi
+        consti -1
+        addi
+        call fib
+        ret
+        ->finish
+        pushfp
+        consti f0
+        mloadi
+        ret
+
+    """.trimIndent())
+}
+
 //Function body. Expects 1 arg and 3 locals declared. Return n's Fibonacci number
 internal val asmFibonacciIterativeFunctionBody = """
     aloadi 0
@@ -44,34 +91,4 @@ internal val asmFibonacciIterativeFunctionBody = """
 internal val asmFibonacciIterative = """
     .fun main: args=1, locals=3
     $asmFibonacciIterativeFunctionBody
-""".trimIndent()
-
-//run with one int argument (n) and get n's Fibonacci number (computed by recursive way)
-internal val asmFibonacciRecursive = """
-
-    .fun main: args = 1
-    consti 1
-    consti 1
-    aloadi 0
-    call fib
-    ret
-
-    .fun fib: args = 3
-    aloadi 2
-    cmpic 1
-    jz finish
-
-    aloadi 1
-    aloadi 0
-    aloadi 1
-    addi
-    aloadi 2
-    consti -1
-    addi
-    call fib
-    ret
-    ->finish
-    aloadi 0
-    ret
-
 """.trimIndent()
