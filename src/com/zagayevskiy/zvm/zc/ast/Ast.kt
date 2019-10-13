@@ -110,10 +110,10 @@ class AstValDecl(val valName: String, val unresolvedType: UnresolvedType?, initi
     var initializer by child(initializer)
 }
 
-class AstForLoop(initializer: AstStatement?, condition: AstExpr?, step: AstStatement?, body: AstStatement) : AstStatement() {
-    var initializer by child(initializer ?: AstBlock.Empty)
-    var condition by child(condition ?: AstConst.Undefined)
-    var step by child(step ?: AstBlock.Empty)
+class AstForLoop(initializer: AstStatement, condition: AstExpr, step: AstStatement, body: AstStatement) : AstStatement() {
+    var initializer by child(initializer)
+    var condition by child(condition)
+    var step by child(step)
     var body by child(body)
 }
 

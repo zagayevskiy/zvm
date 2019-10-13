@@ -237,11 +237,11 @@ class ZcParser(private val lexer: Lexer) {
     private fun forLoop(): AstStatement? {
         maybe<ZcToken.For>() ?: return NotMatched
         expect<ZcToken.ParenthesisOpen>()
-        val initializer = forLoopInitializer()
+        val initializer = forLoopInitializer() ?: AstStatementList.Empty
         expect<ZcToken.Semicolon>()
-        val condition = forLoopCondition()
+        val condition = forLoopCondition() ?: AstConst.Undefined
         expect<ZcToken.Semicolon>()
-        val step = forLoopStep()
+        val step = forLoopStep() ?: AstStatementList.Empty
         expect<ZcToken.ParenthesisClose>()
         val body = statement() ?: error("For-loop body expected.")
         //Block needed to create enclosing scope

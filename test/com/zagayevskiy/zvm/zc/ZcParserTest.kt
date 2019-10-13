@@ -73,22 +73,22 @@ internal class ZcParserTest(private val test: TestData) {
                         )))),
                 "fn for_loop_infinite() { for(;;){} } " expect program(
                         fn("for_loop_infinite", args = emptyList(), body = AstBlock(listOf(
-                                AstForLoop(
-                                        initializer = AstBlock.Empty,
+                                AstBlock(listOf(AstForLoop(
+                                        initializer = AstStatementList.Empty,
                                         condition = AstConst.Undefined,
-                                        step = AstBlock.Empty,
+                                        step = AstStatementList.Empty,
                                         body = AstBlock.Empty
-                                ))))),
+                                ))))))),
                 "fn for_loop(){ for(var i = 0, val k = 1; i + 1 < 10; i = i + 3, k){} }" expect program(
-                        fn("for_loop", args = emptyList(), body = AstBlock(listOf(
+                        fn("for_loop", args = emptyList(), body = AstBlock(listOf(AstBlock(listOf(
                                 AstForLoop(
-                                        initializer = AstBlock(listOf(
+                                        initializer = AstStatementList(listOf(
                                                 AstVarDecl("i", null, 0.const),
                                                 AstValDecl("k", null, 1.const))),
                                         condition = AstLess(AstSum("i".id, 1.const), 10.const),
-                                        step = AstBlock(listOf(AstExpressionStatement(AstAssignment("i".id, AstSum("i".id, 3.const))), AstExpressionStatement("k".id))),
+                                        step = AstStatementList(listOf(AstExpressionStatement(AstAssignment("i".id, AstSum("i".id, 3.const))), AstExpressionStatement("k".id))),
                                         body = AstBlock.Empty
-                                ))))),
+                                ))))))),
                 "fn while_loop(){ while(1){} }" expect program(
                         fn("while_loop", args = emptyList(), body = AstBlock(listOf(
                                 AstWhileLoop(
