@@ -31,7 +31,7 @@ internal val zcTestData = listOf(
         test("%", simpleBinaryInt("%"), entries(1000, 50), (1000 % 50).toStackEntry()),
         test(">>", simpleBinaryInt(">>"), entries(10203040, 11), (10203040 shr 11).toStackEntry()),
         test("<<", simpleBinaryInt("<<"), entries(17181929, 19), (17181929 shl 19).toStackEntry()),
-        test("stack", stackTest, emptyList(), 0.toStackEntry(), heapSize = 1024),
+
         testArraySumOverAsmInsert(10, 123),
         testArraySumOverAsmInsert(100, 123),
         testArraySumOverAsmInsert(1000, 213456),

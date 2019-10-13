@@ -91,8 +91,8 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import java.util.*
 
-data class RuntimeFunction(val address: Address, val argTypes: List<RuntimeType>) {
-    val argsMemorySize = argTypes.fold(0) { totalSize, arg -> totalSize + arg.size }
+data class RuntimeFunction(val address: Address, val argTypesReversed: List<RuntimeType>) {
+    val argsMemorySize = argTypesReversed.fold(0) { totalSize, arg -> totalSize + arg.size }
 }
 
 enum class RuntimeType(val size: Int) {
@@ -104,10 +104,10 @@ private data class StackFrame(val framePointer: Address, val previousStackPointe
 sealed class StackEntry {
 
     data class VMInteger(val intValue: Int) : StackEntry() {
-        override fun toString() = "$intValue"
+        override fun toString() = "i$intValue"
     }
     data class VMByte(val byteValue: Byte) : StackEntry() {
-        override fun toString() = "$byteValue"
+        override fun toString() = "b$byteValue"
     }
 
     object VMNull : StackEntry()
@@ -404,7 +404,7 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
         stackPointer += function.argsMemorySize
         var offset = stackPointer
 
-        function.argTypes.forEachIndexed { index, type ->
+        function.argTypesReversed.forEachIndexed { index, type ->
             offset -= type.size
             when (type) {
                 RuntimeInt -> heap.writeInt(offset, pop<VMInteger> { "int expected as #$index arg of $function but $it found. " }.intValue)

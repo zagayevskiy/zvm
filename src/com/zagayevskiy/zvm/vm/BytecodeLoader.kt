@@ -50,7 +50,7 @@ class BytecodeLoader(private val rawBytecode: ByteArray) {
             val functionInfo = FunctionTableRowStruct(rawBytecode, functionTableStart + index * functionRowSize)
             RuntimeFunction(
                     address = functionInfo.address,
-                    argTypes = functionInfo.readArgsTypes())
+                    argTypesReversed = functionInfo.readArgsTypes().reversed())
         }
 
         val bytecodeStart = functionTableStart + functionsCount * functionRowSize

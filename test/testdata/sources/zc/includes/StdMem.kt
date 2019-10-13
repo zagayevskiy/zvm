@@ -4,7 +4,7 @@ package testdata.sources.zc.includes
 internal fun includeStdMem() = """
     fn alloc(size: int): [void] {
         asm{"
-            aloadi 0
+            lloadi size
             alloc
             ret
         "}
@@ -12,7 +12,7 @@ internal fun includeStdMem() = """
 
     fn free(memory: [void]): int {
         asm {"
-            aloadi 0
+            lloadi memory
             free
             consti 0
             ret
