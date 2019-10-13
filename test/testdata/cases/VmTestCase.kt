@@ -6,7 +6,7 @@ import com.zagayevskiy.zvm.vm.StackEntry
 import com.zagayevskiy.zvm.vm.VirtualMachine
 
 interface VmTestCase {
-    val loadedProgram: LoadedInfo
+    val bytecode: ByteArray
 
     fun createVm(info: LoadedInfo): VirtualMachine
     val runArgs: List<StackEntry>
@@ -14,7 +14,7 @@ interface VmTestCase {
 }
 
 internal class SimpleVmTestCase(private val name: String,
-                                override val loadedProgram: LoadedInfo,
+                                override val bytecode: ByteArray,
                                 override val runArgs: List<StackEntry>, override val expectedResult: StackEntry,
                                 private val stackSize: Int = 1024,
                                 private val heapSize: Int = 2048) : VmTestCase {

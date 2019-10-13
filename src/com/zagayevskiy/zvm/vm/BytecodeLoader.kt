@@ -67,7 +67,7 @@ class BytecodeLoader(private val rawBytecode: ByteArray) {
 
     //TODO see BytecodeGenerator and may be merge types somehow
     private fun FunctionTableRowStruct.readArgsTypes(): List<RuntimeType> {
-        val count = argsCount.takeIf { it >= 0 } ?: throw java.lang.IllegalStateException("Arg count negative: $argsCount")
+        val count = argsCount.takeIf { it >= 0 } ?: throw IllegalStateException("Arg count negative: $argsCount")
         val description = argsDescription
         return (0 until count).map { index ->
             val arg = (description shr (index*2)) and 0b11L

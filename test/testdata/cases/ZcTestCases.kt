@@ -74,13 +74,11 @@ internal object ZcTestCases: MutableList<VmTestCase> by mutableListOf() {
 
 
 private class ZcRunBuilder(val source: TestSource) {
-    private val precompiledProgram: LoadedInfo
+    private val precompiledProgram: ByteArray
 
     init {
         val compiler = ZcCompiler()
-        val bytecode = compiler.compile(source.text)
-        val loader = BytecodeLoader(bytecode)
-        precompiledProgram = (loader.load() as LoadingResult.Success).info
+        precompiledProgram = compiler.compile(source.text)
     }
 
     fun run(arg: Int, ret: Int) = run(args = entries(arg), ret = ret.toStackEntry())

@@ -100,7 +100,7 @@ object AsmTestCases : MutableList<VmTestCase> by mutableListOf() {
 private object No : List<StackEntry> by emptyList()
 
 private class AsmRunBuilder(val source: TestSource) {
-    private val precompiledProgram: LoadedInfo
+    private val precompiledProgram: ByteArray
 
     init {
         val parser = AsmParser(AsmSequenceLexer(source.text.asSequence()), OpcodesMapping.opcodes)
@@ -108,9 +108,7 @@ private class AsmRunBuilder(val source: TestSource) {
         val result = parsed as? ParseResult.Success ?: throw IllegalArgumentException("Failed to parse $parsed")
         val assembler = BytecodeAssembler(result.commands, OpcodesMapping.mapping)
         val generator = BytecodeGenerator()
-        val bytecode = generator.generate(assembler.generate())
-        val loader = BytecodeLoader(bytecode)
-        precompiledProgram = (loader.load() as LoadingResult.Success).info
+        precompiledProgram = generator.generate(assembler.generate())
     }
 
     fun run(arg: Int, ret: Int) = run(args = entries(arg), ret = ret.toStackEntry())
