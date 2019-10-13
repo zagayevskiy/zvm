@@ -35,20 +35,6 @@ internal val zcTestData = listOf(
         testArraySumOverAsmInsert(10, 123),
         testArraySumOverAsmInsert(100, 123),
         testArraySumOverAsmInsert(1000, 213456),
-        test("f(-100)", zcFibonacciIterative, entries(-100), 1.toStackEntry()),
-        test("f(1)", zcFibonacciIterative, entries(1), 1.toStackEntry()),
-        test("f(5)", zcFibonacciIterative, entries(5), 5.toStackEntry()),
-        test("f(9)", zcFibonacciIterative, entries(9), 34.toStackEntry()),
-        test("f(12)", zcFibonacciIterative, entries(12), 144.toStackEntry()),
-        test("f(33)", zcFibonacciIterative, entries(33), 3524578.toStackEntry()),
-        test("f(41)", zcFibonacciIterative, entries(41), 165580141.toStackEntry()),
-
-        test("!1", zcFactorialIterative, entries(1), 1.toStackEntry()),
-        test("!2", zcFactorialIterative, entries(2), 2.toStackEntry()),
-        test("!5", zcFactorialIterative, entries(5), 120.toStackEntry()),
-        test("!12", zcFactorialIterative, entries(12), 479001600.toStackEntry()),
-
-        test("rev 0b01010101_11110000_00001111_11001100", zcReverseIntBits, entries(0b00110011_01100111_00001111_10101010), 0b01010101_11110000_11100110_11001100.toStackEntry()),
 
         test("isPrime(2)", zcIsPrime, entries(2), True),
         test("isPrime(3)", zcIsPrime, entries(3), True),

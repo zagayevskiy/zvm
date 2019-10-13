@@ -19,6 +19,13 @@ internal object ZcTestCases: MutableList<VmTestCase> by mutableListOf() {
             run(arg = 12, ret = 479001600)
         }
 
+        source(ZcFactorial.Iterative) {
+            run(arg = 1, ret = 1)
+            run(arg = 2, ret = 2)
+            run(arg = 5, ret = 120)
+            run(arg = 12, ret = 479001600)
+        }
+
         source(ZcFibonacci.Recursive) {
             run(arg = 1, ret = 1)
             run(arg = 5, ret = 5)
@@ -37,11 +44,25 @@ internal object ZcTestCases: MutableList<VmTestCase> by mutableListOf() {
             run(arg = 41, ret = 165580141)
         }
 
-        source(ZcReverseInt.BytesViaBitOps) {
+        source(ZcFibonacci.Iterative.ForLoop) {
+            run(arg = 1, ret = 1)
+            run(arg = 5, ret = 5)
+            run(arg = 9, ret = 34)
+            run(arg = 12, ret = 144)
+            run(arg = 33, ret = 3524578)
+            run(arg = 41, ret = 165580141)
+        }
+
+        source(ZcReverseInt.Bytes) {
             run(arg = 0x0a1b2c3d, ret = 0x3d2c1b0a)
             run(arg = 0x3d2c1b0a, ret = 0x0a1b2c3d)
             run(arg = 0b01010101_11110000_00001111_00110011, ret = 0b00110011_00001111_11110000_01010101)
             run(arg = 0b00110011_00001111_11110000_01010101, ret = 0b01010101_11110000_00001111_00110011)
+        }
+
+        source((ZcReverseInt.Bits)) {
+            run(arg = 0b01010101_11110000_11100110_11001100, ret = 0b00110011_01100111_00001111_10101010)
+            run(arg = 0b00110011_01100111_00001111_10101010, ret = 0b01010101_11110000_11100110_11001100)
         }
     }
 }

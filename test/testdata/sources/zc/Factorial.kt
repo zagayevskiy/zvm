@@ -11,4 +11,13 @@ internal object ZcFactorial {
             return main(n - 1)*n;
         }
     """.trimIndent())
+
+    //run with one int argument (n) and get n's Fibonacci number (computed by iterative way)
+    val Iterative = TestSource("n! iterative",  """
+        fn main(n: int): int {
+            var accum = 1;
+            for(var i = 0; i < n; i = i + 1, accum = accum * i) {}
+            return accum;
+        }
+    """.trimIndent())
 }
