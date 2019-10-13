@@ -21,7 +21,7 @@ internal class VirtualMachineProgramsTest(private val testCase: VmTestCase) {
 
     @Before
     fun setup() {
-        vm = testCase.createVm(testCase.loadProgram())
+        vm = testCase.createVm(testCase.loadedProgram)
     }
 
     @Test

@@ -3,7 +3,7 @@ package com.zagayevskiy.zvm.vm
 import com.zagayevskiy.zvm.memory.BitTableMemory
 
 interface VmTestCase {
-    fun loadProgram(): LoadedInfo
+    val loadedProgram: LoadedInfo
     fun createVm(info: LoadedInfo): VirtualMachine
     val runArgs: List<StackEntry>
     val expectedResult: StackEntry
