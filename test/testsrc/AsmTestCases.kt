@@ -2,32 +2,46 @@ package testsrc
 
 import com.zagayevskiy.zvm.asm.*
 import com.zagayevskiy.zvm.entries
+import com.zagayevskiy.zvm.util.extensions.and
+import com.zagayevskiy.zvm.util.extensions.or
+import com.zagayevskiy.zvm.util.extensions.xor
 import com.zagayevskiy.zvm.vm.*
 import testsrc.asm.AsmFactorial
 import testsrc.asm.AsmFibonacci
 import testsrc.asm.AsmReverse
 import testsrc.asm.AsmSimple.JustRet0
 import testsrc.asm.AsmSimple.JustRetArg
-import testsrc.asm.AsmSimple.Sum
 
 
 object AsmTestCases : MutableList<AsmSourceTestCase> by mutableListOf() {
     val Sources = mutableListOf<Source>()
 
     init {
+
+        binarySources {
+            IntAdd ireturns { left, right -> left + right }
+            IntMul ireturns { left, right -> left * right }
+            IntXor ireturns { left, right -> left xor  right }
+            IntOr ireturns { left, right -> left or right }
+            IntAnd ireturns { left, right -> left and right }
+            IntMul ireturns { left, right -> left * right }
+            IntMul ireturns { left, right -> left * right }
+
+            ByteAdd breturns { left, right -> left + right }
+            ByteMul breturns { left, right -> left * right }
+            ByteXor breturns { left, right -> left xor  right }
+            ByteOr breturns { left, right -> left or right }
+            ByteAnd breturns { left, right -> left and right }
+            ByteMul breturns { left, right -> left * right }
+            ByteMul breturns { left, right -> left * right }
+        }
+
         source(JustRet0) {
             run(args = No, ret = 0)
         }
 
         source(JustRetArg) {
             run(arg = 100500, ret = 100500)
-        }
-
-        source(Sum) {
-            run(args = entries(0, 0), ret = 0)
-            run(args = entries(1, 2), ret = 3)
-            run(args = entries(10000, -10000), ret = 0)
-            run(args = entries(Int.MIN_VALUE, Int.MAX_VALUE), ret = Int.MIN_VALUE + Int.MAX_VALUE)
         }
 
         source(AsmFactorial.Recursive) {
@@ -38,10 +52,10 @@ object AsmTestCases : MutableList<AsmSourceTestCase> by mutableListOf() {
         }
 
         source(AsmFactorial.Iterative) {
-            run(arg = 1, ret= 1)
-            run(arg = 2, ret= 2)
-            run(arg = 5, ret= 120)
-            run(arg = 12, ret= 479001600)
+            run(arg = 1, ret = 1)
+            run(arg = 2, ret = 2)
+            run(arg = 5, ret = 120)
+            run(arg = 12, ret = 479001600)
         }
 
         source(AsmFibonacci.Recursive) {
@@ -64,22 +78,22 @@ object AsmTestCases : MutableList<AsmSourceTestCase> by mutableListOf() {
         }
 
         source(AsmReverse.IntBits) {
-            run (arg = 0b01010101_11110000_11100110_11001100, ret = 0b00110011_01100111_00001111_10101010)
-            run (arg = 0b00110011_01100111_00001111_10101010, ret = 0b01010101_11110000_11100110_11001100)
+            run(arg = 0b01010101_11110000_11100110_11001100, ret = 0b00110011_01100111_00001111_10101010)
+            run(arg = 0b00110011_01100111_00001111_10101010, ret = 0b01010101_11110000_11100110_11001100)
         }
 
         source(AsmReverse.IntBytes.ViaBitOps) {
-            run (arg = 0x0a1b2c3d, ret = 0x3d2c1b0a)
-            run (arg = 0x3d2c1b0a, ret = 0x0a1b2c3d)
-            run (arg = 0b01010101_11110000_00001111_00110011, ret = 0b00110011_00001111_11110000_01010101)
-            run (arg = 0b00110011_00001111_11110000_01010101, ret = 0b01010101_11110000_00001111_00110011)
+            run(arg = 0x0a1b2c3d, ret = 0x3d2c1b0a)
+            run(arg = 0x3d2c1b0a, ret = 0x0a1b2c3d)
+            run(arg = 0b01010101_11110000_00001111_00110011, ret = 0b00110011_00001111_11110000_01010101)
+            run(arg = 0b00110011_00001111_11110000_01010101, ret = 0b01010101_11110000_00001111_00110011)
         }
 
         source(AsmReverse.IntBytes.ViaMemory) {
-            run (arg = 0x0a1b2c3d, ret = 0x3d2c1b0a)
-            run (arg = 0x3d2c1b0a, ret = 0x0a1b2c3d)
-            run (arg = 0b01010101_11110000_00001111_00110011, ret = 0b00110011_00001111_11110000_01010101)
-            run (arg = 0b00110011_00001111_11110000_01010101, ret = 0b01010101_11110000_00001111_00110011)
+            run(arg = 0x0a1b2c3d, ret = 0x3d2c1b0a)
+            run(arg = 0x3d2c1b0a, ret = 0x0a1b2c3d)
+            run(arg = 0b01010101_11110000_00001111_00110011, ret = 0b00110011_00001111_11110000_01010101)
+            run(arg = 0b00110011_00001111_11110000_01010101, ret = 0b01010101_11110000_00001111_00110011)
         }
     }
 }
@@ -95,6 +109,7 @@ private object No : List<StackEntry> by emptyList()
 
 private class AsmRunBuilder(val source: Source) {
     private val precompiledProgram: LoadedInfo
+
     init {
         val parser = AsmParser(AsmSequenceLexer(source.text.asSequence()), OpcodesMapping.opcodes)
         val parsed = parser.program()
@@ -106,18 +121,17 @@ private class AsmRunBuilder(val source: Source) {
         precompiledProgram = (loader.load() as LoadingResult.Success).info
     }
 
-    fun run(arg: Int, ret: Int) {
-        run(args = entries(arg), ret = ret)
-    }
+    fun run(arg: Int, ret: Int) =run(args = entries(arg), ret = ret.toStackEntry())
 
-    fun run(args: List<StackEntry>, ret: Int) {
+    fun run(args: List<StackEntry>, ret: Int) = run(args, ret.toStackEntry())
+
+    fun run(args: List<StackEntry>, ret: StackEntry) {
         AsmTestCases.add(AsmSourceTestCase(
-                source.name + (args.map { (it as StackEntry.VMInteger).intValue }.takeIf { it.isNotEmpty() } ?: "") + " -> $ret",
+                source.name + (args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "") + " -> $ret",
                 precompiledProgram,
                 runArgs = args,
-                expectedResult = ret.toStackEntry()
+                expectedResult = ret
         ))
-
     }
 }
 
@@ -125,3 +139,61 @@ private fun source(source: Source, block: AsmRunBuilder.() -> Unit) {
     AsmTestCases.Sources.add(source)
     AsmRunBuilder(source).block()
 }
+
+private object BinarySourcesBuilder {
+    private val binaryTestsIntArguments = listOf(
+            entries(0, 0),
+            entries(0, 1),
+            entries(1, 0),
+            entries(Int.MIN_VALUE, Int.MAX_VALUE),
+            entries(10000, -10000)
+    )
+
+    private val binaryTestsByteArguments = listOf(
+            entries(0.toByte() ,0.toByte()),
+            entries(0.toByte(), 1.toByte()),
+            entries(1.toByte(), 0.toByte()),
+            entries(Byte.MIN_VALUE, Byte.MAX_VALUE),
+            entries((-10).toByte(), 10.toByte())
+    )
+
+
+    infix fun Opcode.ireturns(ret: (left: Int, right: Int) -> Int) {
+        source(binaryIntSource()) {
+            binaryTestsIntArguments.forEach { args ->
+                val (left, right) = args
+                run(args = args, ret = ret((left as StackEntry.VMInteger).intValue, (right as StackEntry.VMInteger).intValue))
+            }
+        }
+    }
+
+    infix fun Opcode.breturns(ret: (left: Byte, right: Byte) -> Int) {
+        source(binaryByteSource()) {
+            binaryTestsByteArguments.forEach { args ->
+                val (left, right) = args
+                run(args = args, ret = ret((left as StackEntry.VMByte).byteValue, (right as StackEntry.VMByte).byteValue).toByte().toInt())
+            }
+        }
+    }
+}
+
+private fun binarySources(block: BinarySourcesBuilder.() -> Unit) {
+    BinarySourcesBuilder.block()
+}
+
+private fun Opcode.binaryIntSource() = Source("Binary $name", """
+        .fun main: left: int, right: int;
+        lloadi left
+        lloadi right
+        $name
+        ret
+    """.trimIndent())
+
+private fun Opcode.binaryByteSource() = Source("Binary $name", """
+        .fun main: left: byte, right: byte;
+        lloadb left
+        lloadb right
+        $name
+        btoi
+        ret
+    """.trimIndent())

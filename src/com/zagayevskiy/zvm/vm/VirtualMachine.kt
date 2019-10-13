@@ -96,15 +96,19 @@ data class RuntimeFunction(val address: Address, val argTypes: List<RuntimeType>
 }
 
 enum class RuntimeType(val size: Int) {
-    RuntimeInt(4), RuntimeByte(4)
+    RuntimeInt(4), RuntimeByte(1)
 }
 
 private data class StackFrame(val framePointer: Address, val previousStackPointer: Address, val returnAddress: Address)
 
 sealed class StackEntry {
 
-    data class VMInteger(val intValue: Int) : StackEntry()
-    data class VMByte(val byteValue: Byte) : StackEntry()
+    data class VMInteger(val intValue: Int) : StackEntry() {
+        override fun toString() = "$intValue"
+    }
+    data class VMByte(val byteValue: Byte) : StackEntry() {
+        override fun toString() = "$byteValue"
+    }
 
     object VMNull : StackEntry()
 }
@@ -649,7 +653,7 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
     private inline fun binaryByteExpr(body: (left: Byte, right: Byte) -> Int) {
         val right = pop<VMByte>(PopByteExprOperandMsg).byteValue
         val left = pop<VMByte>(PopByteExprOperandMsg).byteValue
-        push(body(left, right).toByte().toStackEntry())
+        push(body(left, right).toByte())
     }
 
     private inline fun compareByteExpr(body: (left: Byte, right: Byte) -> Boolean) {

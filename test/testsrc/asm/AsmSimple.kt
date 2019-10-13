@@ -1,5 +1,7 @@
 package testsrc.asm
 
+import com.zagayevskiy.zvm.asm.IntAdd
+import com.zagayevskiy.zvm.asm.Opcode
 import com.zagayevskiy.zvm.vm.Source
 
 
@@ -19,16 +21,13 @@ object AsmSimple {
         ret
     """.trimIndent())
 
-    val Sum = Source("x+y", """
-        .fun main: x: int, y: int;
-        pushfp
-        consti x
-        mloadi
-        pushfp
-        consti y
-        mloadi
-        addi
-        ret
-    """.trimIndent())
+    val Sum = Source("x+y", IntAdd.binarySource())
 
+    private fun Opcode.binarySource(): String = """
+        .fun main: left: int, right: int;
+        lloadi left
+        lloadi right
+        $name
+        ret
+    """.trimIndent()
 }

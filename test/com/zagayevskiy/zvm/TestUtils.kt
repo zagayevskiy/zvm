@@ -12,3 +12,7 @@ fun <T> assertEquals(actual: List<T>, expected: List<T>) {
 internal fun entries(vararg values: Int): List<StackEntry> {
     return values.map { it.toStackEntry() }
 }
+
+internal fun entries(vararg values: Byte): List<StackEntry> {
+    return values.map { it.toStackEntry() }
+}
