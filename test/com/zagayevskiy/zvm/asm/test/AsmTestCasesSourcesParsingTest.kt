@@ -4,14 +4,14 @@ import com.zagayevskiy.zvm.asm.AsmParser
 import com.zagayevskiy.zvm.asm.AsmSequenceLexer
 import com.zagayevskiy.zvm.asm.OpcodesMapping
 import com.zagayevskiy.zvm.asm.ParseResult
-import com.zagayevskiy.zvm.vm.Source
+import testdata.cases.TestSource
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import testsrc.AsmTestCases
+import testdata.cases.AsmTestCases
 
 @RunWith(Parameterized::class)
-class AsmTestCasesSourcesParsingTest(private val source: Source) {
+class AsmTestCasesSourcesParsingTest(private val source: TestSource) {
 
     companion object {
         @JvmStatic
@@ -23,6 +23,6 @@ class AsmTestCasesSourcesParsingTest(private val source: Source) {
     fun test() {
         val parser = AsmParser(AsmSequenceLexer(source.text.asSequence()), OpcodesMapping.opcodes)
         val parsed = parser.program()
-        parsed as? ParseResult.Success ?: throw IllegalArgumentException("Failed to parse $parsed")
+        parsed as? ParseResult.Success ?: throw IllegalArgumentException("Failed to parse. Result: $parsed")
     }
 }

@@ -2,7 +2,7 @@ package com.zagayevskiy.zvm.zc
 
 import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.vm.*
-import testsrc.zc.includes.includeStdMem
+import testdata.sources.zc.includes.includeStdMem
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

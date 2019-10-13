@@ -7,8 +7,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import testsrc.ZcTestData
-import testsrc.zcTestData
+import testdata.ZcTestData
+import testdata.zcTestData
 
 
 @RunWith(Parameterized::class)

@@ -1,16 +1,13 @@
 package com.zagayevskiy.zvm.zc.vmoverzc
 
 import com.zagayevskiy.zvm.common.BackingStruct
-import com.zagayevskiy.zvm.common.sizeOf
 import com.zagayevskiy.zvm.entries
 import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.vm.*
 import com.zagayevskiy.zvm.zc.ZcCompiler
 import org.junit.Before
 import org.junit.Test
-import testsrc.zc.includes.includeStdMem
-import testsrc.zc.vm.includeBytecodeParser
-import testsrc.zc.vm.vmOverZc
+import testdata.sources.zc.vm.vmOverZc
 import kotlin.test.assertEquals
 
 internal fun compile(text: String): ByteArray {

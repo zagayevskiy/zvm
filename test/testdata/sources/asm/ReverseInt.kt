@@ -1,10 +1,10 @@
-package testsrc.asm
+package testdata.sources.asm
 
-import com.zagayevskiy.zvm.vm.Source
+import testdata.cases.TestSource
 
 object AsmReverse {
     //run with one argument(int) and reverse it bits
-    internal val IntBits = Source("Reverse int bits", """
+    internal val IntBits = TestSource("Reverse int bits", """
         .fun main: x: int;
         pushfp
         consti x
@@ -45,7 +45,7 @@ object AsmReverse {
     
     object IntBytes {
         //run with one argument(int) and reverse it bytes
-        internal val ViaBitOps = Source("Reverse int bytes via bit ops", """
+        internal val ViaBitOps = TestSource("Reverse int bytes via bit ops", """
             .fun main: x: int;
             lloadi x
             call reverse
@@ -82,7 +82,7 @@ object AsmReverse {
         """.trimIndent())
 
         //run with one argument(int) and reverse it bytes(via memory manipulations)
-        internal val ViaMemory = Source("Reverse int bytes via memory", """
+        internal val ViaMemory = TestSource("Reverse int bytes via memory", """
             .fun reverse: x: int;
             addsp 4
             consti 4

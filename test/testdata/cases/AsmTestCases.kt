@@ -1,4 +1,4 @@
-package testsrc
+package testdata.cases
 
 import com.zagayevskiy.zvm.asm.*
 import com.zagayevskiy.zvm.entries
@@ -6,21 +6,21 @@ import com.zagayevskiy.zvm.util.extensions.and
 import com.zagayevskiy.zvm.util.extensions.or
 import com.zagayevskiy.zvm.util.extensions.xor
 import com.zagayevskiy.zvm.vm.*
-import testsrc.asm.AsmFactorial
-import testsrc.asm.AsmFibonacci
-import testsrc.asm.AsmReverse
-import testsrc.asm.AsmSimple.JustRet0
-import testsrc.asm.AsmSimple.JustRetArg
+import testdata.sources.asm.AsmFactorial
+import testdata.sources.asm.AsmFibonacci
+import testdata.sources.asm.AsmReverse
+import testdata.sources.asm.AsmSimple.JustRet0
+import testdata.sources.asm.AsmSimple.JustRetArg
 
 
-object AsmTestCases : MutableList<AsmSourceTestCase> by mutableListOf() {
-    val Sources = mutableListOf<Source>()
+object AsmTestCases : MutableList<VmTestCase> by mutableListOf() {
+    val Sources = mutableListOf<TestSource>()
 
     init {
         binarySources {
             IntAdd ireturns { left, right -> left + right }
             IntMul ireturns { left, right -> left * right }
-            IntXor ireturns { left, right -> left xor  right }
+            IntXor ireturns { left, right -> left xor right }
             IntOr ireturns { left, right -> left or right }
             IntAnd ireturns { left, right -> left and right }
             IntMul ireturns { left, right -> left * right }
@@ -28,7 +28,7 @@ object AsmTestCases : MutableList<AsmSourceTestCase> by mutableListOf() {
 
             ByteAdd breturns { left, right -> left + right }
             ByteMul breturns { left, right -> left * right }
-            ByteXor breturns { left, right -> left xor  right }
+            ByteXor breturns { left, right -> left xor right }
             ByteOr breturns { left, right -> left or right }
             ByteAnd breturns { left, right -> left and right }
             ByteMul breturns { left, right -> left * right }
@@ -97,16 +97,9 @@ object AsmTestCases : MutableList<AsmSourceTestCase> by mutableListOf() {
     }
 }
 
-
-class AsmSourceTestCase(
-        name: String,
-        override val loadedProgram: LoadedInfo,
-        override val runArgs: List<StackEntry>,
-        override val expectedResult: StackEntry) : AbsVmTestCase(name)
-
 private object No : List<StackEntry> by emptyList()
 
-private class AsmRunBuilder(val source: Source) {
+private class AsmRunBuilder(val source: TestSource) {
     private val precompiledProgram: LoadedInfo
 
     init {
@@ -120,13 +113,13 @@ private class AsmRunBuilder(val source: Source) {
         precompiledProgram = (loader.load() as LoadingResult.Success).info
     }
 
-    fun run(arg: Int, ret: Int) =run(args = entries(arg), ret = ret.toStackEntry())
+    fun run(arg: Int, ret: Int) = run(args = entries(arg), ret = ret.toStackEntry())
 
     fun run(args: List<StackEntry>, ret: Int) = run(args, ret.toStackEntry())
 
     fun run(args: List<StackEntry>, ret: StackEntry) {
-        AsmTestCases.add(AsmSourceTestCase(
-                source.name + (args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "") + " -> $ret",
+        AsmTestCases.add(SimpleVmTestCase(
+                """Asm ${source.name} ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "") } -> $ret"""",
                 precompiledProgram,
                 runArgs = args,
                 expectedResult = ret
@@ -134,7 +127,7 @@ private class AsmRunBuilder(val source: Source) {
     }
 }
 
-private fun source(source: Source, block: AsmRunBuilder.() -> Unit) {
+private fun source(source: TestSource, block: AsmRunBuilder.() -> Unit) {
     AsmTestCases.Sources.add(source)
     AsmRunBuilder(source).block()
 }
@@ -149,7 +142,7 @@ private object BinarySourcesBuilder {
     )
 
     private val binaryTestsByteArguments = listOf(
-            entries(0.toByte() ,0.toByte()),
+            entries(0.toByte(), 0.toByte()),
             entries(0.toByte(), 1.toByte()),
             entries(1.toByte(), 0.toByte()),
             entries(Byte.MIN_VALUE, Byte.MAX_VALUE),
@@ -180,7 +173,7 @@ private fun binarySources(block: BinarySourcesBuilder.() -> Unit) {
     BinarySourcesBuilder.block()
 }
 
-private fun Opcode.binaryIntSource() = Source("Binary $name", """
+private fun Opcode.binaryIntSource() = TestSource("Binary $name", """
         .fun main: left: int, right: int;
         lloadi left
         lloadi right
@@ -188,7 +181,7 @@ private fun Opcode.binaryIntSource() = Source("Binary $name", """
         ret
     """.trimIndent())
 
-private fun Opcode.binaryByteSource() = Source("Binary $name", """
+private fun Opcode.binaryByteSource() = TestSource("Binary $name", """
         .fun main: left: byte, right: byte;
         lloadb left
         lloadb right

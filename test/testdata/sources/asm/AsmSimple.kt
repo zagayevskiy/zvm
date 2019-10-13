@@ -1,17 +1,17 @@
-package testsrc.asm
+package testdata.sources.asm
 
-import com.zagayevskiy.zvm.vm.Source
+import testdata.cases.TestSource
 
 
 object AsmSimple {
 
-    val JustRet0 = Source("Just ret 0", """
+    val JustRet0 = TestSource("Just ret 0", """
         .fun main
         consti 0
         ret
     """.trimIndent())
 
-    val JustRetArg = Source("Just ret arg", """
+    val JustRetArg = TestSource("Just ret arg", """
         .fun main: x: int;
         pushfp
         consti x

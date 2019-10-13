@@ -1,8 +1,8 @@
-package testsrc.zc.vm
+package testdata.sources.zc.vm
 
-import testsrc.zc.includes.includeCrash
-import testsrc.zc.includes.includeStack
-import testsrc.zc.includes.includeStdMem
+import testdata.sources.zc.includes.includeCrash
+import testdata.sources.zc.includes.includeStack
+import testdata.sources.zc.includes.includeStdMem
 
 
 

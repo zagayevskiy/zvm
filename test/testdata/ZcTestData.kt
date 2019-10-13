@@ -1,9 +1,9 @@
-package testsrc
+package testdata
 
 import com.zagayevskiy.zvm.vm.StackEntry
 import com.zagayevskiy.zvm.entries
 import com.zagayevskiy.zvm.vm.toStackEntry
-import testsrc.zc.*
+import testdata.sources.zc.*
 
 internal data class ZcTestData(val name: String, val text: String, val expectedResult: StackEntry, val runArgs: List<StackEntry>, val heapSize: Int)
 
@@ -43,34 +43,10 @@ internal val zcTestData = listOf(
         test("f(33)", zcFibonacciIterative, entries(33), 3524578.toStackEntry()),
         test("f(41)", zcFibonacciIterative, entries(41), 165580141.toStackEntry()),
 
-        test("f_asm(-100)", zcFibonacciIterativeByAsmInsert, entries(-100), 1.toStackEntry()),
-        test("f_asm(1)", zcFibonacciIterativeByAsmInsert, entries(1), 1.toStackEntry()),
-        test("f_asm(5)", zcFibonacciIterativeByAsmInsert, entries(5), 5.toStackEntry()),
-        test("f_asm(9)", zcFibonacciIterativeByAsmInsert, entries(9), 34.toStackEntry()),
-        test("f_asm(12)", zcFibonacciIterativeByAsmInsert, entries(12), 144.toStackEntry()),
-        test("f_asm(33)", zcFibonacciIterativeByAsmInsert, entries(33), 3524578.toStackEntry()),
-        test("f_asm(41)", zcFibonacciIterativeByAsmInsert, entries(41), 165580141.toStackEntry()),
-
-        test("f_rec(-100)", zcFibonacciRecursive, entries(-100), 1.toStackEntry()),
-        test("f_rec(1)", zcFibonacciRecursive, entries(1), 1.toStackEntry()),
-        test("f_rec(5)", zcFibonacciRecursive, entries(5), 5.toStackEntry()),
-        test("f_rec(9)", zcFibonacciRecursive, entries(9), 34.toStackEntry()),
-        test("f_rec(12)", zcFibonacciRecursive, entries(12), 144.toStackEntry()),
-        test("f_rec(33)", zcFibonacciRecursive, entries(33), 3524578.toStackEntry()),
-        test("f_rec(41)", zcFibonacciRecursive, entries(41), 165580141.toStackEntry()),
-
         test("!1", zcFactorialIterative, entries(1), 1.toStackEntry()),
         test("!2", zcFactorialIterative, entries(2), 2.toStackEntry()),
         test("!5", zcFactorialIterative, entries(5), 120.toStackEntry()),
         test("!12", zcFactorialIterative, entries(12), 479001600.toStackEntry()),
-
-        test("rec !1", zcFactorialRecursive, entries(1), 1.toStackEntry()),
-        test("rec !2", zcFactorialRecursive, entries(2), 2.toStackEntry()),
-        test("rec !5", zcFactorialRecursive, entries(5), 120.toStackEntry()),
-        test("rec !12", zcFactorialRecursive, entries(12), 479001600.toStackEntry()),
-
-        test("rbit 0x0a1b2c3d", zcReverseIntBytesViaBitManipulations, entries(0x0a1b2c3d), 0x3d2c1b0a.toStackEntry()),
-        test("rbit 0b01010101_11110000_00001111_00110011", zcReverseIntBytesViaBitManipulations, entries(0b01010101_11110000_00001111_00110011), 0b00110011_00001111_11110000_01010101.toStackEntry()),
 
         test("rev 0b01010101_11110000_00001111_11001100", zcReverseIntBits, entries(0b00110011_01100111_00001111_10101010), 0b01010101_11110000_11100110_11001100.toStackEntry()),
 

@@ -1,8 +1,8 @@
-package testsrc.zc
+package testdata.sources.zc
 
-import testsrc.asm.AsmFibonacci
-import testsrc.zc.includes.includeStack
-import testsrc.zc.includes.includeStdMem
+import testdata.sources.asm.AsmFibonacci
+import testdata.sources.zc.includes.includeStack
+import testdata.sources.zc.includes.includeStdMem
 
 fun simpleBinaryInt(operation: String) = """
     fn main(left: int, right: int): int {
@@ -25,31 +25,6 @@ internal val zcFibonacciIterative = """
     }
 """.trimIndent()
 
-internal val zcFibonacciIterativeByAsmInsert = """
-    fn fibonacciAsm(n: int): int {
-        asm {"
-            ${AsmFibonacci.iterativeFunctionBody()}
-        "}
-    }
-
-    fn main(n: int): int {
-        return fibonacciAsm(n);
-    }
-""".trimIndent()
-
-//run with one int argument (n) and get n's Fibonacci number (computed by recursive way)
-internal val zcFibonacciRecursive = """
-    fn fibonacci(prevStep: int, currentStep: int, counter: int): int {
-        if (counter <= 0)
-            return currentStep;
-        else
-            return fibonacci(currentStep, prevStep + currentStep, counter - 1);
-    }
-
-    fn main(n: int): int {
-        return fibonacci(1, 1, n - 2);
-    }
-""".trimIndent()
 
 //run with one int argument (n) and get n's Fibonacci number (computed by iterative way)
 internal val zcFactorialIterative = """
@@ -57,21 +32,6 @@ internal val zcFactorialIterative = """
         var accum = 1;
         for(var i = 0; i < n; i = i + 1, accum = accum * i) {}
         return accum;
-    }
-""".trimIndent()
-
-//run with one int argument(n) and get n! (computed by recursive way)
-internal val zcFactorialRecursive = """
-    fn main(n: int): int {
-        if (n <= 1) return 1;
-        return main(n - 1)*n;
-    }
-""".trimIndent()
-
-//run with one argument(int) and reverse it bytes
-internal val zcReverseIntBytesViaBitManipulations = """
-    fn main(x: int): int {
-        return ((x >> 24) & 255) | ((x >> 8) & 65280) | ((x & 255) << 24) | ((x & 65280) << 8);
     }
 """.trimIndent()
 

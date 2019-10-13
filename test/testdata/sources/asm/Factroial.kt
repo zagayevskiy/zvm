@@ -1,11 +1,11 @@
-package testsrc.asm
+package testdata.sources.asm
 
-import com.zagayevskiy.zvm.vm.Source
+import testdata.cases.TestSource
 
 object AsmFactorial {
 
     //run with one int argument(n) and get n! (computed by recursive way)
-    internal val Recursive = Source("n! recursive", """
+    internal val Recursive = TestSource("n! recursive", """
         .fun main: n: int;
         pushfp
         consti n
@@ -29,7 +29,7 @@ object AsmFactorial {
     """.trimIndent())
 
     //run with one int argument(n) and get n! (computed by iterative way)
-    internal val Iterative = Source("n! iterative", """
+    internal val Iterative = TestSource("n! iterative", """
         .fun main: n: int;
         addsp 8
         lloadi n

@@ -1,10 +1,10 @@
-package testsrc.asm
+package testdata.sources.asm
 
-import com.zagayevskiy.zvm.vm.Source
+import testdata.cases.TestSource
 
 internal object AsmFibonacci {
     //run with one int argument (n) and get n's Fibonacci number (computed by recursive way)
-    val Recursive = Source("fibonacci recursive","""
+    val Recursive = TestSource("fibonacci recursive", """
         .fun main: number: int;
         consti 1
         consti 1
@@ -47,7 +47,7 @@ internal object AsmFibonacci {
     """.trimIndent())
 
     //run with one int argument (n) and get n's Fibonacci number
-    val Iterative = Source("fibonacci iterative", """
+    val Iterative = TestSource("fibonacci iterative", """
         .fun main: n: int;
         ${iterativeFunctionBody()}
     """.trimIndent())

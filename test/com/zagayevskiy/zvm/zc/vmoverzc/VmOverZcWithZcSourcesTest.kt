@@ -3,8 +3,8 @@ package com.zagayevskiy.zvm.zc.vmoverzc
 import com.zagayevskiy.zvm.vm.*
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import testsrc.ZcTestData
-import testsrc.zcTestData
+import testdata.ZcTestData
+import testdata.zcTestData
 
 @RunWith(Parameterized::class)
 internal class VmOverZcWithZcSourcesTest(private val test: ZcTestData): AbsVirtualMachineOverZtTest() {
