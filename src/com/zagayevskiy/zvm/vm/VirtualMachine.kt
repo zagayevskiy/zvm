@@ -164,6 +164,7 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
     } catch (oom: VMOutOfMemory) {
         throw VMOutOfMemory("No enough memory to create locals stack. Wanted stack size: $localsStackSize", cause = oom)
     }
+
     private var stackPointer: Int = localsStackBaseAddress
         set(value) {
             when {

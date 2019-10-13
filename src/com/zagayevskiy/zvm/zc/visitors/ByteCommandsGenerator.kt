@@ -84,7 +84,9 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
     }
 
     private fun <S : LocalScope> generateLocalScope(scope: S, generator: S.() -> Unit) {
-        when (val offset = scope.localsOffset) {
+        val offset = scope.localsOffset
+        val localsSize = offset - ((scope.enclosingScope as? LocalScope)?.localsOffset ?: 0)
+        when (localsSize) {
             0 -> generator(scope) //no locals in this scope
             1 -> {
                 commands.add(IncStackPointerByte.instruction())
@@ -97,9 +99,9 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                 commands.add(DecStackPointerInt.instruction())
             }
             else -> {
-                commands.add(AddStackPointer.instruction(offset.op))
+                commands.add(AddStackPointer.instruction(localsSize.op))
                 generator(scope)
-                commands.add(AddStackPointer.instruction((-offset).op))
+                commands.add(AddStackPointer.instruction((-localsSize).op))
             }
         }
     }
