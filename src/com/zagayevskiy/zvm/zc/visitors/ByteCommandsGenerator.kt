@@ -26,9 +26,10 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
     private fun generate(function: AstDefinedFunction) {
         function.apply {
             commands.add(Command.Func(
-                    name = name, args = emptyList() //TODO
-//                    args = args.size,
-//                    locals = totalVariablesCount
+                    name = name,
+                    args = args.map { arg ->
+                        Command.Func.Arg(arg.name, arg.type.toAsmType())
+                    }
             ))
             return@apply when (val body = body) {
                 is AstBlock -> generate(body)
@@ -36,6 +37,17 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                 else -> error("Unknown function body.")
             }
         }
+    }
+
+    private fun ZcType.toAsmType() = when(this) {
+        ZcType.Void -> TODO()
+        ZcType.Integer -> "int"
+        ZcType.Byte -> "byte"
+        ZcType.Boolean -> "byte"
+        ZcType.Unknown -> TODO()
+        is ZcType.Struct -> "int"
+        is ZcType.Array -> "int"
+        is ZcType.Function -> "int"
     }
 
     private fun generate(statement: AstStatement) {
@@ -146,11 +158,10 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             is AstBinary -> generate(expression)
             is AstIdentifier -> error("All identifiers must be resolved before. Why $expression don't?")
             is AstFunctionArgument -> {
-                val index = expression.index.op
-//                TODO
-//                commands.add(instructionByType(expression.type,
-//                        int = { ArgLoadInt.instruction(index) },
-//                        byte = { ArgLoadByte.instruction(index) }))
+                val name = expression.name.id
+                commands.add(instructionByType(expression.type,
+                        int = { LocalLoadInt.instruction(name) },
+                        byte = { LocalLoadByte.instruction(name) }))
             }
             is AstVar -> {
                 val index = expression.varIndex.op

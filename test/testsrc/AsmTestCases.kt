@@ -17,7 +17,6 @@ object AsmTestCases : MutableList<AsmSourceTestCase> by mutableListOf() {
     val Sources = mutableListOf<Source>()
 
     init {
-
         binarySources {
             IntAdd ireturns { left, right -> left + right }
             IntMul ireturns { left, right -> left * right }

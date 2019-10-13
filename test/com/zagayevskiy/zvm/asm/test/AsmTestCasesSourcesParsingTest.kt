@@ -11,7 +11,7 @@ import org.junit.runners.Parameterized
 import testsrc.AsmTestCases
 
 @RunWith(Parameterized::class)
-class AsmTestCasesSourcesParsing(private val source: Source) {
+class AsmTestCasesSourcesParsingTest(private val source: Source) {
 
     companion object {
         @JvmStatic

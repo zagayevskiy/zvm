@@ -7,7 +7,7 @@ import testsrc.zc.*
 
 internal data class ZcTestData(val name: String, val text: String, val expectedResult: StackEntry, val runArgs: List<StackEntry>, val heapSize: Int)
 
-private fun test(name: String, text: String, runArgs: List<StackEntry>, expectedResult: StackEntry, heapSize: Int = 0) = ZcTestData(name, text, expectedResult, runArgs, heapSize)
+private fun test(name: String, text: String, runArgs: List<StackEntry>, expectedResult: StackEntry, heapSize: Int = 2048) = ZcTestData(name, text, expectedResult, runArgs, heapSize)
 
 private fun bytes(vararg values: Byte) = values.map { it.toStackEntry() }
 
