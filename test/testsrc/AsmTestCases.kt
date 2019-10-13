@@ -12,6 +12,8 @@ import testsrc.asm.AsmSimple.Sum
 
 
 object AsmTestCases : MutableList<AsmSourceTestCase> by mutableListOf() {
+    val Sources = mutableListOf<Source>()
+
     init {
         source(JustRet0) {
             run(args = No, ret = 0)
@@ -65,9 +67,21 @@ object AsmTestCases : MutableList<AsmSourceTestCase> by mutableListOf() {
             run (arg = 0b01010101_11110000_11100110_11001100, ret = 0b00110011_01100111_00001111_10101010)
             run (arg = 0b00110011_01100111_00001111_10101010, ret = 0b01010101_11110000_11100110_11001100)
         }
+
+        source(AsmReverse.IntBytes.ViaBitOps) {
+            run (arg = 0x0a1b2c3d, ret = 0x3d2c1b0a)
+            run (arg = 0x3d2c1b0a, ret = 0x0a1b2c3d)
+            run (arg = 0b01010101_11110000_00001111_00110011, ret = 0b00110011_00001111_11110000_01010101)
+            run (arg = 0b00110011_00001111_11110000_01010101, ret = 0b01010101_11110000_00001111_00110011)
+        }
+
+        source(AsmReverse.IntBytes.ViaMemory) {
+            run (arg = 0x0a1b2c3d, ret = 0x3d2c1b0a)
+            run (arg = 0x3d2c1b0a, ret = 0x0a1b2c3d)
+            run (arg = 0b01010101_11110000_00001111_00110011, ret = 0b00110011_00001111_11110000_01010101)
+            run (arg = 0b00110011_00001111_11110000_01010101, ret = 0b01010101_11110000_00001111_00110011)
+        }
     }
-
-
 }
 
 
@@ -108,5 +122,6 @@ private class AsmRunBuilder(val source: Source) {
 }
 
 private fun source(source: Source, block: AsmRunBuilder.() -> Unit) {
+    AsmTestCases.Sources.add(source)
     AsmRunBuilder(source).block()
 }

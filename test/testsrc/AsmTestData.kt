@@ -27,11 +27,5 @@ internal val asmTestData = listOf(
         test("1+..+5", asmSumOfArray, entries(6), 15, heapSize = 10),
         test("1+..+1000", asmSumOfArray, entries(1001), 1000 * (1 + 1000) / 2, heapSize = 4000),
 
-        test("rbit 0x0a1b2c3d", asmReverseIntBytesViaBitManipulations, entries(0x0a1b2c3d), 0x3d2c1b0a),
-        test("rbit 0b01010101_11110000_00001111_00110011", asmReverseIntBytesViaBitManipulations, entries(0b01010101_11110000_00001111_00110011), 0b00110011_00001111_11110000_01010101),
-
-        test("rmem 0x0a1b2c3d", asmReverseIntBytesViaMemoryManipulations, entries(0x0a1b2c3d), 0x3d2c1b0a, heapSize = 4),
-        test("rmem 0b01010101_11110000_00001111_00110011", asmReverseIntBytesViaMemoryManipulations, entries(0b01010101_11110000_00001111_00110011), 0b00110011_00001111_11110000_01010101, heapSize = 4),
-
         test("globals", countersInGlobals, emptyList(), ((1 + 1 * 3) * (1 + 2 * 3)))
 )
