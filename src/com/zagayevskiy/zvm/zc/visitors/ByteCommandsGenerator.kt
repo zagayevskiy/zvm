@@ -147,9 +147,10 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             is AstIdentifier -> error("All identifiers must be resolved before. Why $expression don't?")
             is AstFunctionArgument -> {
                 val index = expression.index.op
-                commands.add(instructionByType(expression.type,
-                        int = { ArgLoadInt.instruction(index) },
-                        byte = { ArgLoadByte.instruction(index) }))
+//                TODO
+//                commands.add(instructionByType(expression.type,
+//                        int = { ArgLoadInt.instruction(index) },
+//                        byte = { ArgLoadByte.instruction(index) }))
             }
             is AstVar -> {
                 val index = expression.varIndex.op

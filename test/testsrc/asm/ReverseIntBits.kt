@@ -4,7 +4,7 @@ import com.zagayevskiy.zvm.vm.Source
 
 object AsmReverse {
     //run with one argument(int) and reverse it bits
-    internal val IntBits = Source("Reverse int bits","""
+    internal val IntBits = Source("Reverse int bits", """
         .fun main: x: int;
         pushfp
         consti x
@@ -12,7 +12,8 @@ object AsmReverse {
         call reverse
         ret
 
-        .fun reverse: x: int, locals = 2
+        .fun reverse: x: int;
+        incspi
         consti 0
         lstori 0
 
@@ -38,6 +39,7 @@ object AsmReverse {
         cmpic 32
         jnz loop
 
+        decspi
         ret
     """.trimIndent())
 }

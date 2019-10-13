@@ -19,6 +19,11 @@ object Opcodes {
     const val POP: Byte = 12
     const val DUP: Byte = 13
     const val PUSHFP: Byte = 14
+    const val ADDSP: Byte = 15
+    const val INCSPI: Byte = 16
+    const val DECSPI: Byte = 17
+    const val INCSPB: Byte = 18
+    const val DECSPB: Byte = 19
 
     //region casts opcodes
     const val ITOB: Byte = 21
@@ -29,7 +34,6 @@ object Opcodes {
     //endregion
 
     //region int opcodes
-    const val ALOADI: Byte = 40
     const val LSTORI: Byte = 41
     const val LLOADI: Byte = 42
     const val MSTORI: Byte = 43
@@ -62,7 +66,6 @@ object Opcodes {
     //endregion
 
     //region byte opcodes
-    const val ALOADB: Byte = -40
     const val LSTORB: Byte = -41
     const val LLOADB: Byte = -42
     const val MSTORB: Byte = -43

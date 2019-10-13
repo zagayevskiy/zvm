@@ -27,25 +27,26 @@ object AsmFactorial {
         muli
         ret
     """.trimIndent())
-}
 
-//run with one int argument(n) and get n! (computed by iterative way)
-internal val asmFactorialIterative = """
-    .fun main: args = 1, locals = 2
-    aloadi 0
-    lstori 0
-    consti 1
-    lstori 1
-    ->loop
-    lloadi 0
-    lloadi 1
-    muli
-    lstori 1
-    lloadi 0
-    deci
-    lstori 0
-    lloadi 0
-    jnz loop
-    lloadi 1
-    ret
-""".trimIndent()
+    //run with one int argument(n) and get n! (computed by iterative way)
+    internal val Iterative = Source("n! iterative", """
+        .fun main: n: int;
+        addsp 8
+        lloadi n
+        lstori 0
+        consti 1
+        lstori 4
+        ->loop
+        lloadi 0
+        lloadi 4
+        muli
+        lstori 4
+        lloadi 0
+        deci
+        lstori 0
+        lloadi 0
+        jnz loop
+        lloadi 4
+        ret
+    """.trimIndent())
+}

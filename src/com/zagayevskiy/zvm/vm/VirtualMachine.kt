@@ -3,9 +3,8 @@ package com.zagayevskiy.zvm.vm
 import com.zagayevskiy.zvm.common.Address
 import com.zagayevskiy.zvm.common.Opcodes.ADDB
 import com.zagayevskiy.zvm.common.Opcodes.ADDI
+import com.zagayevskiy.zvm.common.Opcodes.ADDSP
 import com.zagayevskiy.zvm.common.Opcodes.ALLOC
-import com.zagayevskiy.zvm.common.Opcodes.ALOADB
-import com.zagayevskiy.zvm.common.Opcodes.ALOADI
 import com.zagayevskiy.zvm.common.Opcodes.ANDB
 import com.zagayevskiy.zvm.common.Opcodes.ANDI
 import com.zagayevskiy.zvm.common.Opcodes.BTOI
@@ -19,6 +18,8 @@ import com.zagayevskiy.zvm.common.Opcodes.CONSTB
 import com.zagayevskiy.zvm.common.Opcodes.CONSTI
 import com.zagayevskiy.zvm.common.Opcodes.CRASH
 import com.zagayevskiy.zvm.common.Opcodes.DECI
+import com.zagayevskiy.zvm.common.Opcodes.DECSPB
+import com.zagayevskiy.zvm.common.Opcodes.DECSPI
 import com.zagayevskiy.zvm.common.Opcodes.DIVB
 import com.zagayevskiy.zvm.common.Opcodes.DIVI
 import com.zagayevskiy.zvm.common.Opcodes.DUP
@@ -34,6 +35,8 @@ import com.zagayevskiy.zvm.common.Opcodes.GREQI
 import com.zagayevskiy.zvm.common.Opcodes.GSTORB
 import com.zagayevskiy.zvm.common.Opcodes.GSTORI
 import com.zagayevskiy.zvm.common.Opcodes.INCI
+import com.zagayevskiy.zvm.common.Opcodes.INCSPB
+import com.zagayevskiy.zvm.common.Opcodes.INCSPI
 import com.zagayevskiy.zvm.common.Opcodes.ITOB
 import com.zagayevskiy.zvm.common.Opcodes.ITOJ
 import com.zagayevskiy.zvm.common.Opcodes.JCALL
@@ -81,22 +84,22 @@ import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.memory.Memory
 import com.zagayevskiy.zvm.memory.VMOutOfMemory
 import com.zagayevskiy.zvm.util.extensions.*
-import com.zagayevskiy.zvm.vm.RuntimeType.*
+import com.zagayevskiy.zvm.vm.RuntimeType.RuntimeByte
+import com.zagayevskiy.zvm.vm.RuntimeType.RuntimeInt
 import com.zagayevskiy.zvm.vm.StackEntry.*
-import java.lang.IllegalStateException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import java.util.*
 
 data class RuntimeFunction(val address: Address, val argTypes: List<RuntimeType>) {
-    val argsMemorySize = argTypes.fold(0){ totalSize, arg-> totalSize + arg.size }
+    val argsMemorySize = argTypes.fold(0) { totalSize, arg -> totalSize + arg.size }
 }
 
 enum class RuntimeType(val size: Int) {
     RuntimeInt(4), RuntimeByte(4)
 }
 
-private class StackFrame(val framePointer: Address, val previousStackPointer: Address, val returnAddress: Address)
+private data class StackFrame(val framePointer: Address, val previousStackPointer: Address, val returnAddress: Address)
 
 sealed class StackEntry {
 
@@ -139,8 +142,9 @@ private object DisabledJavaInterop : JavaInterop {
     override fun remove(index: Int) = Unit
 }
 
-class VMStackOverflow(message: String): Exception(message)
-class VMStackUnderflow(message: String): Exception(message)
+class VMStackOverflow(message: String) : Exception(message)
+class VMStackUnderflow(message: String) : Exception(message)
+class VMStackCorrupted(message: String) : Exception(message)
 
 class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, private val heap: Memory = BitTableMemory(localsStackSize), private val javaInterop: JavaInterop = DisabledJavaInterop) {
 
@@ -157,8 +161,11 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
     }
     private var stackPointer: Int = localsStackBaseAddress
         set(value) {
-            if (value > localsStackBaseAddress + localsStackSize) throw VMStackOverflow("Trying to increase stack size to ${value - localsStackBaseAddress} while max stack size is $localsStackSize")
-            if (value < localsStackBaseAddress) throw VMStackUnderflow("Trying to set sp under the base address")
+            when {
+                value > localsStackBaseAddress + localsStackSize -> throw VMStackOverflow("Trying to increase stack size to ${value - localsStackBaseAddress} while max stack size is $localsStackSize")
+                value < localsStackBaseAddress -> throw VMStackUnderflow("Trying to set sp under the base address")
+                callStack.peekOrNull()?.previousStackPointer?.let { savedSp -> savedSp > value } ?: false -> throw VMStackCorrupted("Trying to set sp under current saved sp. value=$value, frame=${callStack.peek()}")
+            }
             field = value
         }
 
@@ -197,21 +204,19 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
                 JZ -> jz()
                 JNZ -> jnz()
 
-                CONSTI -> push(decodeNextInt().toStackEntry())
-                CONSTB -> push(nextByte().toStackEntry())
+                CONSTI -> push(decodeNextInt())
+                CONSTB -> push(nextByte())
 
                 GLOADI -> globalLoad<VMInteger>()
                 GSTORI -> globalStore<VMInteger>()
                 GLOADB -> globalLoad<VMByte>()
                 GSTORB -> globalStore<VMByte>()
 
-                ALOADI -> argLoad<VMInteger>()
-                ALOADB -> argLoad<VMByte>()
 
-                LLOADI -> localLoad<VMInteger>()
-                LSTORI -> localStore<VMInteger>()
-                LLOADB -> localLoad<VMByte>()
-                LSTORB -> localStore<VMByte>()
+                LLOADI -> localLoadInt()
+                LSTORI -> localStoreInt()
+                LLOADB -> localLoadByte()
+                LSTORB -> localStoreByte()
 
                 MSTORI -> memoryStoreInt()
                 MLOADI -> memoryLoadInt()
@@ -220,7 +225,12 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
 
                 POP -> pop()
                 DUP -> push(peek())
-                PUSHFP -> push(callStack.peek().framePointer.toStackEntry())
+                PUSHFP -> push(callStack.peek().framePointer)
+                ADDSP -> addStackPointer(decodeNextInt())
+                INCSPI -> addStackPointer(4)
+                DECSPI -> addStackPointer(-4)
+                INCSPB -> addStackPointer(1)
+                DECSPB -> addStackPointer(-1)
 
                 ADDI -> addi()
                 SUBI -> subi()
@@ -282,6 +292,31 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
         }
     }
 
+    private fun addStackPointer(value: Int) {
+        stackPointer += value
+    }
+
+    private fun localLoadInt() {
+        val offset = decodeNextInt()
+        push(heap.readInt(callStack.peek().framePointer + offset))
+    }
+
+    private fun localStoreInt() {
+        val offset = decodeNextInt()
+        val int = pop<VMInteger>().intValue
+        heap.writeInt(address = callStack.peek().framePointer + offset, value = int)
+    }
+
+    private fun localLoadByte() {
+        val offset = decodeNextInt()
+        push(heap[callStack.peek().framePointer + offset])
+    }
+
+    private fun localStoreByte() {
+        val offset = decodeNextInt()
+        val byte = pop<VMByte>().byteValue
+        heap[callStack.peek().framePointer + offset] = byte
+    }
 
     private fun memoryStoreInt() {
         val argument = pop<VMInteger>().intValue
@@ -339,33 +374,6 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
         globals[index] = value
     }
 
-    private inline fun <reified T : StackEntry> argLoad() = callStack.peek().apply {
-//        TODO
-//        val index = decodeNextInt()
-//        checkArgIndex(index)
-//        val arg = args[index]
-//        if (arg !is T)
-//            error("Invalid arg type. Has $arg but ${T::class.java.simpleName} wanted.")
-//        push(arg)
-    }
-
-    private inline fun <reified T : StackEntry> localLoad() = callStack.peek().apply {
-//        TODO
-//        val index = decodeNextInt()
-//        checkLocalIndex(index)
-//        val local = locals[index]
-//        if (local !is T) error("Invalid local type. Has $local but ${T::class.java.simpleName} wanted.")
-//        push(local)
-    }
-
-    private inline fun <reified T : StackEntry> localStore() = callStack.peek().apply {
-//        val index = decodeNextInt()
-//        checkLocalIndex(index)
-//        val value = pop<T> { "Want to store local ${T::class.java.simpleName} but has $it." }
-//     TODO   locals[index] = value
-
-    }
-
     private fun decodeNextInt(): Int = bytecode.copyToInt(startIndex = ip).also { ip += 4 }
 
     private fun nextByte(): Byte = bytecode[ip++]
@@ -379,9 +387,9 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
 
         function.argTypes.forEachIndexed { index, type ->
             offset -= type.size
-            when(type) {
+            when (type) {
                 RuntimeInt -> heap.writeInt(offset, pop<VMInteger> { "int expected as #$index arg of $function but $it found. " }.intValue)
-                RuntimeByte -> heap[offset] = pop<VMByte> {"byte expected as #$index arg of $function but $it found." }.byteValue
+                RuntimeByte -> heap[offset] = pop<VMByte> { "byte expected as #$index arg of $function but $it found." }.byteValue
             }
 
         }
@@ -526,6 +534,8 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
     }
 
     private fun push(entry: StackEntry) = operandsStack.push(entry)
+    private fun push(value: Int) = push(value.toStackEntry())
+    private fun push(value: Byte) = push(value.toStackEntry())
 
     private fun peek() = operandsStack.peek()
     //endregion

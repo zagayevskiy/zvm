@@ -1,6 +1,8 @@
 package com.zagayevskiy.zvm.asm
 
 import com.zagayevskiy.zvm.common.Opcodes
+import com.zagayevskiy.zvm.util.BitTable
+import java.lang.IllegalStateException
 
 abstract class OpcodeImpl(override val name: String, override val operandCount: Int = 0) : Opcode {
     override fun toString() = "${javaClass.simpleName} (operands: $operandCount)"
@@ -8,7 +10,7 @@ abstract class OpcodeImpl(override val name: String, override val operandCount: 
 
 object OpcodesMapping {
 
-    val mapping = mapOf<Opcode, Byte>(
+    val mapping = createMapping(
             Jmp to Opcodes.JMP,
             JumpZero to Opcodes.JZ,
             JumpNotZero to Opcodes.JNZ,
@@ -24,10 +26,14 @@ object OpcodesMapping {
             Pop to Opcodes.POP,
             Dup to Opcodes.DUP,
             PushFramePointer to Opcodes.PUSHFP,
+            AddStackPointer to Opcodes.ADDSP,
+            IncStackPointerInt to Opcodes.INCSPI,
+            DecStackPointerInt to Opcodes.DECSPI,
+            IncStackPointerByte to Opcodes.INCSPB,
+            DecStackPointerByte to Opcodes.DECSPB,
 
-            GlobalLoadInt to Opcodes.GLOADI,
             GlobalStoreInt to Opcodes.GSTORI,
-            ArgLoadInt to Opcodes.ALOADI,
+            GlobalLoadInt to Opcodes.GLOADI,
             LocalStoreInt to Opcodes.LSTORI,
             LocalLoadInt to Opcodes.LLOADI,
             MemoryStoreInt to Opcodes.MSTORI,
@@ -59,7 +65,6 @@ object OpcodesMapping {
 
             GlobalLoadByte to Opcodes.GLOADB,
             GlobalStoreByte to Opcodes.GSTORB,
-            ArgLoadByte to Opcodes.ALOADB,
             LocalStoreByte to Opcodes.LSTORB,
             LocalLoadByte to Opcodes.LLOADB,
             MemoryStoreByte to Opcodes.MSTORB,
@@ -98,6 +103,20 @@ object OpcodesMapping {
     )
 
     val opcodes = mapping.keys
+
+    private fun createMapping(vararg implToOpcode: Pair<Opcode, Byte>) : Map<Opcode, Byte> {
+        val mapping = implToOpcode.toMap()
+        implToOpcode.fold( BitTable(256)) { acc, (impl, opcode)->
+            val index = opcode.toInt() and 0xff
+            if (acc[index]) throw IllegalArgumentException("Opcode $opcode used twice. Last use with $impl" )
+            acc.apply { set(index, true) }
+        }
+        mapping.keys.zip(implToOpcode) { keyImpl, (impl, _) ->
+            if (keyImpl != impl) throw IllegalArgumentException("$impl used twice")
+        }
+
+        return mapping
+    }
 }
 
 
@@ -107,7 +126,7 @@ object JumpNotZero : OpcodeImpl(name = "jnz", operandCount = 1)
 
 object Ret : OpcodeImpl(name = "ret")
 object Call : OpcodeImpl(name = "call", operandCount = 1)
-object Crash: OpcodeImpl(name = "crash")
+object Crash : OpcodeImpl(name = "crash")
 
 object JavaCall : OpcodeImpl(name = "jcall", operandCount = 1)
 object JavaNew : OpcodeImpl(name = "jnew", operandCount = 1)
@@ -116,10 +135,14 @@ object JavaDelete : OpcodeImpl(name = "jdel")
 object Pop : OpcodeImpl(name = "pop")
 object Dup : OpcodeImpl(name = "dup")
 object PushFramePointer : OpcodeImpl(name = "pushfp")
+object AddStackPointer : OpcodeImpl(name = "addsp", operandCount = 1)
+object IncStackPointerInt : OpcodeImpl(name = "incspi")
+object DecStackPointerInt : OpcodeImpl(name = "decspi")
+object IncStackPointerByte : OpcodeImpl(name = "incspb")
+object DecStackPointerByte : OpcodeImpl(name = "decspb")
 
-object GlobalLoadInt: OpcodeImpl(name = "gloadi", operandCount = 1)
-object GlobalStoreInt: OpcodeImpl(name = "gstori", operandCount = 1)
-object ArgLoadInt : OpcodeImpl(name = "aloadi", operandCount = 1)
+object GlobalLoadInt : OpcodeImpl(name = "gloadi", operandCount = 1)
+object GlobalStoreInt : OpcodeImpl(name = "gstori", operandCount = 1)
 object LocalStoreInt : OpcodeImpl(name = "lstori", operandCount = 1)
 object LocalLoadInt : OpcodeImpl(name = "lloadi", operandCount = 1)
 object MemoryStoreInt : OpcodeImpl(name = "mstori")
@@ -149,9 +172,8 @@ object IntEq : OpcodeImpl(name = "eqi")
 object IntNotEq : OpcodeImpl(name = "neqi")
 object RandomInt : OpcodeImpl(name = "rndi")
 
-object GlobalLoadByte: OpcodeImpl(name = "gloadb", operandCount = 1)
-object GlobalStoreByte: OpcodeImpl(name = "gstorb", operandCount = 1)
-object ArgLoadByte : OpcodeImpl(name = "aloadb", operandCount = 1)
+object GlobalLoadByte : OpcodeImpl(name = "gloadb", operandCount = 1)
+object GlobalStoreByte : OpcodeImpl(name = "gstorb", operandCount = 1)
 object LocalStoreByte : OpcodeImpl(name = "lstorb", operandCount = 1)
 object LocalLoadByte : OpcodeImpl(name = "lloadb", operandCount = 1)
 object MemoryStoreByte : OpcodeImpl(name = "mstorb")

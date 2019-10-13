@@ -1,6 +1,6 @@
 package testsrc.zc
 
-import testsrc.asm.asmFibonacciIterativeFunctionBody
+import testsrc.asm.AsmFibonacci
 import testsrc.zc.includes.includeStack
 import testsrc.zc.includes.includeStdMem
 
@@ -27,11 +27,8 @@ internal val zcFibonacciIterative = """
 
 internal val zcFibonacciIterativeByAsmInsert = """
     fn fibonacciAsm(n: int): int {
-        var x: int = 0;
-        var y: int = 0;
-        var z: int = 0;
         asm {"
-            $asmFibonacciIterativeFunctionBody
+            ${AsmFibonacci.iterativeFunctionBody()}
         "}
     }
 

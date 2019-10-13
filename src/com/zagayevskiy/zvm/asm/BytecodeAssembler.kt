@@ -1,6 +1,7 @@
 package com.zagayevskiy.zvm.asm
 
 import com.zagayevskiy.zvm.asm.Command.*
+import com.zagayevskiy.zvm.asm.FunctionDefinition.Type.*
 import com.zagayevskiy.zvm.common.Address
 import com.zagayevskiy.zvm.util.extensions.copyTo
 import com.zagayevskiy.zvm.util.extensions.copyToByteArray
@@ -62,6 +63,8 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
                     Call -> write(functionIndex(operand.name))
                     Jmp, JumpZero, JumpNotZero -> write(obtainLabel(operand.name))
                     IntConst -> write(obtainFuncArgumentOffset(operand.name) ?: TODO("May be global?"))
+                    LocalLoadInt, LocalStoreInt -> write(obtainFuncArgumentOffset(operand.name, DefInt) ?: error("Arg ${operand.name} not defined."))
+                    LocalLoadByte, LocalStoreByte -> write(obtainFuncArgumentOffset(operand.name, DefByte) ?: error("Arg ${operand.name} not defined."))
                     else -> error("opcode ${opcode.name} can't operate with $operand")
                 }
             }
@@ -86,9 +89,11 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
         return 0
     }
 
-    private fun obtainFuncArgumentOffset(argName: String): Int? {
+    private fun obtainFuncArgumentOffset(argName: String, checkType: FunctionDefinition.Type? = null): Int? {
         val currentFunc = lastDefinedFunction ?: throw IllegalStateException("No function defined but offset for $argName arg wanted")
-        return currentFunc.args.firstOrNull { it.name == argName }?.offset
+        return currentFunc.args.firstOrNull { it.name == argName }?.apply {
+            if(checkType != null && checkType != type) error("Want $checkType for arg $argName but $type found")
+        }?.offset
     }
 
     private fun defineLabel(label: Label) {
@@ -179,7 +184,7 @@ private fun List<Func.Arg>.toDefinitionArgs(): List<FunctionDefinition.Arg> {
 }
 
 private fun String.toDefinitionType() = when (this) {
-    "int" -> FunctionDefinition.Type.DefInt
-    "byte" -> FunctionDefinition.Type.DefByte
+    "int" -> DefInt
+    "byte" -> DefByte
     else -> throw IllegalArgumentException("Unknown type name $this")
 }
