@@ -6,9 +6,11 @@ internal fun includeContext() = """
         var bytecodeSize: int;
         var operandsStack: Stack;
         var callStack: Stack;
-        var functions: [FunctionInfo];
+        var functions: [RuntimeFunction];
         var globals: [void];
         var ip: int;
+        var localsStackBaseAddress: [void];
+        var sp: [void];
     }
 
      fn createContext(info: ProgramInfo): Context {
@@ -19,6 +21,8 @@ internal fun includeContext() = """
         result.callStack = createStack(1024);
         result.functions = info.functionsTable;
         result.ip = 0;
+        result.localsStackBaseAddress = alloc(1024);
+        result.sp = result.localsStackBaseAddress;
 
         return result;
     }

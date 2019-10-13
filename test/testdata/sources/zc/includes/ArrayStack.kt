@@ -42,4 +42,18 @@ internal fun includeStack() = """
         return cast<byte>(popInt(stack));
     }
 
+    fn drop(stack: Stack, count: int): int {
+        stack.top = stack.top - count;
+        return 0;
+    }
+
+    fn pushAll(stack: Stack, values: [void], size: int): int {
+        val top = stack.top;
+        if (top >= stack.size) crash(104);
+        val newTop = top + size;
+        copy(values, stack.stack + top, size);
+        stack.top = newTop;
+        return 0;
+    }
+
 """

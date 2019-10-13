@@ -25,4 +25,13 @@ internal fun includeStdMem() = """
             ret
         "}
     }
+
+    fn copy(src: [void], dst: [void], count: int): int {
+        val srcBytes: [byte] = src;
+        val dstBytes: [byte] = dst;
+        for (var i = 0; i < count; i = i + 1) {
+            dstBytes[i] = srcBytes[i];
+        }
+        return 0;
+    }
 """
