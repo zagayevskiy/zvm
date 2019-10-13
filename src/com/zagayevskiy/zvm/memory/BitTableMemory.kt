@@ -36,7 +36,6 @@ class BitTableMemory(desirableSize: Int, private val blockSize: Int = 64) : Memo
     }
 
     override fun free(address: Address) {
-        println("free $address")
         val actualAddress = address - allocationInfoSize
         if (actualAddress % blockSize != 0) throw RuntimeException("Memory corrupted. Tries free address $address which doesn't allocated.")
         val blockCount = readServiceInfo(actualAddress)

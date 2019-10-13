@@ -16,6 +16,8 @@ interface AstVisitor<R> {
 
     fun visit(ast: AstBlock): R
 
+    fun visit(ast: AstStatementList): R
+
     fun visit(ast: AstAsmBlock): R
 
     fun visit(ast: AstVarDecl): R
@@ -112,6 +114,7 @@ fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
     is AstDefinedFunction -> visitor.visit(ast)
     is AstAsmBlock -> visitor.visit(ast)
     is AstBlock -> visitor.visit(ast)
+    is AstStatementList -> visitor.visit(ast)
     is AstVarDecl -> visitor.visit(ast)
     is AstValDecl -> visitor.visit(ast)
     is AstLocal -> when (ast) {

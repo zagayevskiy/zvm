@@ -25,6 +25,8 @@ private class AstEqualityVisitor(private val other: Ast) : AstVisitor<Boolean> {
 
     override fun visit(ast: AstBlock) = ast.check()
 
+    override fun visit(ast: AstStatementList) = ast.check()
+
     override fun visit(ast: AstAsmBlock) = ast.check { ast.body == it.body }
 
     override fun visit(ast: AstVarDecl) = ast.check { ast.varName == it.varName && ast.unresolvedType == it.unresolvedType }

@@ -22,6 +22,8 @@ private object AstToStringVisitor : AstVisitor<String> {
 
     override fun visit(ast: AstBlock) = "block"
 
+    override fun visit(ast: AstStatementList) = "statement list"
+
     override fun visit(ast: AstWhen) = "when"
 
     override fun visit(ast: AstWhenBranch) = "when-branch"

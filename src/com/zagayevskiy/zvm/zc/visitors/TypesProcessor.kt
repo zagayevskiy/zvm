@@ -25,36 +25,46 @@ class TypesProcessor(private val program: AstProgram) {
         )
     }
 
-    private fun onTopDown(ast: Ast): Ast = when (ast) {
-        is Scope -> ast.also { scopes.push(ast) }
-        is AstValDecl -> {
-            var type = ast.unresolvedType?.let { resolveType(it) }
-            val initializer = resolveSymbolsAndTypes(ast.initializer) as AstExpr
-            if (type == null) {
-                type = initializer.type
-            }
-            val astVal = currentScope.declareVal(ast.valName, type) ?: error("Name ${ast.valName} already declared.")
-            AstValInitialization(astVal, initializer.tryAutoPromoteTo(type) ?: error("Can't auto promote $initializer to $type for val-initialization."))
-
+    private fun onTopDown(ast: Ast): Ast {
+        if (ast is AstBlock) {
+            return AstBlock(ast.statements, currentScope).also { scopes.push(it) }
         }
-        is AstVarDecl -> resolveVarDecl(ast)
-        is AstFunctionCall -> resolveFunctionCall(ast)
-        is AstIdentifier -> currentScope.lookup(ast.name) ?: error("Unknown identifier '${ast.name}'")
-        is AstSizeOf -> AstConst.Integer(resolveType(ast.unresolvedType).let {
-            when (it) {
-                is ZcType.Struct -> it.allocSize
-                else -> it.sizeOf
+
+        if (ast is Scope) scopes.push(ast)
+
+        return when (ast) {
+            is AstValDecl -> {
+                var type = ast.unresolvedType?.let { resolveType(it) }
+                val initializer = resolveSymbolsAndTypes(ast.initializer) as AstExpr
+                if (type == null) {
+                    type = initializer.type
+                }
+                val astVal = currentScope.declareVal(ast.valName, type) ?: error("Name ${ast.valName} already declared.")
+                AstValInitialization(astVal, initializer.tryAutoPromoteTo(type) ?: error("Can't auto promote $initializer to $type for val-initialization."))
+
             }
-        })
-        else -> ast
+            is AstVarDecl -> resolveVarDecl(ast)
+            is AstFunctionCall -> resolveFunctionCall(ast)
+            is AstIdentifier -> currentScope.lookup(ast.name) ?: error("Unknown identifier '${ast.name}'")
+            is AstSizeOf -> AstConst.Integer(resolveType(ast.unresolvedType).let {
+                when (it) {
+                    is ZcType.Struct -> it.allocSize
+                    else -> it.sizeOf
+                }
+            })
+            else -> ast
+        }
     }
 
     private fun onBottomUp(ast: Ast): Ast {
         // TODO may be do it typesafe?
         if (ast.isLeaf() && ast.type == ZcType.Unknown) throw IllegalStateException("$ast type must not be unknown at that point.")
 
+        if (ast is Scope) scopes.pop()
         return when (ast) {
-            is Scope -> ast.also { scopes.pop() }
+            is AstBlock -> ast.apply {
+                if (enclosingScope == null) error("Enclosing scope of block must not be null at this point")
+            }
             is AstSum -> ast.apply {
                 val arithmeticPromotedType = arithmeticTypesPromotion(left.type, right.type)
                 if (arithmeticPromotedType != null) {

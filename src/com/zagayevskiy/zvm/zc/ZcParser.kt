@@ -234,7 +234,7 @@ class ZcParser(private val lexer: Lexer) {
     private fun loopStatement() = forLoop() ?: whileLoop()
 
     // for_loop ::= "for" "(" [for_loop_initializer] ";" [for_loop_condition] ";" [for_loop_step] ")" block
-    private fun forLoop(): AstForLoop? {
+    private fun forLoop(): AstStatement? {
         maybe<ZcToken.For>() ?: return NotMatched
         expect<ZcToken.ParenthesisOpen>()
         val initializer = forLoopInitializer()
@@ -244,31 +244,32 @@ class ZcParser(private val lexer: Lexer) {
         val step = forLoopStep()
         expect<ZcToken.ParenthesisClose>()
         val body = statement() ?: error("For-loop body expected.")
-        return AstForLoop(initializer, condition, step, body)
+        //Block needed to create enclosing scope
+        return AstBlock(listOf(AstForLoop(initializer, condition, step, body)))
     }
 
     // for_loop_initializer ::= variable_declaration {"," variable_declaration}
-    private fun forLoopInitializer(): AstStatement? {
+    private fun forLoopInitializer(): AstStatementList? {
         val first = variableDecl() ?: return NotMatched
         val list = mutableListOf(first)
         while (maybe<ZcToken.Comma>() != null) {
             list.add(variableDecl() ?: error("Initializer expected."))
         }
 
-        return AstBlock(list)
+        return AstStatementList(list)
     }
 
     private fun forLoopCondition(): AstExpr? = expression()
 
     // for_loop_step ::= expression {"," expression}
-    private fun forLoopStep(): AstStatement? {
+    private fun forLoopStep(): AstStatementList? {
         val first = expression() ?: return NotMatched
         val list = mutableListOf(first)
         while (maybe<ZcToken.Comma>() != null) {
             list.add(expression() ?: error("Expression expected."))
         }
 
-        return AstBlock(list.map { AstExpressionStatement(it) })
+        return AstStatementList(list.map { AstExpressionStatement(it) })
     }
 
     // while_loop ::= "while" "(" expression ")" block

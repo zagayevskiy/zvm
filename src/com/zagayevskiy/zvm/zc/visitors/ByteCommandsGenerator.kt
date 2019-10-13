@@ -2,6 +2,7 @@ package com.zagayevskiy.zvm.zc.visitors
 
 import com.zagayevskiy.zvm.asm.*
 import com.zagayevskiy.zvm.zc.ast.*
+import com.zagayevskiy.zvm.zc.scopes.LocalScope
 import com.zagayevskiy.zvm.zc.types.ZcType
 
 class ByteCommandsGenerator(private val program: AstProgram, private val asmParserFactory: (String) -> AsmParser) {
@@ -31,15 +32,17 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                         Command.Func.Arg(arg.name, arg.type.toAsmType())
                     }
             ))
-            return@apply when (val body = body) {
-                is AstBlock -> generate(body)
-                is AstExpr -> TODO("Expression body not supported yet.")
-                else -> error("Unknown function body.")
+            generateLocalScope(function) {
+                when (val body = body) {
+                    is AstBlock -> generate(body)
+                    is AstExpr -> TODO("Expression body not supported yet.")
+                    else -> error("Unknown function body.")
+                }
             }
         }
     }
 
-    private fun ZcType.toAsmType() = when(this) {
+    private fun ZcType.toAsmType() = when (this) {
         ZcType.Void -> TODO()
         ZcType.Integer -> "int"
         ZcType.Byte -> "byte"
@@ -52,7 +55,10 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
 
     private fun generate(statement: AstStatement) {
         return when (statement) {
-            is AstBlock -> statement.statements.forEach { child -> generate(child) }
+            is AstBlock -> generateLocalScope(statement) {
+                statements.forEach { child -> generate(child) }
+            }
+            is AstStatementList -> statement.statements.forEach { child -> generate(child) }
             is AstAsmBlock -> generate(statement)
             is AstVarDecl, is AstValDecl -> error("Variables ($statement) declarations must be resolved before.")
             is AstValInitialization -> Unit.also {
@@ -74,6 +80,27 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                 commands.add(Pop.instruction())
             }
             is AstWhen -> generate(statement)
+        }
+    }
+
+    private fun <S : LocalScope> generateLocalScope(scope: S, generator: S.() -> Unit) {
+        when (val offset = scope.localsOffset) {
+            0 -> generator(scope) //no locals in this scope
+            1 -> {
+                commands.add(IncStackPointerByte.instruction())
+                generator(scope)
+                commands.add(DecStackPointerByte.instruction())
+            }
+            4 -> {
+                commands.add(IncStackPointerInt.instruction())
+                generator(scope)
+                commands.add(DecStackPointerInt.instruction())
+            }
+            else -> {
+                commands.add(AddStackPointer.instruction(offset.op))
+                generator(scope)
+                commands.add(AddStackPointer.instruction((-offset).op))
+            }
         }
     }
 

@@ -1,8 +1,6 @@
 package com.zagayevskiy.zvm.zc.ast
 
-import com.zagayevskiy.zvm.zc.scopes.FunctionScope
-import com.zagayevskiy.zvm.zc.scopes.FunctionScopeDelegate
-import com.zagayevskiy.zvm.zc.scopes.Scope
+import com.zagayevskiy.zvm.zc.scopes.*
 import com.zagayevskiy.zvm.zc.types.UnresolvedType
 import com.zagayevskiy.zvm.zc.types.ZcType
 import kotlin.reflect.KProperty
@@ -88,7 +86,15 @@ sealed class AstStatement : Ast(type = ZcType.Void)
 
 data class AstAsmBlock(val body: String) : AstStatement()
 
-class AstBlock(statements: List<AstStatement> = emptyList()) : AstStatement() {
+class AstStatementList(statements: List<AstStatement> = emptyList()): AstStatement() {
+    val statements by childList(statements)
+
+    companion object {
+        val Empty = AstStatementList()
+    }
+}
+
+class AstBlock(statements: List<AstStatement> = emptyList(), enclosingScope: Scope? = null) : AstStatement(), BlockScope by BlockScopeDelegate(enclosingScope) {
     val statements by childList(statements)
 
     companion object {

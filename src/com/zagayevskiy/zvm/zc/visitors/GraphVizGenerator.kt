@@ -46,6 +46,8 @@ class GraphVizGenerator(private val ast: Ast) {
 
         override fun visit(ast: AstBlock) = "{...}" to ++id
 
+        override fun visit(ast: AstStatementList) = "statement list" to ++id
+
         override fun visit(ast: AstAsmBlock) = "asm { ${ast.body} }" to ++id
 
         override fun visit(ast: AstVarDecl) = "decl var ${ast.varName}: ${ast.unresolvedType}" to ++id
