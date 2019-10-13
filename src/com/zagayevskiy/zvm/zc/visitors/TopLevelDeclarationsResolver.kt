@@ -2,6 +2,7 @@ package com.zagayevskiy.zvm.zc.visitors
 
 import com.zagayevskiy.zvm.zc.types.ZcType
 import com.zagayevskiy.zvm.zc.ast.*
+import com.zagayevskiy.zvm.zc.scopes.GlobalScope
 import com.zagayevskiy.zvm.zc.types.UnresolvedType
 import com.zagayevskiy.zvm.zc.types.resolveType
 

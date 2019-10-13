@@ -1,5 +1,8 @@
 package com.zagayevskiy.zvm.zc.ast
 
+import com.zagayevskiy.zvm.zc.scopes.FunctionScope
+import com.zagayevskiy.zvm.zc.scopes.FunctionScopeDelegate
+import com.zagayevskiy.zvm.zc.scopes.Scope
 import com.zagayevskiy.zvm.zc.types.UnresolvedType
 import com.zagayevskiy.zvm.zc.types.ZcType
 import kotlin.reflect.KProperty
@@ -156,8 +159,12 @@ class AstValInitialization(valToInit: AstVal, initializer: AstExpr) : AstStateme
     var initializer by child((initializer))
 }
 
-class AstVar(val varName: String, var varIndex: Int, type: ZcType) : AstExpr(type)
-class AstVal(val valName: String, val valIndex: Int, type: ZcType) : AstExpr(type)
+sealed class AstLocal(type: ZcType): AstExpr(type) {
+    abstract val name: String
+    abstract val offset: Int
+}
+class AstVar(override val name: String, override val offset: Int, type: ZcType) : AstLocal(type)
+class AstVal(override val name: String, override val offset: Int, type: ZcType) : AstLocal(type)
 
 class AstArrayIndexing(array: AstExpr, index: AstExpr) : AstExpr() {
     var array by child(array)

@@ -24,9 +24,9 @@ class GraphVizGenerator(private val ast: Ast) {
 
         override fun visit(ast: AstIdentifier) = "id: ${ast.name}" to ++id
 
-        override fun visit(ast: AstVal) = "val ${ast.valName}: ${ast.type}" to ++id
+        override fun visit(ast: AstVal) = "val ${ast.name}: ${ast.type}" to ++id
 
-        override fun visit(ast: AstVar) = "var:${ast.varName}: ${ast.type}" to ++id
+        override fun visit(ast: AstVar) = "var:${ast.name}: ${ast.type}" to ++id
 
         override fun visit(ast: AstProgram) = "program" to ++id
 

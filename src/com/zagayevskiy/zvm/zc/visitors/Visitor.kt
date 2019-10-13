@@ -1,6 +1,7 @@
 package com.zagayevskiy.zvm.zc.visitors
 
 import com.zagayevskiy.zvm.zc.ast.*
+import java.lang.IllegalStateException
 import java.lang.RuntimeException
 
 interface AstVisitor<R> {
@@ -113,6 +114,10 @@ fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
     is AstBlock -> visitor.visit(ast)
     is AstVarDecl -> visitor.visit(ast)
     is AstValDecl -> visitor.visit(ast)
+    is AstLocal -> when (ast) {
+        is AstVar -> visitor.visit(ast)
+        is AstVal -> visitor.visit(ast)
+    }
     is AstForLoop -> visitor.visit(ast)
     is AstWhileLoop -> visitor.visit(ast)
     is AstIfElse -> visitor.visit(ast)
@@ -138,7 +143,6 @@ fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
     is AstMul -> visitor.visit(ast)
     is AstDiv -> visitor.visit(ast)
     is AstMod -> visitor.visit(ast)
-    is AstVar -> visitor.visit(ast)
     is AstArrayIndexing -> visitor.visit(ast)
     is AstFunctionCall -> visitor.visit(ast)
     is AstConst.Integer -> visitor.visit(ast)
@@ -152,7 +156,6 @@ fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
     is AstFunctionArgument -> visitor.visit(ast)
     is AstFunctionReference -> visitor.visit(ast)
     is AstIdentifier -> visitor.visit(ast)
-    is AstVal -> visitor.visit(ast)
     is AstCastExpr -> visitor.visit(ast)
     is AstValInitialization -> visitor.visit(ast)
     is AstDefinedStruct -> visitor.visit(ast)

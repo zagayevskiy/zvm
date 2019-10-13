@@ -1,6 +1,6 @@
 package com.zagayevskiy.zvm.zc.types
 
-import com.zagayevskiy.zvm.zc.ast.Scope
+import com.zagayevskiy.zvm.zc.scopes.Scope
 
 sealed class UnresolvedType {
     data class Simple(val name: String) : UnresolvedType() {

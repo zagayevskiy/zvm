@@ -57,10 +57,10 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             is AstVarDecl, is AstValDecl -> error("Variables ($statement) declarations must be resolved before.")
             is AstValInitialization -> Unit.also {
                 generate(statement.initializer)
-                val index = statement.valToInit.valIndex.op
+                val offset = statement.valToInit.offset.op
                 commands.add(instructionByType(statement.valToInit.type,
-                        int = { LocalStoreInt.instruction(index) },
-                        byte = { LocalStoreByte.instruction(index) }))
+                        int = { LocalStoreInt.instruction(offset) },
+                        byte = { LocalStoreByte.instruction(offset) }))
             }
             is AstForLoop -> generate(statement)
             is AstWhileLoop -> generate(statement)
@@ -163,17 +163,11 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                         int = { LocalLoadInt.instruction(name) },
                         byte = { LocalLoadByte.instruction(name) }))
             }
-            is AstVar -> {
-                val index = expression.varIndex.op
+            is AstLocal -> {
+                val offset = expression.offset.op
                 commands.add(instructionByType(expression.type,
-                        int = { LocalLoadInt.instruction(index) },
-                        byte = { LocalLoadByte.instruction(index) }))
-            }
-            is AstVal -> {
-                val index = expression.valIndex.op
-                commands.add(instructionByType(expression.type,
-                        int = { LocalLoadInt.instruction(index) },
-                        byte = { LocalLoadByte.instruction(index) }))
+                        int = { LocalLoadInt.instruction(offset) },
+                        byte = { LocalLoadByte.instruction(offset) }))
             }
             is AstArrayIndexing -> {
                 generate(expression.array)
@@ -246,11 +240,11 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             is AstVar -> {
                 generate(assignment.assignation)
                 commands.add(Dup.instruction())
-                val index = left.varIndex.op
+                val offset = left.offset.op
 
                 commands.add(instructionByType(left.type,
-                        int = { LocalStoreInt.instruction(index) },
-                        byte = { LocalStoreByte.instruction(index) }))
+                        int = { LocalStoreInt.instruction(offset) },
+                        byte = { LocalStoreByte.instruction(offset) }))
             }
             is AstArrayIndexing -> {
                 generate(left.array)

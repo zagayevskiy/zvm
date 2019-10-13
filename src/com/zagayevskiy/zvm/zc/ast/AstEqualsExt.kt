@@ -79,7 +79,7 @@ private class AstEqualityVisitor(private val other: Ast) : AstVisitor<Boolean> {
 
     override fun visit(ast: AstMod) = ast.check()
 
-    override fun visit(ast: AstVar) = ast.check { ast.varName == it.varName }
+    override fun visit(ast: AstVar) = ast.check { ast.name == it.name }
 
     override fun visit(ast: AstArrayIndexing) = ast.check()
 
@@ -107,7 +107,7 @@ private class AstEqualityVisitor(private val other: Ast) : AstVisitor<Boolean> {
 
     override fun visit(ast: AstIdentifier) = ast.check { ast.name == it.name }
 
-    override fun visit(ast: AstVal) = ast.check { ast.valName == it.valName }
+    override fun visit(ast: AstVal) = ast.check { ast.name == it.name }
 
     override fun visit(ast: AstCastExpr) = ast.check()
 

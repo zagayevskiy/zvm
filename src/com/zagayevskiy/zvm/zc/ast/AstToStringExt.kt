@@ -80,7 +80,7 @@ private object AstToStringVisitor : AstVisitor<String> {
 
     override fun visit(ast: AstMod) = "%"
 
-    override fun visit(ast: AstVar) = "var(${ast.varIndex}) ${ast.varName}"
+    override fun visit(ast: AstVar) = "var(${ast.name}) ${ast.name}"
 
     override fun visit(ast: AstArrayIndexing) = "[]"
 
@@ -108,7 +108,7 @@ private object AstToStringVisitor : AstVisitor<String> {
 
     override fun visit(ast: AstIdentifier) = "id ${ast.name}"
 
-    override fun visit(ast: AstVal) = "val(${ast.valIndex}) ${ast.valName}"
+    override fun visit(ast: AstVal) = "val(${ast.name}) ${ast.name}"
 
     override fun visit(ast: AstCastExpr) = "cast"
 
