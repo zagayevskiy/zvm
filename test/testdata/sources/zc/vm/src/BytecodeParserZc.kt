@@ -1,4 +1,4 @@
-package testdata.sources.zc.vm
+package testdata.sources.zc.vm.src
 
 import testdata.sources.zc.includes.includeCrash
 import testdata.sources.zc.includes.includeStdMem

@@ -1,4 +1,4 @@
-package testdata.sources.zc.vm
+package testdata.sources.zc.vm.src
 
 internal fun includeContext() = """
     struct Context {

@@ -16,30 +16,40 @@ internal fun includeStack() = """
     }
 
     fn pushInt(stack: Stack, value: int): int {
-        if (stack.top >= stack.size) crash(101);
-        cast<[int]>(stack.stack)[stack.top] = value;
-        stack.top = stack.top + 1;
+        val top = stack.top;
+        val newTop = top + sizeof<int>;
+        if (newTop >= stack.size) crash(101);
+        cast<[int]>(stack.stack + top)[0] = value;
+        stack.top = newTop;
         return 0;
     }
 
     fn popInt(stack: Stack): int {
-        if (stack.top == 0) crash(102);
-        val newTop = stack.top - 1;
+        val newTop = stack.top - sizeof<int>;
+        if (newTop < 0) crash(102);
         stack.top = newTop;
-        return cast<[int]>(stack.stack)[newTop];
+        return cast<[int]>(stack.stack + newTop)[0];
     }
 
     fn peekInt(stack: Stack): int {
         if (stack.top == 0) crash(103);
-        return cast<[int]>(stack.stack)[stack.top - 1];
+        return cast<[int]>(stack.stack + stack.top - sizeof<int>)[0];
     }
 
     fn pushByte(stack: Stack, value: byte): int {
-        return pushInt(stack, cast<int>(value));
+        val top = stack.top;
+        val newTop = top + sizeof<byte>;
+        if (newTop >= stack.size) crash(104);
+        cast<[byte]>(stack.stack + top)[0] = value;
+        stack.top = newTop;
+        return 0;
     }
 
     fn popByte(stack: Stack): byte {
-        return cast<byte>(popInt(stack));
+        val newTop = stack.top - sizeof<byte>;
+        if (newTop < 0) crash(105);
+        stack.top = newTop;
+        return cast<[byte]>(stack.stack)[newTop];
     }
 
     fn drop(stack: Stack, count: int): int {

@@ -1,9 +1,9 @@
 package com.zagayevskiy.zvm.zc.vmoverzc
 
-import com.zagayevskiy.zvm.assertEquals
 import com.zagayevskiy.zvm.entries
 import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.memory.Memory
+import com.zagayevskiy.zvm.util.extensions.copyToByteArray
 import com.zagayevskiy.zvm.vm.*
 import com.zagayevskiy.zvm.zc.ZcCompiler
 import org.junit.Before
@@ -13,8 +13,7 @@ import org.junit.runners.Parameterized
 import testdata.cases.AsmTestCases
 import testdata.cases.VmTestCase
 import testdata.cases.ZcTestCases
-import testdata.sources.zc.bytecodeLoading
-import testdata.sources.zc.vm.vmOverZc
+import testdata.sources.zc.vm.src.vmOverZc
 import kotlin.test.assertEquals
 
 @RunWith(Parameterized::class)
@@ -25,35 +24,63 @@ internal class VmOnZcRunTest(private val testCase: VmTestCase) {
         @Parameterized.Parameters(name = "{index}: {0}")
         fun data() = AsmTestCases + ZcTestCases
 
-        private const val HEAP_SIZE = 65536
+        private const val HEAP_SIZE = 1024*65536
     }
 
+    private lateinit var compiler: ZcCompiler
     private lateinit var heap: Memory
-    private lateinit var vm: VirtualMachine
-    private lateinit var testCaseLoadedInfo: LoadedInfo
-    private var bytecodeAddress: Int = 0
+    private var bytecodeAddress = 0
+    private var testcaseMainArgsAddress = 0
+    private var testcastMainArgsByteSize = 0
 
     @Before
     fun setup() {
         heap = BitTableMemory(HEAP_SIZE).apply {
             bytecodeAddress = allocate(testCase.bytecode.size)
             copyIn(testCase.bytecode, bytecodeAddress)
+
+            val args = testCase.runArgs.toByteArray()
+            testcastMainArgsByteSize = args.size
+            testcaseMainArgsAddress = allocate(testcastMainArgsByteSize)
+            copyIn(args, testcaseMainArgsAddress)
         }
 
-        val compiler = ZcCompiler()
-        val testCode = compiler.compile(vmOverZc)
-        val loader = BytecodeLoader(testCode)
-        val info = loader.load() as LoadingResult.Success
-
-        vm = VirtualMachine(info.info, heap = heap)
-
-        testCaseLoadedInfo = (BytecodeLoader(testCase.bytecode).load() as LoadingResult.Success)?.info
-
+        compiler = ZcCompiler()
     }
 
-    @Test
-    fun test() {
-        vm.run(emptyList())
+//    @Test
+//    fun
 
+    @Test
+    fun runTestCasesInNestedVm() {
+        val compiledVm = compiler.compile(vmOverZc)
+        val vmLoader = BytecodeLoader(compiledVm)
+        val loadedVm = vmLoader.load() as LoadingResult.Success
+
+        val regularVm = VirtualMachine(loadedVm.info, heap = heap)
+
+        val actualResult = regularVm.run(entries(bytecodeAddress, testCase.bytecode.size, testcaseMainArgsAddress, testcastMainArgsByteSize))
+
+        assertEquals(testCase.expectedResult, actualResult)
+    }
+
+    private fun List<StackEntry>.toByteArray(): ByteArray {
+        val size = map { if (it is StackEntry.VMInteger) 4 else 1 }.sum()
+        val result = ByteArray(size)
+        if (size == 0) return result
+
+        var cursor = 0
+        forEach {
+            when (it) {
+                is StackEntry.VMInteger -> {
+                    it.intValue.copyToByteArray(result, cursor)
+                    cursor += 4
+                }
+                is StackEntry.VMByte -> {
+                    result[cursor++] = it.byteValue
+                }
+            }
+        }
+        return result
     }
 }

@@ -6,12 +6,29 @@ import com.zagayevskiy.zvm.zc.ZcCompiler
 import testdata.sources.zc.ZcFactorial
 import testdata.sources.zc.ZcFibonacci
 import testdata.sources.zc.ZcReverseInt
+import testdata.sources.zc.includes.includeStdIo
 import testdata.sources.zc.stackTest
 
 internal object ZcTestCases: MutableList<VmTestCase> by mutableListOf() {
     val Sources = mutableListOf<TestSource>()
 
+
+
     init {
+
+        source(TestSource("simple", """
+            ${includeStdIo()}
+            fn main(i: int, b: byte): int {
+                outInt(i);
+                outByte(b);
+                return i;
+            }
+        """.trimIndent())) {
+            run(args = listOf(
+                    21345.toStackEntry(),
+                    111.toByte().toStackEntry()),
+                    ret = 21345)
+        }
 
         source(stackTest) {
             run (args = emptyList(), ret = 0)

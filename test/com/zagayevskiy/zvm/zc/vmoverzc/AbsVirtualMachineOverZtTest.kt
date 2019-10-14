@@ -7,7 +7,7 @@ import com.zagayevskiy.zvm.vm.*
 import com.zagayevskiy.zvm.zc.ZcCompiler
 import org.junit.Before
 import org.junit.Test
-import testdata.sources.zc.vm.vmOverZc
+import testdata.sources.zc.vm.src.vmOverZc
 import kotlin.test.assertEquals
 
 internal fun compile(text: String): ByteArray {

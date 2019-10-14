@@ -15,7 +15,7 @@ import org.junit.runners.Parameterized
 import testdata.cases.AsmTestCases
 import testdata.cases.VmTestCase
 import testdata.cases.ZcTestCases
-import testdata.sources.zc.bytecodeLoading
+import testdata.sources.zc.vm.testsrc.bytecodeLoading
 import kotlin.test.assertEquals
 
 

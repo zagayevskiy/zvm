@@ -1,8 +1,8 @@
-package testdata.sources.zc
+package testdata.sources.zc.vm.testsrc
 
 import testdata.sources.zc.includes.includeCrash
 import testdata.sources.zc.includes.includeStdMem
-import testdata.sources.zc.vm.includeBytecodeParser
+import testdata.sources.zc.vm.src.includeBytecodeParser
 
 internal val bytecodeLoading = """
     ${includeStdMem()}

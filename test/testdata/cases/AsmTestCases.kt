@@ -132,9 +132,9 @@ private fun source(source: TestSource, block: AsmRunBuilder.() -> Unit) {
 
 private object BinarySourcesBuilder {
     private val binaryTestsIntArguments = listOf(
-            entries(0, 0),
-            entries(0, 1),
-            entries(1, 0),
+            entries(1234567, 987654321),
+            entries(30, 40),
+            entries(500, 600),
             entries(Int.MIN_VALUE, Int.MAX_VALUE),
             entries(10000, -10000)
     )

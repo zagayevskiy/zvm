@@ -1,7 +1,8 @@
-package testdata.sources.zc.vm
+package testdata.sources.zc.vm.src
 
 import testdata.sources.zc.includes.includeCrash
 import testdata.sources.zc.includes.includeStack
+import testdata.sources.zc.includes.includeStdIo
 import testdata.sources.zc.includes.includeStdMem
 
 
@@ -11,6 +12,7 @@ internal val vmOverZc = """
     ${includeStack()}
     ${includeBytecodeParser()}
     ${includeContext()}
+    ${includeStdIo()}
 
     struct StackFrame {
         var framePointer: [void];
@@ -22,21 +24,26 @@ internal val vmOverZc = """
         val programInfo = parseBytecode(rawBytecode, rawBytecodeSize);
         val context = createContext(programInfo);
         pushAll(context.operandsStack, mainArgs, mainArgsBytesSize);
-
         call(context, programInfo.mainIndex);
-        loop(context);
 
-        return popInt(context.operandsStack);
+        return loop(context);
     }
 
     fn loop(context: Context): int {
         val bytecodeSize = context.bytecodeSize;
         while(context.ip < bytecodeSize) {
             val code = nextByte(context);
+
             when(code) {
                 1 -> call(context, nextInt(context));
                 2 -> {
-                    if(context.callStack.size == 1) return popInt(context.operandsStack);
+                    if(context.callStack.top == 4) {
+                        when(context.operandsStack.top) {
+                            1 -> return popByte(context.operandsStack);
+                            4 -> return popInt(context.operandsStack);
+                            else -> crash(context.operandsStack.top);
+                        }
+                    }
                     ret(context);
                 }
                 3 -> jump(context, nextInt(context));
@@ -122,8 +129,10 @@ internal val vmOverZc = """
         val argsMemorySize = function.argsMemorySize;
         context.sp = sp + argsMemorySize;
         copy(context.operandsStack.stack, sp, argsMemorySize);
+        drop(context.operandsStack, argsMemorySize);
 
-        pushStackFrame(context.callStack, createStackFrame(context.sp, sp, context.ip));
+        var frame = createStackFrame(context.sp, sp, context.ip);
+        pushStackFrame(context.callStack, frame);
         context.ip = function.address;
 
         return 0;
@@ -168,16 +177,33 @@ internal val vmOverZc = """
     fn stoj(context: Context): int { return 0; }
 
     fn lstori(context: Context): int {
-
+        cast<[int]>(peekStackFrame(context.callStack).framePointer + nextInt(context))[0] = popInt(context.operandsStack);
         return 0;
     }
     fn lloadi(context: Context): int {
-        return 0;
+        return pushInt(context.operandsStack, cast<[int]>(peekStackFrame(context.callStack).framePointer + nextInt(context))[0]);
     }
     fn mstori(context: Context): int {
         return 0;
     }
     fn mloadi(context: Context): int { return 0; }
+
+    fn gloadi(context: Context): int { return 0; }
+    fn gstori(context: Context): int { return 0; }
+
+    fn lstorb(context: Context): int {
+        cast<[byte]>(peekStackFrame(context.callStack).framePointer)[nextInt(context)] = popByte(context.operandsStack);
+        return 0;
+    }
+    fn lloadb(context: Context): int {
+        return pushByte(context.operandsStack, cast<[byte]>(peekStackFrame(context.callStack).framePointer)[nextInt(context)]);
+    }
+    fn mstorb(context: Context): int { return 0; }
+    fn mloadb(context: Context): int { return 0; }
+    fn constb(context: Context): int {
+        return pushByte(context.operandsStack, nextByte(context));
+    }
+
     fn consti(context: Context): int { return pushInt(context.operandsStack, nextInt(context)); }
     fn addi(context: Context): int {
         val stack = context.operandsStack;
@@ -295,20 +321,6 @@ internal val vmOverZc = """
         "}
     }
 
-    fn gloadi(context: Context): int { return 0; }
-    fn gstori(context: Context): int { return 0; }
-
-    fn lstorb(context: Context): int {
-        return 0;
-    }
-    fn lloadb(context: Context): int {
-        return 0;
-    }
-    fn mstorb(context: Context): int { return 0; }
-    fn mloadb(context: Context): int { return 0; }
-    fn constb(context: Context): int {
-        return pushByte(context.operandsStack, nextByte(context));
-    }
     fn addb(context: Context): int {
         val stack = context.operandsStack;
         return pushByte(stack, popByte(stack) + popByte(stack));
