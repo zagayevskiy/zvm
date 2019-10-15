@@ -222,8 +222,14 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                     byte = { ByteConst.instruction(0.op) }))
             AstConst.Undefined -> TODO("What to do with undefined?")
             AstConst.Void -> TODO("What to do with void?")
-            is AstLogicalNot -> commands.add(ByteLogicalNot.instruction())
-            is AstBitNot -> commands.add(instructionByType(expression.type, IntNot, ByteNot))
+            is AstLogicalNot -> {
+                generate(expression.expression)
+                commands.add(ByteLogicalNot.instruction())
+            }
+            is AstBitNot -> {
+                generate(expression.expression)
+                commands.add(instructionByType(expression.type, IntNot, ByteNot))
+            }
             is AstCastExpr -> generate(expression)
         }
     }

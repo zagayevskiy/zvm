@@ -17,11 +17,11 @@ internal fun includeContext() = """
         val result: Context = alloc(sizeof<Context>);
         result.bytecode = info.bytecode;
         result.bytecodeSize = info.bytecodeSize;
-        result.operandsStack = createStack(2048);
-        result.callStack = createStack(1024);
+        result.operandsStack = createStack(65536);
+        result.callStack = createStack(65536);
         result.functions = info.functionsTable;
         result.ip = 0;
-        result.localsStackBaseAddress = alloc(1024);
+        result.localsStackBaseAddress = alloc(65536);
         result.sp = result.localsStackBaseAddress;
 
         return result;

@@ -16,20 +16,6 @@ internal object ZcTestCases: MutableList<VmTestCase> by mutableListOf() {
 
     init {
 
-        source(TestSource("simple", """
-            ${includeStdIo()}
-            fn main(i: int, b: byte): int {
-                outInt(i);
-                outByte(b);
-                return i;
-            }
-        """.trimIndent())) {
-            run(args = listOf(
-                    21345.toStackEntry(),
-                    111.toByte().toStackEntry()),
-                    ret = 21345)
-        }
-
         source(stackTest) {
             run (args = emptyList(), ret = 0)
         }

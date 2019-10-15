@@ -17,7 +17,7 @@ internal class SimpleVmTestCase(private val name: String,
                                 override val bytecode: ByteArray,
                                 override val runArgs: List<StackEntry>, override val expectedResult: StackEntry,
                                 private val stackSize: Int = 1024,
-                                private val heapSize: Int = 2048) : VmTestCase {
+                                private val heapSize: Int = 10000) : VmTestCase {
 
     override fun createVm(info: LoadedInfo) = VirtualMachine(info, stackSize, BitTableMemory(heapSize))
 

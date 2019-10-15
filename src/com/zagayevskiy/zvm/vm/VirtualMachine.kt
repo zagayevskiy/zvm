@@ -349,7 +349,7 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
     private fun memoryLoadInt() {
         val offset = pop<VMInteger>(PopOffsetMsg).intValue
         val address = pop<VMInteger>(PopAddrMsg).intValue
-        push(heap.readInt(address + offset).toStackEntry())
+        push(heap.readInt(address + offset))
     }
 
     private fun memoryStoreByte() {
@@ -363,7 +363,7 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
     private fun memoryLoadByte() {
         val offset = pop<VMInteger>(PopOffsetMsg).intValue
         val address = pop<VMInteger>(PopAddrMsg).intValue
-        push(heap[address + offset].toStackEntry())
+        push(heap[address + offset])
     }
 
 

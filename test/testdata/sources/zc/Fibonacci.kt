@@ -2,17 +2,12 @@ package testdata.sources.zc
 
 import testdata.cases.TestSource
 import testdata.sources.asm.AsmFibonacci
-import testdata.sources.zc.includes.includeStdIo
 
 internal object ZcFibonacci {
 
     //run with one int argument (n) and get n's Fibonacci number (computed by recursive way)
     val Recursive = TestSource("Fibonacci recursive", """
-        ${includeStdIo()}
         fn fibonacci(prevStep: int, currentStep: int, counter: int): int {
-            outInt(prevStep);
-            outInt(currentStep);
-            outInt(counter);
             if (counter <= 0)
                 return currentStep;
             else
@@ -20,7 +15,6 @@ internal object ZcFibonacci {
         }
 
         fn main(n: int): int {
-            outInt(n);
             return fibonacci(1, 1, n - 2);
         }
     """.trimIndent())

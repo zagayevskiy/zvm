@@ -40,8 +40,7 @@ internal val vmOverZc = """
                     if(context.callStack.top == 4) {
                         when(context.operandsStack.top) {
                             1 -> return popByte(context.operandsStack);
-                            4 -> return popInt(context.operandsStack);
-                            else -> crash(context.operandsStack.top);
+                            else -> return popInt(context.operandsStack);
                         }
                     }
                     ret(context);
@@ -49,9 +48,16 @@ internal val vmOverZc = """
                 3 -> jump(context, nextInt(context));
                 4 -> jz(context);
                 5 -> jnz(context);
+                6 -> crash(popInt(context.operandsStack));
 
                 12 -> pop(context);
                 13 -> dup(context);
+                14 -> pushfp(context);
+                15 -> addStackPointer(context, nextInt(context));
+                16 -> addStackPointer(context, 4);
+                17 -> addStackPointer(context, -4);
+                18 -> addStackPointer(context, 1);
+                19 -> addStackPointer(context, -1);
 
                 21 -> itob(context);
                 22 -> btoi(context);
@@ -117,7 +123,7 @@ internal val vmOverZc = """
 
                 -11 -> doAlloc(context);
                 -12 -> doFree(context);
-                else -> return -1;
+                else -> crash(code);
             }
         }
         return 0;
@@ -148,29 +154,38 @@ internal val vmOverZc = """
 
     fn jump(context: Context, address: int): int {
         context.ip = address;
-
         return 0;
     }
 
     fn jz(context: Context): int {
         val address = nextInt(context);
-        val argument = popInt(context.operandsStack);
+        val argument = popByte(context.operandsStack);
         if (argument == 0) jump(context, address);
         return 0;
     }
     fn jnz(context: Context): int {
         val address = nextInt(context);
-        val argument = popInt(context.operandsStack);
+        val argument = popByte(context.operandsStack);
         if (argument != 0) jump(context, address);
         return 0;
     }
     fn pop(context: Context): int { return popInt(context.operandsStack); }
     fn dup(context: Context): int { return pushInt(context.operandsStack, peekInt(context.operandsStack)); }
+    fn pushfp(context: Context): int {
+        pushInt(context.operandsStack, cast<int>(peekStackFrame(context.callStack).framePointer));
+        return 0;
+    }
+    fn addStackPointer(context: Context, value: int): int {
+        context.sp = context.sp + value;
+        return 0;
+    }
 
     fn itob(context: Context): int {
         return pushByte(context.operandsStack, cast<byte>(popInt(context.operandsStack)));
     }
-    fn btoi(context: Context): int { return 0; }
+    fn btoi(context: Context): int {
+        return pushInt(context.operandsStack, cast<int>(popByte(context.operandsStack)));
+    }
 
     fn itoj(context: Context): int { return 0; }
     fn btoj(context: Context): int { return 0; }
@@ -184,9 +199,20 @@ internal val vmOverZc = """
         return pushInt(context.operandsStack, cast<[int]>(peekStackFrame(context.callStack).framePointer + nextInt(context))[0]);
     }
     fn mstori(context: Context): int {
+        val stack = context.operandsStack;
+        val argument = popInt(stack);
+        val offset = popInt(stack);
+        val address = popInt(stack);
+        cast<[int]>(offset + address)[0] = argument;
         return 0;
     }
-    fn mloadi(context: Context): int { return 0; }
+    fn mloadi(context: Context): int {
+        val stack = context.operandsStack;
+        val offset = popInt(stack);
+        val address = popInt(stack);
+        pushInt(stack, cast<[int]>(offset + address)[0]);
+        return 0;
+    }
 
     fn gloadi(context: Context): int { return 0; }
     fn gstori(context: Context): int { return 0; }
@@ -198,8 +224,21 @@ internal val vmOverZc = """
     fn lloadb(context: Context): int {
         return pushByte(context.operandsStack, cast<[byte]>(peekStackFrame(context.callStack).framePointer)[nextInt(context)]);
     }
-    fn mstorb(context: Context): int { return 0; }
-    fn mloadb(context: Context): int { return 0; }
+    fn mstorb(context: Context): int {
+        val stack = context.operandsStack;
+        val argument = popByte(stack);
+        val offset = popInt(stack);
+        val address = popInt(stack);
+        cast<[byte]>(address)[offset] = argument;
+        return 0;
+    }
+    fn mloadb(context: Context): int {
+        val stack = context.operandsStack;
+        val offset = popInt(stack);
+        val address = popInt(stack);
+        pushByte(stack, cast<[byte]>(address)[offset]);
+        return 0;
+    }
     fn constb(context: Context): int {
         return pushByte(context.operandsStack, nextByte(context));
     }
@@ -272,11 +311,11 @@ internal val vmOverZc = """
         val stack = context.operandsStack;
         val right = popInt(stack);
         val left = popInt(stack);
-        return pushInt(stack, compareInts(left, right));
+        return pushByte(stack, compareInts(left, right));
     }
     fn cmpic(context: Context): int {
         val stack = context.operandsStack;
-        return pushInt(stack, compareInts(popInt(stack), nextInt(context)));
+        return pushByte(stack, compareInts(popInt(stack), nextInt(context)));
     }
     fn lessi(context: Context): int {
         val stack = context.operandsStack;
@@ -468,13 +507,13 @@ internal val vmOverZc = """
         }
     }
 
-    fn compareInts(left: int, right: int): int {
+    fn compareInts(left: int, right: int): byte {
         if (left == right) {
-            return 0;
+            return cast<byte>(0);
         } else if (left < right) {
-            return -1;
+            return cast<byte>(-1);
         } else {
-            return 1;
+            return cast<byte>(1);
         }
     }
 

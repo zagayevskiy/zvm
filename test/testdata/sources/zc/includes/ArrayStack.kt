@@ -26,7 +26,7 @@ internal fun includeStack() = """
 
     fn popInt(stack: Stack): int {
         val newTop = stack.top - sizeof<int>;
-        if (newTop < 0) crash(102);
+        if (newTop < 0) crash(1002);
         stack.top = newTop;
         return cast<[int]>(stack.stack + newTop)[0];
     }
@@ -50,6 +50,11 @@ internal fun includeStack() = """
         if (newTop < 0) crash(105);
         stack.top = newTop;
         return cast<[byte]>(stack.stack)[newTop];
+    }
+
+    fn peekByte(stack: Stack): int {
+        if (stack.top == 0) crash(106);
+        return cast<[byte]>(stack.stack)[stack.top - sizeof<byte>];
     }
 
     fn drop(stack: Stack, count: int): int {

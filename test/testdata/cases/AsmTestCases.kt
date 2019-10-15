@@ -17,6 +17,14 @@ object AsmTestCases : MutableList<VmTestCase> by mutableListOf() {
     val Sources = mutableListOf<TestSource>()
 
     init {
+
+        source(AsmFactorial.Iterative) {
+            run(arg = 1, ret = 1)
+            run(arg = 2, ret = 2)
+            run(arg = 5, ret = 120)
+            run(arg = 12, ret = 479001600)
+        }
+
         binarySources {
             IntAdd ireturns { left, right -> left + right }
             IntMul ireturns { left, right -> left * right }
@@ -44,13 +52,6 @@ object AsmTestCases : MutableList<VmTestCase> by mutableListOf() {
         }
 
         source(AsmFactorial.Recursive) {
-            run(arg = 1, ret = 1)
-            run(arg = 2, ret = 2)
-            run(arg = 5, ret = 120)
-            run(arg = 12, ret = 479001600)
-        }
-
-        source(AsmFactorial.Iterative) {
             run(arg = 1, ret = 1)
             run(arg = 2, ret = 2)
             run(arg = 5, ret = 120)
@@ -155,6 +156,12 @@ private object BinarySourcesBuilder {
                 run(args = args, ret = ret((left as StackEntry.VMInteger).intValue, (right as StackEntry.VMInteger).intValue))
             }
         }
+        source(binaryIntSourceWithAdditionalCall()) {
+            binaryTestsIntArguments.forEach { args ->
+                val (left, right) = args
+                run(args = args, ret = ret((left as StackEntry.VMInteger).intValue, (right as StackEntry.VMInteger).intValue))
+            }
+        }
     }
 
     infix fun Opcode.breturns(ret: (left: Byte, right: Byte) -> Int) {
@@ -177,6 +184,22 @@ private fun Opcode.binaryIntSource() = TestSource("Binary $name", """
         lloadi right
         $name
         ret
+    """.trimIndent())
+
+private fun Opcode.binaryIntSourceWithAdditionalCall() = TestSource("Binary $name w/ fun call", """
+
+        .fun f: left: int, right: int;
+        lloadi left
+        lloadi right
+        $name
+        ret
+
+        .fun main: left: int, right: int;
+        lloadi left
+        lloadi right
+        call f
+        ret
+
     """.trimIndent())
 
 private fun Opcode.binaryByteSource() = TestSource("Binary $name", """
