@@ -16,6 +16,28 @@ internal object ZcTestCases: MutableList<VmTestCase> by mutableListOf() {
 
     init {
 
+        source(TestSource("When", """
+            fn main(code: byte): int {
+                when(code) {
+                    0 -> return 1;
+                    1 -> return 1;
+                    2 -> return 2;
+                    3 -> return 6;
+                    4 -> return 24;
+                    else -> return 0;
+                }
+            }
+        """.trimIndent())) {
+            run(args = entries(0.toByte()), ret = 1)
+            run(args = entries(1.toByte()), ret = 1)
+            run(args = entries(2.toByte()), ret = 2)
+            run(args = entries(3.toByte()), ret = 6)
+            run(args = entries(4.toByte()), ret = 24)
+            run(args = entries(5.toByte()), ret = 0)
+            run(args = entries(112.toByte()), ret = 0)
+            run(args = entries((-59).toByte()), ret = 0)
+        }
+
         source(stackTest) {
             run (args = emptyList(), ret = 0)
         }

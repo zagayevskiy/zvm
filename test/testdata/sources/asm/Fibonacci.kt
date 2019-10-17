@@ -77,6 +77,7 @@ internal object AsmFibonacci {
         addi
         lstori 8
         lloadi 8
+        itob
         jz finish
         lloadi 0
         lloadi 4

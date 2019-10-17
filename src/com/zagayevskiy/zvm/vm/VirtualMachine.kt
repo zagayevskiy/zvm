@@ -187,7 +187,7 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
         args.forEach { push(it) }
         call(mainIndex)
         loop()
-        return pop()
+        return pop().also { if(operandsStack.isNotEmpty()) error("Operands stack is not empty: $operandsStack") }
     }
 
     private fun loop() {

@@ -45,6 +45,7 @@ object AsmFactorial {
         deci
         lstori 0
         lloadi 0
+        itob
         jnz loop
         lloadi 4
         ret

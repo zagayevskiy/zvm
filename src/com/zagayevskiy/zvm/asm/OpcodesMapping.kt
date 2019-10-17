@@ -132,8 +132,8 @@ object JavaCall : OpcodeImpl(name = "jcall", operandCount = 1)
 object JavaNew : OpcodeImpl(name = "jnew", operandCount = 1)
 object JavaDelete : OpcodeImpl(name = "jdel")
 
-object Pop : OpcodeImpl(name = "pop")
-object Dup : OpcodeImpl(name = "dup")
+object Pop : OpcodeImpl(name = "pop") //TODO make it i/b
+object Dup : OpcodeImpl(name = "dup") //TODO make it i/b
 object PushFramePointer : OpcodeImpl(name = "pushfp")
 object AddStackPointer : OpcodeImpl(name = "addsp", operandCount = 1)
 object IncStackPointerInt : OpcodeImpl(name = "incspi")

@@ -40,7 +40,8 @@ internal val vmOverZc = """
                     if(context.callStack.top == 4) {
                         when(context.operandsStack.top) {
                             1 -> return popByte(context.operandsStack);
-                            else -> return popInt(context.operandsStack);
+                            4 -> return popInt(context.operandsStack);
+                            else -> crash(context.operandsStack.top);
                         }
                     }
                     ret(context);
@@ -121,6 +122,7 @@ internal val vmOverZc = """
                 -64 -> gloadb(context);
                 -65 -> gstorb(context);
 
+                -10 -> asm{"out"}
                 -11 -> doAlloc(context);
                 -12 -> doFree(context);
                 else -> crash(code);

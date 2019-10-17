@@ -121,6 +121,7 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             generate(branch.case)
             commands.add(instructionByType(whenStatement.checkValue.type, IntEq, ByteEq))
             commands.add(JumpZero.instruction(nextBranchLabel.id))
+            commands.add(Pop.instruction())
             generate(branch.branch)
             commands.add(Jmp.instruction(endLabel.id))
         }
@@ -288,7 +289,7 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                 commands.add(IntMul.instruction())
                 generate(assignment.assignation)
                 commands.add(instructionByType(left.type, MemoryStoreInt, MemoryStoreByte))
-                commands.add(ByteConst.instruction(0.op)) //TODO just to pop
+                commands.add(IntConst.instruction(0.op)) //TODO just to pop
             }
             is AstStructFieldDereference -> {
                 val field = left.structType.findField(left.name) ?: error("Field must be resolved before.")
@@ -296,7 +297,7 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                 commands.add(IntConst.instruction(field.offset.op))
                 generate(assignment.assignation)
                 commands.add(instructionByType(left.type, MemoryStoreInt, MemoryStoreByte))
-                commands.add(ByteConst.instruction(0.op)) //TODO just to pop
+                commands.add(IntConst.instruction(0.op)) //TODO just to pop
             }
             else -> error("$left isn't lvalue.")
         }

@@ -4,7 +4,10 @@ import com.zagayevskiy.zvm.entries
 import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.memory.Memory
 import com.zagayevskiy.zvm.util.extensions.copyToByteArray
-import com.zagayevskiy.zvm.vm.*
+import com.zagayevskiy.zvm.vm.BytecodeLoader
+import com.zagayevskiy.zvm.vm.LoadingResult
+import com.zagayevskiy.zvm.vm.StackEntry
+import com.zagayevskiy.zvm.vm.VirtualMachine
 import com.zagayevskiy.zvm.zc.ZcCompiler
 import org.junit.Before
 import org.junit.Test
@@ -22,7 +25,7 @@ internal class VmOnZcRunTest(private val testCase: VmTestCase) {
     companion object {
         @JvmStatic
         @Parameterized.Parameters(name = "{index}: {0}")
-        fun data() = AsmTestCases + ZcTestCases
+        fun data() =   ZcTestCases + AsmTestCases
 
         private const val HEAP_SIZE = 1024*65536
     }
