@@ -19,7 +19,7 @@ class BytecodeAssemblerTest {
     @Test
     fun test() {
         val text = """
-            .fun main: x: int, y: byte;
+            .fun main: x: int, y: byte
             jmp lbl
             call f
             ->lbl
@@ -30,7 +30,7 @@ class BytecodeAssemblerTest {
             call g
             ret
 
-            .fun g: z: int;
+            .fun g: z: int
             ->lbl
             call f
             jmp lbl

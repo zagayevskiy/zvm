@@ -12,7 +12,7 @@ object AsmSimple {
     """.trimIndent())
 
     val JustRetArg = TestSource("Just ret arg", """
-        .fun main: x: int;
+        .fun main: x: int
         pushfp
         consti x
         mloadi

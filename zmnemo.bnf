@@ -1,11 +1,11 @@
 program ::= command {EOL{EOL} command}
 command ::= (globals | fun | label | instruction)
 
-globals ::= "globals" "=" natural
+globals ::= ".global" var_decl
+var_decl ::= identifier ":" identifier
 
 fun ::= ".fun" identifier {fun_args}
-fun_args ::= ":" fun_arg ["," fun_arg] ";"
-fun_arg ::= identifier ":" identifier
+fun_args ::= ":" var_decl ["," var_decl]
 
 label ::= "->" identifier
 

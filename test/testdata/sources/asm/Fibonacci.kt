@@ -5,7 +5,7 @@ import testdata.cases.TestSource
 internal object AsmFibonacci {
     //run with one int argument (n) and get n's Fibonacci number (computed by recursive way)
     val Recursive = TestSource("fibonacci recursive", """
-        .fun main: number: int;
+        .fun main: number: int
         consti 1
         consti 1
         pushfp
@@ -14,7 +14,7 @@ internal object AsmFibonacci {
         call fib
         ret
 
-        .fun fib: f0: int, f1: int, number: int;
+        .fun fib: f0: int, f1: int, number: int
         pushfp
         consti number
         mloadi
@@ -48,7 +48,7 @@ internal object AsmFibonacci {
 
     //run with one int argument (n) and get n's Fibonacci number
     val Iterative = TestSource("fibonacci iterative", """
-        .fun main: n: int;
+        .fun main: n: int
         ${iterativeFunctionBody()}
     """.trimIndent())
 

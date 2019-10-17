@@ -179,7 +179,7 @@ private fun binarySources(block: BinarySourcesBuilder.() -> Unit) {
 }
 
 private fun Opcode.binaryIntSource() = TestSource("Binary $name", """
-        .fun main: left: int, right: int;
+        .fun main: left: int, right: int
         lloadi left
         lloadi right
         $name
@@ -188,13 +188,13 @@ private fun Opcode.binaryIntSource() = TestSource("Binary $name", """
 
 private fun Opcode.binaryIntSourceWithAdditionalCall() = TestSource("Binary $name w/ fun call", """
 
-        .fun f: left: int, right: int;
+        .fun f: left: int, right: int
         lloadi left
         lloadi right
         $name
         ret
 
-        .fun main: left: int, right: int;
+        .fun main: left: int, right: int
         lloadi left
         lloadi right
         call f
@@ -203,7 +203,7 @@ private fun Opcode.binaryIntSourceWithAdditionalCall() = TestSource("Binary $nam
     """.trimIndent())
 
 private fun Opcode.binaryByteSource() = TestSource("Binary $name", """
-        .fun main: left: byte, right: byte;
+        .fun main: left: byte, right: byte
         lloadb left
         lloadb right
         $name

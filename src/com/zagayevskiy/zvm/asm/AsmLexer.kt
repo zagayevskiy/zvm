@@ -9,7 +9,6 @@ object AsmToken {
     object Arrow : Token
     object Assign : Token
     object Colon : Token
-    object Semicolon: Token
     object Comma : Token
     object Minus : Token
     object Fun : Token
@@ -21,7 +20,6 @@ private val symbolsMap = mapOf(
         "->" to AsmToken.Arrow,
         "=" to AsmToken.Assign,
         ":" to AsmToken.Colon,
-        ";" to AsmToken.Semicolon,
         "," to AsmToken.Comma,
         "-" to AsmToken.Minus
 )

@@ -6,7 +6,7 @@ object AsmFactorial {
 
     //run with one int argument(n) and get n! (computed by recursive way)
     internal val Recursive = TestSource("n! recursive", """
-        .fun main: n: int;
+        .fun main: n: int
         pushfp
         consti n
         mloadi
@@ -30,7 +30,7 @@ object AsmFactorial {
 
     //run with one int argument(n) and get n! (computed by iterative way)
     internal val Iterative = TestSource("n! iterative", """
-        .fun main: n: int;
+        .fun main: n: int
         addsp 8
         lloadi n
         lstori 0

@@ -74,7 +74,7 @@ internal class AsmParserTest(private val test: TestData) {
                 ),
 
                 """
-                    .fun f: i: int, i1: int, i2: int;
+                    .fun f: i: int, i1: int, i2: int
                     iload1 0
                     iload2 1, 2
                     sum 3
@@ -89,7 +89,7 @@ internal class AsmParserTest(private val test: TestData) {
 
                 """
                     globals = 17
-                    .fun f: i0: int, i1: int, i2: int;
+                    .fun f: i0: int, i1: int, i2: int
                     iload1 0
                     iload2 1, 2
                     sum 3
@@ -130,8 +130,8 @@ internal class AsmParserTest(private val test: TestData) {
                     .fun f
                     .fun g
                     jmp label1
-                    .fun k: x: int;
-                    .fun t: y: int, z: int;
+                    .fun k: x: int
+                    .fun t: y: int, z: int
                     ->label1
                     ->label2
                     ->label3

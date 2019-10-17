@@ -24,14 +24,14 @@ class BytecodeGeneratorTest {
     private val text = """
             .fun f
             ret
-            .fun main: argc: int, argv: int;
+            .fun main: argc: int, argv: int
             ret
             ret
-            .fun g: x: int;
+            .fun g: x: int
             ret
             ret
             ret
-            .fun k: b1: byte, b2: byte, i: int;
+            .fun k: b1: byte, b2: byte, i: int
             ret
             ret
             .fun last

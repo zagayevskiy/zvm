@@ -5,14 +5,14 @@ import testdata.cases.TestSource
 object AsmReverse {
     //run with one argument(int) and reverse it bits
     internal val IntBits = TestSource("Reverse int bits", """
-        .fun main: x: int;
+        .fun main: x: int
         pushfp
         consti x
         mloadi
         call reverse
         ret
 
-        .fun reverse: x: int;
+        .fun reverse: x: int
         incspi
         consti 0
         lstori 0
@@ -46,12 +46,12 @@ object AsmReverse {
     object IntBytes {
         //run with one argument(int) and reverse it bytes
         internal val ViaBitOps = TestSource("Reverse int bytes via bit ops", """
-            .fun main: x: int;
+            .fun main: x: int
             lloadi x
             call reverse
             ret
         
-            .fun reverse: x: int;
+            .fun reverse: x: int
             lloadi x
             consti 24
             shri
@@ -83,7 +83,7 @@ object AsmReverse {
 
         //run with one argument(int) and reverse it bytes(via memory manipulations)
         internal val ViaMemory = TestSource("Reverse int bytes via memory", """
-            .fun reverse: x: int;
+            .fun reverse: x: int
             addsp 4
             consti 4
             alloc
@@ -130,7 +130,7 @@ object AsmReverse {
             free
             ret
         
-            .fun main: x: int;
+            .fun main: x: int
             lloadi x
             call reverse
             ret

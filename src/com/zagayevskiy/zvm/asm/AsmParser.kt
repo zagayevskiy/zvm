@@ -115,9 +115,6 @@ class AsmParser(private val lexer: Lexer, supportedOpcodes: Iterable<Opcode>) {
             args.add(Func.Arg(name, type))
         }
 
-        if (token != AsmToken.Semicolon) error()
-        nextToken()
-
         return args.takeIf { it.isNotEmpty() } ?: error()
 
     }
