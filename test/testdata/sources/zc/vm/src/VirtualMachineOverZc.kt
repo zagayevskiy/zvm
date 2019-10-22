@@ -50,6 +50,7 @@ internal val vmOverZc = """
                 4 -> jz(context);
                 5 -> jnz(context);
                 6 -> crash(popInt(context.operandsStack));
+                7 -> invoke(context);
 
                 12 -> pop(context);
                 13 -> dup(context);
@@ -143,6 +144,13 @@ internal val vmOverZc = """
         pushStackFrame(context.callStack, frame);
         context.ip = function.address;
 
+        return 0;
+    }
+
+    fn invoke(context: Context): int {
+        val functionIndex = popInt(context.operandsStack);
+        if (functionIndex < 0 || functionIndex >= context.functionsCount) crash(404);
+        call(context, functionIndex);
         return 0;
     }
 

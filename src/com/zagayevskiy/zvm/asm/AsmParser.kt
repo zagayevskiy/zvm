@@ -119,16 +119,6 @@ class AsmParser(private val lexer: Lexer, supportedOpcodes: Iterable<Opcode>) {
 
     }
 
-    private fun funcLocals(): Int? {
-        if (token != Locals) return null
-        nextToken()
-        if (token != Assign) error()
-        nextToken()
-        val count = (token as? Integer) ?: error()
-        nextToken()
-        return count.value
-    }
-
     private fun label(): Label? {
         if (token != Arrow) return null
         nextToken()

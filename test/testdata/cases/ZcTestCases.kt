@@ -9,12 +9,26 @@ import testdata.sources.zc.ZcReverseInt
 import testdata.sources.zc.includes.includeStdIo
 import testdata.sources.zc.stackTest
 
-internal object ZcTestCases: MutableList<VmTestCase> by mutableListOf() {
+internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
     val Sources = mutableListOf<TestSource>()
 
 
-
     init {
+
+        source(TestSource("invoke", """
+            fn inc(i: int): int {
+                return i + 1;
+            }
+
+            fn main(i: int): int {
+                return cast<(int) -> int>(0)(i);
+            }
+
+        """.trimIndent())) {
+            run(arg = -1, ret = 0)
+            run(arg = 100, ret = 101)
+            run(arg = Int.MIN_VALUE, ret = Int.MIN_VALUE + 1)
+        }
 
         source(TestSource("When", """
             fn main(code: byte): int {
@@ -39,7 +53,7 @@ internal object ZcTestCases: MutableList<VmTestCase> by mutableListOf() {
         }
 
         source(stackTest) {
-            run (args = emptyList(), ret = 0)
+            run(args = emptyList(), ret = 0)
         }
 
         source(ZcFactorial.Recursive) {
@@ -112,7 +126,7 @@ private class ZcRunBuilder(val source: TestSource) {
 
     fun run(args: List<StackEntry>, ret: StackEntry) {
         ZcTestCases.add(SimpleVmTestCase(
-                """Zc ${source.name} ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "") } -> $ret"""",
+                """Zc ${source.name} ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "")} -> $ret"""",
                 precompiledProgram,
                 runArgs = args,
                 expectedResult = ret

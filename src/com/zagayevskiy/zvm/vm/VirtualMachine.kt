@@ -37,6 +37,7 @@ import com.zagayevskiy.zvm.common.Opcodes.GSTORI
 import com.zagayevskiy.zvm.common.Opcodes.INCI
 import com.zagayevskiy.zvm.common.Opcodes.INCSPB
 import com.zagayevskiy.zvm.common.Opcodes.INCSPI
+import com.zagayevskiy.zvm.common.Opcodes.INVOKE
 import com.zagayevskiy.zvm.common.Opcodes.ITOB
 import com.zagayevskiy.zvm.common.Opcodes.ITOJ
 import com.zagayevskiy.zvm.common.Opcodes.JCALL
@@ -195,6 +196,7 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
             val code = nextByte()
             when (code) {
                 CALL -> call(functionIndex = decodeNextInt())
+                INVOKE -> invoke()
                 RET -> {
                     if (callStack.size == 1) return
                     ret()
@@ -415,6 +417,12 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
         }
         callStack.push(StackFrame(framePointer = stackPointer, previousStackPointer = sp, returnAddress = ip))
         ip = function.address
+    }
+
+    private fun invoke() {
+        val functionIndex = pop<VMInteger> { "int expected as address of function" }.intValue
+        if (functionIndex < 0 || functionIndex >= functions.size) error("$functionIndex is not a function index. Has ${functions.size} functions.")
+        call(functionIndex)
     }
 
     private fun ret() {

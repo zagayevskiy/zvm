@@ -267,7 +267,10 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             is AstFunctionReference -> {
                 commands.add(Call.instruction(ref.function.name.id))
             }
-            else -> TODO("Dynamic calls not implemented yet.")
+            else -> {
+                generate(call.function)
+                commands.add(Invoke.instruction())
+            }
         }
     }
 
@@ -307,7 +310,7 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
         generate(cast.expression)
         val castInstruction = when (cast.expression.type) {
             ZcType.Integer -> when (cast.type) {
-                ZcType.Integer, is ZcType.Array, is ZcType.Struct -> null
+                ZcType.Integer, is ZcType.Array, is ZcType.Struct, is ZcType.Function -> null
                 ZcType.Byte,
                 ZcType.Boolean -> IntToByte.instruction()
                 else -> error("${cast.expression} can't be casted to ${cast.type}")

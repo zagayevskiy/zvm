@@ -64,7 +64,7 @@ multiplication_expr ::= unary_expr [ "*" | "/" | "%" multiplication_expr ]
 
 unary_expr ::= [( "~" | "!" | "*")] value_expr
 
-value_expr ::= const | parenthesis_expr | assignment_expr | sizeof_operator | cast_operator//TODO lambda syntax
+value_expr ::= const | parenthesis_expr | assignment_expr | sizeof_operator | cast_operator | function_reference //TODO lambda syntax
 
 parenthesis_expr ::= "(" expression ")" [chain]
 
@@ -72,6 +72,7 @@ assignment_expr ::= identifier ("=" expression | [chain])
 
 sizeof_operator ::= "sizeof" "<" type ">"
 cast_operator ::= "cast" "<" type ">" "(" expression ")" [chain]
+function_reference ::= "::" identifier
 
 expressions_list ::= expression { "," expression }
 

@@ -8,6 +8,7 @@ object Opcodes {
     const val JZ: Byte = 4
     const val JNZ: Byte = 5
     const val CRASH: Byte = 6
+    const val INVOKE: Byte = 7
     //endregion
 
     //region java interop opcodes

@@ -7,6 +7,7 @@ internal fun includeContext() = """
         var operandsStack: Stack;
         var callStack: Stack;
         var functions: [RuntimeFunction];
+        var functionsCount: int;
         var globals: [void];
         var ip: int;
         var localsStackBaseAddress: [void];
@@ -20,6 +21,7 @@ internal fun includeContext() = """
         result.operandsStack = createStack(65536);
         result.callStack = createStack(65536);
         result.functions = info.functionsTable;
+        result.functionsCount = info.functionsTableSize;
         result.ip = 0;
         result.localsStackBaseAddress = alloc(65536);
         result.sp = result.localsStackBaseAddress;

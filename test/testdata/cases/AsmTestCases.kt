@@ -162,6 +162,12 @@ private object BinarySourcesBuilder {
                 run(args = args, ret = ret((left as StackEntry.VMInteger).intValue, (right as StackEntry.VMInteger).intValue))
             }
         }
+        source(binaryIntSourceWithAdditionalInvoke()) {
+            binaryTestsIntArguments.forEach { args ->
+                val (left, right) = args
+                run(args = args, ret = ret((left as StackEntry.VMInteger).intValue, (right as StackEntry.VMInteger).intValue))
+            }
+        }
     }
 
     infix fun Opcode.breturns(ret: (left: Byte, right: Byte) -> Int) {
@@ -198,6 +204,23 @@ private fun Opcode.binaryIntSourceWithAdditionalCall() = TestSource("Binary $nam
         lloadi left
         lloadi right
         call f
+        ret
+
+    """.trimIndent())
+
+private fun Opcode.binaryIntSourceWithAdditionalInvoke() = TestSource("Binary $name w/ invoke", """
+
+        .fun f: left: int, right: int
+        lloadi left
+        lloadi right
+        $name
+        ret
+
+        .fun main: left: int, right: int
+        lloadi left
+        lloadi right
+        consti f
+        invoke
         ret
 
     """.trimIndent())

@@ -1,7 +1,8 @@
 package com.zagayevskiy.zvm.asm
 
 import com.zagayevskiy.zvm.asm.Command.*
-import com.zagayevskiy.zvm.asm.FunctionDefinition.Type.*
+import com.zagayevskiy.zvm.asm.FunctionDefinition.Type.DefByte
+import com.zagayevskiy.zvm.asm.FunctionDefinition.Type.DefInt
 import com.zagayevskiy.zvm.common.Address
 import com.zagayevskiy.zvm.util.extensions.copyTo
 import com.zagayevskiy.zvm.util.extensions.copyToByteArray
@@ -62,7 +63,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
                 is Instruction.Operand.Id -> when (opcode) {
                     Call -> write(functionIndex(operand.name))
                     Jmp, JumpZero, JumpNotZero -> write(obtainLabel(operand.name))
-                    IntConst -> write(obtainFuncArgumentOffset(operand.name) ?: TODO("May be global?"))
+                    IntConst -> write(obtainFuncArgumentOffset(operand.name) ?: obtainFunctionIndex(operand.name) ?: TODO("May be global?"))
                     LocalLoadInt, LocalStoreInt -> write(obtainFuncArgumentOffset(operand.name, DefInt) ?: error("Arg ${operand.name} not defined."))
                     LocalLoadByte, LocalStoreByte -> write(obtainFuncArgumentOffset(operand.name, DefByte) ?: error("Arg ${operand.name} not defined."))
                     else -> error("opcode ${opcode.name} can't operate with $operand")
@@ -95,6 +96,8 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
             if(checkType != null && checkType != type) error("Want $checkType for arg $argName but $type found")
         }?.offset
     }
+
+    private fun obtainFunctionIndex(name: String) = functionDefinitionsIndices[name]
 
     private fun defineLabel(label: Label) {
         val labelAddress = ip

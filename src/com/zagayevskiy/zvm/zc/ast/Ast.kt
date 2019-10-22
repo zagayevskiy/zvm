@@ -80,6 +80,7 @@ class AstDefinedFunction(val name: String, val args: List<AstFunctionArgument>, 
 
 class AstDefinedStruct(val name: String, val structType: ZcType.Struct) : TopLevelDeclaration(structType)
 
+//class AstUnknownFunctionReference(val name: String): AstExpr()
 class AstFunctionReference(val function: AstDefinedFunction) : AstExpr(type = function.retType)
 
 sealed class AstStatement : Ast(type = ZcType.Void)

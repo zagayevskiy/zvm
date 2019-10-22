@@ -468,7 +468,7 @@ class ZcParser(private val lexer: Lexer) {
 
     private fun unaryDereferencing() = maybe<ZcToken.Asterisk>()?.andThan { expression() ?: error("Dereferencing argument expected.") }
 
-    private fun valueExpr() = constExpr() ?: parenthesisExpr() ?: assignmentExpr() ?: sizeOfOperator() ?: castOperator()
+    private fun valueExpr() = constExpr() ?: parenthesisExpr() ?: assignmentExpr() ?: sizeOfOperator() ?: castOperator() ?: functionReference()
 
     private fun constExpr(): AstConst? {
         val constant = maybe<Token.Integer>()?.value
@@ -526,6 +526,10 @@ class ZcParser(private val lexer: Lexer) {
         expect<ZcToken.ParenthesisClose>()
 
         return chain(AstHardCastExpr(expression, type))
+    }
+
+    private fun functionReference(): AstFunctionReference? {
+        return NotMatched
     }
 
     // chain ::= function_call | array_indexing | struct_field_dereference

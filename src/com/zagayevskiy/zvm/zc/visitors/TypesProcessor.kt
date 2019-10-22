@@ -142,11 +142,22 @@ class TypesProcessor(private val program: AstProgram) {
             }
 
             is AstFunctionCall -> ast.apply {
-                val definedFunction = (function as AstFunctionReference).function
-                if (definedFunction.args.size != params.size) error("${definedFunction.name} has ${definedFunction.args.size} params. But $params given.")
-                definedFunction.args.zip(params) { arg, param ->
-                    params[arg.index] = param.tryAutoPromoteTo(arg.type)
-                            ?: error("$param can't be auto promoted to ${arg.type} for argument ${arg.index}(${arg.name})")
+                if (function is AstFunctionReference) {
+                    val definedFunction = (function as AstFunctionReference).function
+                    if (definedFunction.args.size != params.size) error("${definedFunction.name} has ${definedFunction.args.size} params. But $params given.")
+                    definedFunction.args.zip(params) { arg, param ->
+                        params[arg.index] = param.tryAutoPromoteTo(arg.type)
+                                ?: error("$param can't be auto promoted to ${arg.type} for argument ${arg.index}(${arg.name})")
+                    }
+                } else {
+                    val func = function
+                    val funcType = func.type as? ZcType.Function ?: error("$func is not invokable.")
+                    if (funcType.argTypes.size != params.size) error("$func has ${funcType.argTypes.size} params. But invoked with $params.")
+                    funcType.argTypes.forEachIndexed { index, argType ->
+                        params[index] = params[index].tryAutoPromoteTo(argType)
+                                ?: error("${params[index]} can't be auto promoted to $argType for #$index argument of invoked function.")
+                    }
+                    type = funcType.retType
                 }
             }
 

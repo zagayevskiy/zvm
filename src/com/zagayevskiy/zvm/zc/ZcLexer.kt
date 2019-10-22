@@ -8,6 +8,7 @@ object ZcToken {
     object Arrow : Token
     object Assign : Token
     object Colon : Token
+    object QuadDot: Token
     object Comma : Token
     object Dot : Token
     object Semicolon : Token
@@ -64,6 +65,7 @@ private val symbolsMap = mapOf(
         "->" to ZcToken.Arrow,
         "=" to ZcToken.Assign,
         ":" to ZcToken.Colon,
+        "::" to ZcToken.QuadDot,
         "," to ZcToken.Comma,
         "." to ZcToken.Dot,
         ";" to ZcToken.Semicolon,

@@ -16,6 +16,7 @@ object OpcodesMapping {
             JumpNotZero to Opcodes.JNZ,
 
             Call to Opcodes.CALL,
+            Invoke to Opcodes.INVOKE,
             Ret to Opcodes.RET,
             Crash to Opcodes.CRASH,
 
@@ -126,6 +127,7 @@ object JumpNotZero : OpcodeImpl(name = "jnz", operandCount = 1)
 
 object Ret : OpcodeImpl(name = "ret")
 object Call : OpcodeImpl(name = "call", operandCount = 1)
+object Invoke : OpcodeImpl(name = "invoke")
 object Crash : OpcodeImpl(name = "crash")
 
 object JavaCall : OpcodeImpl(name = "jcall", operandCount = 1)
