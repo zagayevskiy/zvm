@@ -16,6 +16,8 @@ private object AstToStringVisitor : AstVisitor<String> {
 
     override fun visit(ast: AstStructFieldDereference) = "field .${ast.name} dereference"
 
+    override fun visit(ast: AstUnknownFunctionReference) = "::${ast.name}"
+
     override fun visit(ast: AstSizeOf) = "sizeof ${ast.unresolvedType}"
 
     override fun visit(ast: AstHardCastExpr) = "hard cast to ${ast.unresolvedCastType}"

@@ -40,6 +40,8 @@ class GraphVizGenerator(private val ast: Ast) {
 
         override fun visit(ast: AstStructFieldDereference) = ".${ast.name}" to ++id
 
+        override fun visit(ast: AstUnknownFunctionReference) = "::${ast.name}" to ++id
+
         override fun visit(ast: AstSizeOf) = "sizeof ${ast.unresolvedType}" to ++id
 
         override fun visit(ast: AstDefinedFunction) = "fun ${ast.name}(${ast.args.map { it.type }}): ${ast.retType}" to ++id

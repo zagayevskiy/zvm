@@ -35,9 +35,9 @@ sealed class Ast(var type: ZcType = ZcType.Unknown) : MutableIterable<Ast> {
 
         @Suppress("UNCHECKED_CAST")
         private val delegatedSubList: L
-                get() = (list
-                .takeIf { defaultValue.isNotEmpty() }
-                ?.subList(beginIndex, beginIndex + defaultValue.size) ?: mutableListOf()) as L
+            get() = (list
+                    .takeIf { defaultValue.isNotEmpty() }
+                    ?.subList(beginIndex, beginIndex + defaultValue.size) ?: mutableListOf()) as L
 
         operator fun getValue(thisRef: Ast, property: KProperty<*>): L = delegatedSubList
     }
@@ -73,21 +73,22 @@ class AstStructDeclaration(val name: String, fieldsDeclarations: List<AstVarDecl
     val fieldsDeclarations by childList(fieldsDeclarations)
 }
 
-class AstDefinedFunction(val name: String, val args: List<AstFunctionArgument>, val retType: ZcType, body: Ast, enclosingScope: Scope)
-    : TopLevelDeclaration(), FunctionScope by FunctionScopeDelegate(enclosingScope, args) {
+class AstDefinedFunction(val name: String, val index: Int, val args: List<AstFunctionArgument>, val retType: ZcType, body: Ast, enclosingScope: Scope)
+    : TopLevelDeclaration(type = ZcType.Function(argTypes = args.map { it.type }, retType = retType)),
+        FunctionScope by FunctionScopeDelegate(enclosingScope, args) {
     val body by child(body)
 }
 
 class AstDefinedStruct(val name: String, val structType: ZcType.Struct) : TopLevelDeclaration(structType)
 
-//class AstUnknownFunctionReference(val name: String): AstExpr()
-class AstFunctionReference(val function: AstDefinedFunction) : AstExpr(type = function.retType)
+class AstUnknownFunctionReference(val name: String) : AstExpr()
+class AstFunctionReference(val function: AstDefinedFunction) : AstExpr(type = function.type)
 
 sealed class AstStatement : Ast(type = ZcType.Void)
 
 data class AstAsmBlock(val body: String) : AstStatement()
 
-class AstStatementList(statements: List<AstStatement> = emptyList()): AstStatement() {
+class AstStatementList(statements: List<AstStatement> = emptyList()) : AstStatement() {
     val statements by childList(statements)
 
     companion object {
@@ -129,13 +130,13 @@ class AstIfElse(condition: AstExpr, ifBody: AstStatement, elseBody: AstStatement
     var elseBody by child(elseBody ?: AstBlock.Empty)
 }
 
-class AstWhen(checkValue: AstExpr, branches: List<AstWhenBranch>, elseStatement: AstStatement?): AstStatement() {
+class AstWhen(checkValue: AstExpr, branches: List<AstWhenBranch>, elseStatement: AstStatement?) : AstStatement() {
     var checkValue by child(checkValue)
     val branches: MutableList<AstWhenBranch> by childList(branches.toMutableList())
     var elseStatement by child(elseStatement ?: AstBlock.Empty)
 }
 
-class AstWhenBranch(case: AstExpr, branch: AstStatement): Ast() {
+class AstWhenBranch(case: AstExpr, branch: AstStatement) : Ast() {
     var case by child(case)
     var branch by child(branch)
 }
@@ -166,10 +167,11 @@ class AstValInitialization(valToInit: AstVal, initializer: AstExpr) : AstStateme
     var initializer by child((initializer))
 }
 
-sealed class AstLocal(type: ZcType): AstExpr(type) {
+sealed class AstLocal(type: ZcType) : AstExpr(type) {
     abstract val name: String
     abstract val offset: Int
 }
+
 class AstVar(override val name: String, override val offset: Int, type: ZcType) : AstLocal(type)
 class AstVal(override val name: String, override val offset: Int, type: ZcType) : AstLocal(type)
 
@@ -196,7 +198,7 @@ sealed class AstConst(type: ZcType) : AstExpr(type) {
     data class Integer(val value: Int) : AstConst(ZcType.Integer)
     data class Byte(val value: kotlin.Byte) : AstConst(ZcType.Byte)
     data class Boolean(val value: kotlin.Boolean) : AstConst(ZcType.Boolean)
-    class DefaultValue(type: ZcType): AstConst(type)
+    class DefaultValue(type: ZcType) : AstConst(type)
     object Undefined : AstConst(ZcType.Unknown)
     object Void : AstConst(ZcType.Void)
 }
@@ -245,7 +247,7 @@ class AstCastExpr(expression: AstExpr, castType: ZcType) : AstExpr(type = castTy
     val expression by child(expression)
 }
 
-class AstSizeOf(val unresolvedType: UnresolvedType): AstExpr(ZcType.Integer)
+class AstSizeOf(val unresolvedType: UnresolvedType) : AstExpr(ZcType.Integer)
 
 private val emptyVisitor: (Ast) -> Ast = { it }
 

@@ -16,7 +16,7 @@ internal class VirtualMachineProgramsTest(private val testCase: VmTestCase) {
 
         @JvmStatic
         @Parameterized.Parameters(name = "{index}: {0}")
-        fun data() = ZcTestCases + AsmTestCases
+        fun data() = (ZcTestCases + AsmTestCases)
     }
 
     private lateinit var vm: VirtualMachine

@@ -45,6 +45,10 @@ class TypesProcessor(private val program: AstProgram) {
             }
             is AstVarDecl -> resolveVarDecl(ast)
             is AstFunctionCall -> resolveFunctionCall(ast)
+            is AstUnknownFunctionReference -> {
+                val definedFunction = currentScope.lookupFunction(ast.name).firstOrNull() ?: error("Reference to unknown function ${ast.name}.")
+                AstFunctionReference(definedFunction)
+            }
             is AstIdentifier -> currentScope.lookup(ast.name) ?: error("Unknown identifier '${ast.name}'")
             is AstSizeOf -> AstConst.Integer(resolveType(ast.unresolvedType).let {
                 when (it) {
@@ -149,6 +153,7 @@ class TypesProcessor(private val program: AstProgram) {
                         params[arg.index] = param.tryAutoPromoteTo(arg.type)
                                 ?: error("$param can't be auto promoted to ${arg.type} for argument ${arg.index}(${arg.name})")
                     }
+                    type = definedFunction.retType
                 } else {
                     val func = function
                     val funcType = func.type as? ZcType.Function ?: error("$func is not invokable.")
@@ -163,7 +168,7 @@ class TypesProcessor(private val program: AstProgram) {
 
             is AstFunctionReturn -> ast.apply {
                 val enclosingFunction = findEnclosingFunction() ?: error("Return-statement can be used only inside a function.")
-                expression = expression.tryAutoPromoteTo(enclosingFunction.retType) ?: error("${expression.type} can't be auto promoted to function return type(${enclosingFunction.retType}).")
+                expression = expression.tryAutoPromoteTo(enclosingFunction.retType) ?: error("${expression} can't be auto promoted to function return type(${enclosingFunction.retType}).")
             }
 
             is AstIfElse -> ast.apply {
@@ -226,9 +231,8 @@ class TypesProcessor(private val program: AstProgram) {
         when (val func = call.function) {
             is AstIdentifier -> {
                 val definedFunction = currentScope.lookupFunction(func.name) //TODO resolve with types
-                        .firstOrNull() ?: error("Unknown function ${func.name}")
+                        .firstOrNull() ?: return@apply //So we do not find function. May it is variable.
                 function = AstFunctionReference(definedFunction)
-                type = definedFunction.retType
             }
         }
     }

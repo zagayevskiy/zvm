@@ -16,12 +16,18 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
     init {
 
         source(TestSource("invoke", """
-            fn inc(i: int): int {
-                return i + 1;
+
+                fn main(i: int): int {
+                val doit = ::apply;
+                return doit(::inc, i);
             }
 
-            fn main(i: int): int {
-                return cast<(int) -> int>(0)(i);
+            fn apply(f: (int) -> int, arg: int): int {
+                return f(arg);
+            }
+
+            fn inc(i: int): int {
+                return i + 1;
             }
 
         """.trimIndent())) {

@@ -528,8 +528,11 @@ class ZcParser(private val lexer: Lexer) {
         return chain(AstHardCastExpr(expression, type))
     }
 
-    private fun functionReference(): AstFunctionReference? {
-        return NotMatched
+    private fun functionReference(): AstUnknownFunctionReference? {
+        maybe<ZcToken.QuadDot>() ?: return NotMatched
+        val name = expect<Token.Identifier>().name
+
+        return AstUnknownFunctionReference(name)
     }
 
     // chain ::= function_call | array_indexing | struct_field_dereference

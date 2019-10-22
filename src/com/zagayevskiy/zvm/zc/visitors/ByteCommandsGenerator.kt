@@ -184,7 +184,9 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
 
     private fun generate(expression: AstExpr) {
         when (expression) {
-            is AstFunctionReference -> TODO("Dynamic function references not implemented yet.")
+            is AstFunctionReference -> {
+                commands.add(IntConst.instruction(expression.function.index.op))
+            }
             is AstBinary -> generate(expression)
             is AstIdentifier -> error("All identifiers must be resolved before. Why $expression don't?")
             is AstFunctionArgument -> {
@@ -338,6 +340,7 @@ private fun instructionByType(type: ZcType, int: () -> Command.Instruction, byte
     ZcType.Integer -> int()
     is ZcType.Array -> int()
     is ZcType.Struct -> int()
+    is ZcType.Function -> int()
     ZcType.Byte -> byte()
     ZcType.Boolean -> byte()
     else -> error("Unwanted type $type")
@@ -347,6 +350,7 @@ private fun instructionByType(type: ZcType, intOpcode: Opcode, byteOpcode: Opcod
     ZcType.Integer -> intOpcode.instruction()
     is ZcType.Array -> intOpcode.instruction()
     is ZcType.Struct -> intOpcode.instruction()
+    is ZcType.Function -> intOpcode.instruction()
     ZcType.Byte -> byteOpcode.instruction()
     ZcType.Boolean -> byteOpcode.instruction()
     else -> error("Unwanted type $type")
