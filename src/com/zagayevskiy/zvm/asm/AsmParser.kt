@@ -13,12 +13,14 @@ import com.zagayevskiy.zvm.asm.Command.Instruction.Operand
 import com.zagayevskiy.zvm.common.Lexer
 import com.zagayevskiy.zvm.common.Token
 import com.zagayevskiy.zvm.common.Token.*
+import com.zagayevskiy.zvm.util.extensions.toSizePrefixedByteArray
 
 sealed class Command {
     data class GlobalsDefinition(val count: Int) : Command()
     data class Func(val name: String, val args: List<Arg>) : Command() {
         data class Arg(val name: String, val type: String)
     }
+    class PoolEntry (val name: String, val bytes: ByteArray): Command()
     data class Label(val label: String) : Command()
     data class Instruction(val opcode: Opcode, val operands: List<Operand> = emptyList()) : Command() {
         init {
@@ -85,6 +87,15 @@ class AsmParser(private val lexer: Lexer, supportedOpcodes: Iterable<Opcode>) {
 
     private fun command() = (globals() ?: func() ?: label() ?: instruction())?.also { command ->
         commands.add(command)
+    }
+
+    private fun pool(): PoolEntry? {
+        if (token != AsmToken.Pool) return null
+        nextToken()
+        val name = (token as? Identifier)?.name ?: error()
+        nextToken()
+        val value = (token as? StringConst)?.value ?: error()
+        return PoolEntry(name, value.toSizePrefixedByteArray())
     }
 
     private fun func(): Func? {

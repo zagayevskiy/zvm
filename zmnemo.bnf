@@ -1,6 +1,7 @@
 program ::= command {EOL{EOL} command}
-command ::= (globals | fun | label | instruction)
+command ::= (pool | globals | fun | label | instruction)
 
+pool ::= ".pool" identifier "\""UTF8"\""
 globals ::= ".global" var_decl
 var_decl ::= identifier ":" identifier
 

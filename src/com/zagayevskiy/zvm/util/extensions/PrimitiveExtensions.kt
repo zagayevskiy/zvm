@@ -26,6 +26,14 @@ fun String.copyToByteArray(destination: ByteArray, destIndex: Int = 0) {
     bytes.copyTo(destination = destination, destIndex = destIndex)
 }
 
+fun String.toSizePrefixedByteArray(): ByteArray {
+    val bytes = toByteArray()
+    val result = ByteArray(bytes.size + 4)
+    length.copyToByteArray(result)
+    bytes.copyTo(result, destIndex = 4)
+    return result
+}
+
 fun ByteArray.copyToInt(startIndex: Int = 0): Int {
     require(startIndex + 3 < size) { "startIndex=$startIndex, size=$size" }
 
@@ -44,7 +52,6 @@ fun ByteArray.copyToLong(startIndex: Int = 0): Long {
 }
 
 fun ByteArray.copyTo(destination: ByteArray, destIndex: Int = 0, sourceIndex: Int = 0, count: Int = size) = System.arraycopy(this, sourceIndex, destination, destIndex, count)
-
 
 infix fun Byte.xor(right: Byte): Int = toInt() xor right.toInt()
 

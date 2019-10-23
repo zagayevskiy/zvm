@@ -12,6 +12,7 @@ object AsmToken {
     object Comma : Token
     object Minus : Token
     object Fun : Token
+    object Pool: Token
     object Locals : Token
     object Globals: Token
 }
@@ -26,6 +27,7 @@ private val symbolsMap = mapOf(
 
 private val keywordsMap = mapOf(
         ".fun" to AsmToken.Fun,
+        ".pool" to AsmToken.Pool,
         "args" to AsmToken.Args,
         "locals" to AsmToken.Locals,
         "globals" to AsmToken.Globals
@@ -36,5 +38,6 @@ class AsmSequenceLexer(sequence: Sequence<Char>) : Lexer by SequenceLexer(
         symbols = symbolsMap,
         keywords = keywordsMap,
         idStart = { isLetter() || this == '.' },
-        idPart = { isLetterOrDigit() || this == '_' }
+        idPart = { isLetterOrDigit() || this == '_' },
+        stringConstDelimitator = { it.takeIf { limiter -> limiter == '"' } }
 )

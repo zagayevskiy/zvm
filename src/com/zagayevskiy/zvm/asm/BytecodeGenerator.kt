@@ -17,6 +17,10 @@ private class FunctionTableRowStruct(array: ByteArray, offset: Int) : BackingStr
     var argsDescription by long
 }
 
+private class Raw(array: ByteArray, offset: Int) : BackingStruct(array, offset) {
+
+}
+
 class BytecodeGenerator {
 
     val serviceInfoSize = sizeOf(::ServiceInfoStruct)

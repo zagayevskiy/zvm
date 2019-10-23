@@ -17,13 +17,16 @@ data class FunctionDefinition(val name: String, val index: Int, val defined: Boo
     }
 }
 
-class GenerationInfo(val globalsCount: Int, val functions: List<FunctionDefinition>, val bytecode: ByteArray)
+class PoolEntryDefinition(val name: String, val offset: Int, val value: ByteArray)
+
+class GenerationInfo(val globalsCount: Int, val functions: List<FunctionDefinition>, val pool: List<PoolEntryDefinition>, val bytecode: ByteArray)
 
 class BytecodeAssembler(private val commands: List<Command>, private val opcodesMapping: Map<Opcode, Byte>) {
 
     private var bytecode = ByteArray(1024)
 
     private val labelDefinitions = mutableMapOf<String, LabelDefinition>()
+    private val poolDefinitions = linkedMapOf<String, PoolEntryDefinition>()
 
     private val functionDefinitionsIndices = mutableMapOf<String, Int>()
     private val functions = mutableListOf<FunctionDefinition>()
@@ -39,6 +42,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
                 is Func -> defineFunction(command)
                 is Label -> defineLabel(command)
                 is Instruction -> addInstruction(command)
+                is PoolEntry -> definePoolEntry(command)
                 is GlobalsDefinition -> defineGlobals(command.count)
             }
         }
@@ -47,7 +51,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
 
         val resultBytecode = ByteArray(ip)
         bytecode.copyTo(destination = resultBytecode, count = ip)
-        return GenerationInfo(globalsCount ?: 0, functions, resultBytecode)
+        return GenerationInfo(globalsCount ?: 0, functions, poolDefinitions.values.toList(), resultBytecode)
     }
 
     private fun addInstruction(command: Instruction) = command.run {
@@ -112,6 +116,11 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
         labelDefinitions[label.label] = LabelDefinition(label.label, true, labelAddress)
     }
 
+    private fun definePoolEntry(entry: PoolEntry) {
+        if (poolDefinitions.containsKey(entry.name)) error("${entry.name} pool entry already defined.")
+        val offset = poolDefinitions.values.lastOrNull()?.let { lastPoolEntry -> lastPoolEntry.offset + lastPoolEntry.value.size } ?: 0
+        poolDefinitions[entry.name] = PoolEntryDefinition(entry.name, offset, entry.bytes)
+    }
 
     private fun defineFunction(func: Func) {
         val index = functionIndex(func.name)
