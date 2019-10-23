@@ -1,8 +1,5 @@
 package testdata.sources.zc.vm.src
 
-import testdata.sources.zc.includes.includeCrash
-import testdata.sources.zc.includes.includeStdMem
-
 
 internal fun includeBytecodeParser() = """
 
@@ -10,6 +7,7 @@ internal fun includeBytecodeParser() = """
         var mainIndex: int;
         var functionsCount: int;
         var globalsCount: int;
+        var constantPoolSize: int;
     }
 
     struct RawFunctionInfo {
@@ -28,6 +26,8 @@ internal fun includeBytecodeParser() = """
         var mainIndex: int;
         var functionsTable: [RuntimeFunction];
         var functionsTableSize: int;
+        var constantPool: [byte];
+        var constantPoolSize: int;
         var bytecode: [byte];
         var bytecodeSize: int;
     }
@@ -40,8 +40,6 @@ internal fun includeBytecodeParser() = """
         val serviceInfo: ServiceInfo = cursor;
         cursor = cursor + serviceInfoSize;
 
-        val bytecodeSize = rawBytecodeSize - (serviceInfoSize + functionInfoSize*serviceInfo.functionsCount);
-
         val runtimeFunctionSize = sizeof<RuntimeFunction>;
         val functionsTable: [RuntimeFunction] = alloc(4*serviceInfo.functionsCount);
         for(var i = 0; i < serviceInfo.functionsCount; i = i + 1) {
@@ -52,12 +50,19 @@ internal fun includeBytecodeParser() = """
             function.address = rawFunction.address;
             function.argsMemorySize = computeArgsMemorySize(rawFunction);
         }
+        val constantPool: [byte] = cursor;
+        cursor = cursor + serviceInfo.constantPoolSize;
+
+        val bytecodeStart: [byte] = cursor;
+        val bytecodeSize = rawBytecodeSize - (cast<int>(bytecodeStart) - cast<int>(rawBytecode));
 
         val result: ProgramInfo = alloc(sizeof<ProgramInfo>);
         result.mainIndex = serviceInfo.mainIndex;
         result.functionsTable = functionsTable;
         result.functionsTableSize = serviceInfo.functionsCount;
-        result.bytecode = rawBytecode + (rawBytecodeSize - bytecodeSize);
+        result.constantPool = constantPool;
+        result.constantPoolSize = serviceInfo.constantPoolSize;
+        result.bytecode = bytecodeStart;
         result.bytecodeSize = bytecodeSize;
 
         return result;

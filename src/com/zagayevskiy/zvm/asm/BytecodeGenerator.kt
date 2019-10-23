@@ -9,6 +9,7 @@ private class ServiceInfoStruct(array: ByteArray, offset: Int) : BackingStruct(a
     var mainIndex by int
     var functionsCount by int
     var globalsCount by int
+    var constantPoolSize by int
 }
 
 private class FunctionTableRowStruct(array: ByteArray, offset: Int) : BackingStruct(array, offset) {
@@ -17,9 +18,7 @@ private class FunctionTableRowStruct(array: ByteArray, offset: Int) : BackingStr
     var argsDescription by long
 }
 
-private class Raw(array: ByteArray, offset: Int) : BackingStruct(array, offset) {
 
-}
 
 class BytecodeGenerator {
 
@@ -31,7 +30,7 @@ class BytecodeGenerator {
         val functions = info.functions
         val bytecode = info.bytecode
 
-        val result = ByteArray(serviceInfoSize + functionsTableRowSize * functions.size + bytecode.size)
+        val result = ByteArray(serviceInfoSize + functionsTableRowSize * functions.size + info.constantPool.size + bytecode.size)
 
         writeServiceInfo(info, result, 0)
 
@@ -40,7 +39,11 @@ class BytecodeGenerator {
             writeFunctionTableRow(func, result, functionsTableStart + index * functionsTableRowSize)
         }
 
-        val bytecodeStart = functionsTableStart + functionsTableRowSize * functions.size
+        val constantPoolStart = functionsTableStart + functionsTableRowSize * functions.size
+
+        info.constantPool.copyTo(destination = result, destIndex = constantPoolStart)
+
+        val bytecodeStart = constantPoolStart + info.constantPool.size
 
         bytecode.copyTo(destination = result, destIndex = bytecodeStart)
 
@@ -52,6 +55,7 @@ class BytecodeGenerator {
             mainIndex = info.functions.findMain()?.index ?: error("main function not found")
             functionsCount = info.functions.size
             globalsCount = info.globalsCount
+            constantPoolSize = info.constantPool.size
         }
     }
 

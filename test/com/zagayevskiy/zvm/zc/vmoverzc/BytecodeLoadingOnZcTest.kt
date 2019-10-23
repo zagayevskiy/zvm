@@ -69,26 +69,34 @@ internal class BytecodeLoadingOnZcTest(private val testCase: VmTestCase) {
             assertEquals(expected.argsMemorySize, actual.argsMemorySize)
         }
 
+        val actualConstantPool = ByteArray(actualInfo.constantPoolSize)
+        heap.copyOut(actualInfo.constantPoolAddress, actualConstantPool)
+        assertEquals(actualConstantPool.toList(), testCaseLoadedInfo.constantPool.toList())
+
         val actualBytecode = ByteArray(actualInfo.bytecodeSize)
         heap.copyOut(actualInfo.bytecodeAddress, actualBytecode)
-
         assertEquals(actualBytecode.toList(), testCaseLoadedInfo.bytecode.toList())
     }
 }
 
 /*
-struct ProgramInfo {
-     var mainIndex: int;
-     var functionsTable: [FunctionInfo];
-     var functionsTableSize: int;
-     var bytecode: [byte];
-     var bytecodeSize: int;
- }
+    struct ProgramInfo {
+        var mainIndex: int;
+        var functionsTable: [RuntimeFunction];
+        var functionsTableSize: int;
+        var constantPool: [byte];
+        var constantPoolSize: int;
+        var bytecode: [byte];
+        var bytecodeSize: int;
+    }
+
 */
 private class TestProgramInfo(array: ByteArray, offset: Int): BackingStruct(array, offset) {
     val mainIndex by int
     val functionsTableAddress by int
     val functionTableSize by int
+    val constantPoolAddress by int
+    val constantPoolSize by int
     val bytecodeAddress by int
     val bytecodeSize by int
 

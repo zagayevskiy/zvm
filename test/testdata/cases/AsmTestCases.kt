@@ -168,6 +168,12 @@ private object BinarySourcesBuilder {
                 run(args = args, ret = ret((left as StackEntry.VMInteger).intValue, (right as StackEntry.VMInteger).intValue))
             }
         }
+        source(binaryIntSourceWithConstantPool()) {
+            binaryTestsIntArguments.forEach { args ->
+                val (left, right) = args
+                run(args = args, ret = ret((left as StackEntry.VMInteger).intValue, (right as StackEntry.VMInteger).intValue))
+            }
+        }
     }
 
     infix fun Opcode.breturns(ret: (left: Byte, right: Byte) -> Int) {
@@ -204,6 +210,17 @@ private fun Opcode.binaryIntSourceWithAdditionalCall() = TestSource("Binary $nam
         lloadi left
         lloadi right
         call f
+        ret
+
+    """.trimIndent())
+
+private fun Opcode.binaryIntSourceWithConstantPool() = TestSource("Binary $name w/ pool", """
+
+        .pool p$name "some dummy string $name"
+        .fun main: left: int, right: int
+        lloadi left
+        lloadi right
+        $name
         ret
 
     """.trimIndent())

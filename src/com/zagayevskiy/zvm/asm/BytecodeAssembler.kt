@@ -19,7 +19,7 @@ data class FunctionDefinition(val name: String, val index: Int, val defined: Boo
 
 class PoolEntryDefinition(val name: String, val offset: Int, val value: ByteArray)
 
-class GenerationInfo(val globalsCount: Int, val functions: List<FunctionDefinition>, val pool: List<PoolEntryDefinition>, val bytecode: ByteArray)
+class GenerationInfo(val globalsCount: Int, val functions: List<FunctionDefinition>, val constantPool: ByteArray, val bytecode: ByteArray)
 
 class BytecodeAssembler(private val commands: List<Command>, private val opcodesMapping: Map<Opcode, Byte>) {
 
@@ -51,7 +51,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
 
         val resultBytecode = ByteArray(ip)
         bytecode.copyTo(destination = resultBytecode, count = ip)
-        return GenerationInfo(globalsCount ?: 0, functions, poolDefinitions.values.toList(), resultBytecode)
+        return GenerationInfo(globalsCount ?: 0, functions, poolDefinitions.toByteArray(), resultBytecode)
     }
 
     private fun addInstruction(command: Instruction) = command.run {
@@ -97,7 +97,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
     private fun obtainFuncArgumentOffset(argName: String, checkType: FunctionDefinition.Type? = null): Int? {
         val currentFunc = lastDefinedFunction ?: throw IllegalStateException("No function defined but offset for $argName arg wanted")
         return currentFunc.args.firstOrNull { it.name == argName }?.apply {
-            if(checkType != null && checkType != type) error("Want $checkType for arg $argName but $type found")
+            if (checkType != null && checkType != type) error("Want $checkType for arg $argName but $type found")
         }?.offset
     }
 
@@ -118,9 +118,17 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
 
     private fun definePoolEntry(entry: PoolEntry) {
         if (poolDefinitions.containsKey(entry.name)) error("${entry.name} pool entry already defined.")
-        val offset = poolDefinitions.values.lastOrNull()?.let { lastPoolEntry -> lastPoolEntry.offset + lastPoolEntry.value.size } ?: 0
+        val offset = poolDefinitions.currentBytesSize()
         poolDefinitions[entry.name] = PoolEntryDefinition(entry.name, offset, entry.bytes)
     }
+
+    private fun Map<String, PoolEntryDefinition>.toByteArray(): ByteArray =
+            values.fold(ByteArray(currentBytesSize()) to 0) { (acc, offset), entry ->
+                entry.value.copyTo(acc, offset)
+                acc to (offset + entry.offset)
+            }.first
+
+    private fun Map<String, PoolEntryDefinition>.currentBytesSize() = values.lastOrNull()?.let { lastPoolEntry -> lastPoolEntry.offset + lastPoolEntry.value.size } ?: 0
 
     private fun defineFunction(func: Func) {
         val index = functionIndex(func.name)
@@ -128,7 +136,7 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
         if (existed.defined) error("Function ${func.name} already defined!")
         checkThatAllLabelsDefined()
         labelDefinitions.clear()
-        val defined = existed.copy(defined = true, address = ip, args =  func.args.toDefinitionArgs())
+        val defined = existed.copy(defined = true, address = ip, args = func.args.toDefinitionArgs())
         functions[index] = defined
         lastDefinedFunction = defined
     }

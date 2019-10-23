@@ -85,16 +85,17 @@ class AsmParser(private val lexer: Lexer, supportedOpcodes: Iterable<Opcode>) {
         return GlobalsDefinition(count.value)
     }
 
-    private fun command() = (globals() ?: func() ?: label() ?: instruction())?.also { command ->
+    private fun command() = (globals() ?: func() ?: pool() ?: label() ?: instruction())?.also { command ->
         commands.add(command)
     }
 
     private fun pool(): PoolEntry? {
         if (token != AsmToken.Pool) return null
         nextToken()
-        val name = (token as? Identifier)?.name ?: error()
+        val name = (token as? Identifier)?.name ?: error("name of constant pool entry expected")
         nextToken()
-        val value = (token as? StringConst)?.value ?: error()
+        val value = (token as? StringConst)?.value ?: error("constant pool entry expected")
+        nextToken()
         return PoolEntry(name, value.toSizePrefixedByteArray())
     }
 

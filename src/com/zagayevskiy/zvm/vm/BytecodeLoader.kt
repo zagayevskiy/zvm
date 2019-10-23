@@ -9,12 +9,13 @@ sealed class LoadingResult {
     class Failure(val message: String) : LoadingResult()
 }
 
-class LoadedInfo(val globalsCount: Int, val functions: List<RuntimeFunction>, val mainIndex: Int, val bytecode: ByteArray)
+class LoadedInfo(val globalsCount: Int, val functions: List<RuntimeFunction>, val mainIndex: Int, val constantPool: ByteArray, val bytecode: ByteArray)
 
 internal class ServiceInfoStruct(array: ByteArray, offset: Int) : BackingStruct(array, offset) {
-    var mainIndex by int
-    var functionsCount by int
-    var globalsCount by int
+    val mainIndex by int
+    val functionsCount by int
+    val globalsCount by int
+    val constantPoolSize by int
 }
 
 internal class FunctionTableRowStruct(array: ByteArray, offset: Int) : BackingStruct(array, offset) {
@@ -36,12 +37,13 @@ class BytecodeLoader(private val rawBytecode: ByteArray) {
         val mainIndex = serviceInfo.mainIndex
         val functionsCount = serviceInfo.functionsCount
         val globalsCount = serviceInfo.globalsCount
+        val constantPoolSize = serviceInfo.constantPoolSize
 
         if (functionsCount <= 0) return LoadingResult.Failure("Functions count must be positive. Has $functionsCount.")
         if (mainIndex < 0 || mainIndex >= functionsCount) return LoadingResult.Failure("Invalid main index ($mainIndex). Has $functionsCount} functions")
 
-        val minSizeWithFuncs = serviceInfoSize + functionsCount * functionRowSize + 1
-        if (rawBytecodeSize < minSizeWithFuncs) return LoadingResult.Failure("Bytecode too small: ${rawBytecode.size} bytes. Must be at least $minSizeWithFuncs bytes. Declared $functionsCount functions.")
+        val minSizeWithFuncsAndConstantPool = serviceInfoSize + functionsCount * functionRowSize + constantPoolSize + 1
+        if (rawBytecodeSize < minSizeWithFuncsAndConstantPool) return LoadingResult.Failure("Bytecode too small: ${rawBytecode.size} bytes. Must be at least $minSizeWithFuncsAndConstantPool bytes. Declared $functionsCount functions and $constantPoolSize bytes constant pool.")
 
         @Suppress("UnnecessaryVariable")
         val functionTableStart = serviceInfoSize
@@ -53,7 +55,11 @@ class BytecodeLoader(private val rawBytecode: ByteArray) {
                     argTypesReversed = functionInfo.readArgsTypes().reversed())
         }
 
-        val bytecodeStart = functionTableStart + functionsCount * functionRowSize
+        val constantPoolStart = functionTableStart + functionsCount * functionRowSize
+        val constantPool = ByteArray(constantPoolSize)
+        rawBytecode.copyTo(destination = constantPool, sourceIndex = constantPoolStart, count = constantPoolSize)
+
+        val bytecodeStart = constantPoolStart + constantPoolSize
         val bytecodeSize = rawBytecodeSize - bytecodeStart
 
         val checked = checkFunctions(functions, bytecodeSize)
@@ -62,7 +68,7 @@ class BytecodeLoader(private val rawBytecode: ByteArray) {
         val bytecode = ByteArray(bytecodeSize)
         rawBytecode.copyTo(destination = bytecode, sourceIndex = bytecodeStart, count = bytecodeSize)
 
-        return LoadingResult.Success(LoadedInfo(globalsCount, functions, mainIndex, bytecode))
+        return LoadingResult.Success(LoadedInfo(globalsCount, functions, mainIndex, constantPool = constantPool, bytecode = bytecode))
     }
 
     //TODO see BytecodeGenerator and may be merge types somehow
