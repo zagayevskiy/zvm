@@ -29,7 +29,7 @@ fun String.copyToByteArray(destination: ByteArray, destIndex: Int = 0) {
 fun String.toSizePrefixedByteArray(): ByteArray {
     val bytes = toByteArray()
     val result = ByteArray(bytes.size + 4)
-    length.copyToByteArray(result)
+    bytes.size.copyToByteArray(result)
     bytes.copyTo(result, destIndex = 4)
     return result
 }

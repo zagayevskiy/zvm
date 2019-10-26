@@ -146,7 +146,7 @@ interface VmIo {
     fun print(value: String)
 }
 
-private object SimpleVmIo: VmIo {
+object SimpleVmIo: VmIo {
     override fun print(value: String) = println(value)
 }
 

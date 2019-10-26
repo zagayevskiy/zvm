@@ -9,6 +9,7 @@ import com.zagayevskiy.zvm.vm.*
 import testdata.sources.asm.AsmFactorial
 import testdata.sources.asm.AsmFibonacci
 import testdata.sources.asm.AsmReverse
+import testdata.sources.asm.AsmSimple
 import testdata.sources.asm.AsmSimple.JustRet0
 import testdata.sources.asm.AsmSimple.JustRetArg
 
@@ -23,6 +24,10 @@ object AsmTestCases : MutableList<VmTestCase> by mutableListOf() {
             run(arg = 2, ret = 2)
             run(arg = 5, ret = 120)
             run(arg = 12, ret = 479001600)
+        }
+
+        source(AsmSimple.PrintHelloFromPool) {
+            run(args = No, prints = AsmSimple.HelloStrings)
         }
 
         binarySources {
@@ -118,10 +123,19 @@ private class AsmRunBuilder(val source: TestSource) {
 
     fun run(args: List<StackEntry>, ret: StackEntry) {
         AsmTestCases.add(SimpleVmTestCase(
-                """Asm ${source.name} ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "") } -> $ret"""",
+                """Asm ${source.name} ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "")} -> $ret"""",
                 precompiledProgram,
                 runArgs = args,
                 expectedResult = ret
+        ))
+    }
+
+    fun run(args: List<StackEntry>, prints: List<String>) {
+        AsmTestCases.add(PrintVmTestCase(
+                """Asm print ${source.name} ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "")} prints $prints""",
+                precompiledProgram,
+                runArgs = args,
+                expectPrinted = prints
         ))
     }
 }
@@ -203,11 +217,6 @@ private fun Opcode.binaryIntSourceWithAdditionalCall() = TestSource("Binary $nam
         .fun f: left: int, right: int
         lloadi left
         lloadi right
-        .pool x "call f and do $name"
-        pushcp
-        consti x
-        addi
-        out
         $name
         ret
 

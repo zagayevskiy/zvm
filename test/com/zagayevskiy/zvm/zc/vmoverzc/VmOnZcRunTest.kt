@@ -64,7 +64,7 @@ internal class VmOnZcRunTest(private val testCase: VmTestCase) {
 
         val actualResult = regularVm.run(entries(bytecodeAddress, testCase.bytecode.size, testcaseMainArgsAddress, testcastMainArgsByteSize))
 
-        assertEquals(testCase.expectedResult, actualResult)
+        testCase.checkResult(actualResult)
     }
 
     private fun List<StackEntry>.toByteArray(): ByteArray {

@@ -51,7 +51,11 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
 
         val resultBytecode = ByteArray(ip)
         bytecode.copyTo(destination = resultBytecode, count = ip)
-        return GenerationInfo(globalsCount ?: 0, functions, poolDefinitions.toByteArray(), resultBytecode)
+        val constantPool = poolDefinitions.toByteArray()
+        if (constantPool.toList() != poolDefinitions.values.map { it.value.toList() }.flatten()) {
+            error("Constant pool check failed")
+        }
+        return GenerationInfo(globalsCount ?: 0, functions, constantPool = constantPool, bytecode = resultBytecode)
     }
 
     private fun addInstruction(command: Instruction) = command.run {
@@ -129,8 +133,12 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
 
     private fun Map<String, PoolEntryDefinition>.toByteArray(): ByteArray =
             values.fold(ByteArray(currentBytesSize()) to 0) { (acc, offset), entry ->
-                entry.value.copyTo(acc, offset)
-                acc to (offset + entry.offset)
+                try {
+                    entry.value.copyTo(destination = acc, destIndex = offset)
+                }catch (e: Exception) {
+                    println(e.message)
+                }
+                acc to (offset + entry.value.size)
             }.first
 
     private fun Map<String, PoolEntryDefinition>.currentBytesSize() = values.lastOrNull()?.let { lastPoolEntry -> lastPoolEntry.offset + lastPoolEntry.value.size } ?: 0

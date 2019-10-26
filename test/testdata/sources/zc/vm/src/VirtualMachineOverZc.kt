@@ -124,7 +124,7 @@ internal val vmOverZc = """
                 -64 -> gloadb(context);
                 -65 -> gstorb(context);
 
-                -10 -> out(context);
+                -10 -> out(popInt(context.operandsStack));
                 -11 -> doAlloc(context);
                 -12 -> doFree(context);
                 else -> crash(code);
@@ -484,10 +484,9 @@ internal val vmOverZc = """
         return frame;
     }
 
-    fn out(context: Context): int {
-        val address = popInt(context.operandsStack);
+    fn out(address: int): int {
         asm{"
-            lloadi 0
+            lloadi address
             out
         "}
         return 0;
