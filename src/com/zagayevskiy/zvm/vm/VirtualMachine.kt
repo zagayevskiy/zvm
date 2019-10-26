@@ -71,6 +71,7 @@ import com.zagayevskiy.zvm.common.Opcodes.ORB
 import com.zagayevskiy.zvm.common.Opcodes.ORI
 import com.zagayevskiy.zvm.common.Opcodes.OUT
 import com.zagayevskiy.zvm.common.Opcodes.POP
+import com.zagayevskiy.zvm.common.Opcodes.PUSHCP
 import com.zagayevskiy.zvm.common.Opcodes.PUSHFP
 import com.zagayevskiy.zvm.common.Opcodes.RET
 import com.zagayevskiy.zvm.common.Opcodes.RNDI
@@ -141,6 +142,14 @@ class SimpleJavaInterop : JavaInterop {
     }
 }
 
+interface VmIo {
+    fun print(value: String)
+}
+
+private object SimpleVmIo: VmIo {
+    override fun print(value: String) = println(value)
+}
+
 private object DisabledJavaInterop : JavaInterop {
     override fun put(obj: Any?): Int = 0
     override fun get(index: Int): Any? = null
@@ -152,13 +161,25 @@ class VMStackUnderflow(message: String) : Exception(message)
 class VMStackCorrupted(message: String) : Exception(message)
 class VMStackProtected(message: String) : Exception(message)
 
-class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, private val heap: Memory = BitTableMemory(localsStackSize), private val javaInterop: JavaInterop = DisabledJavaInterop) {
+class VirtualMachine(info: LoadedInfo,
+                     private val localsStackSize: Int = 1024,
+                     private val heap: Memory = BitTableMemory(localsStackSize),
+                     private val javaInterop: JavaInterop = DisabledJavaInterop,
+                     private val io: VmIo = SimpleVmIo) {
 
     private val functions = info.functions
     private val mainIndex = info.mainIndex
     private val bytecode: ByteArray = info.bytecode
 
     private val globals = (0 until info.globalsCount).map { VMNull as StackEntry }.toMutableList()
+
+    private val constantPoolBaseAddress = try {
+        heap.allocate(info.constantPool.size).also { address ->
+            heap.copyIn(source = info.constantPool, destination = address)
+        }
+    } catch (oom: VMOutOfMemory) {
+        throw VMOutOfMemory("No enough memory to allocate constant pool. Want ${info.constantPool.size} bytes.")
+    }
 
     private val localsStackBaseAddress = try {
         heap.allocate(localsStackSize)
@@ -239,6 +260,7 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
                 DECSPI -> addStackPointer(-4)
                 INCSPB -> addStackPointer(1)
                 DECSPB -> addStackPointer(-1)
+                PUSHCP -> push(constantPoolBaseAddress)
 
                 ADDI -> addi()
                 SUBI -> subi()
@@ -712,12 +734,12 @@ class VirtualMachine(info: LoadedInfo, private val localsStackSize: Int = 1024, 
 
     //endregion
 
-    private fun out() = pop().let { entry ->
-        return@let when (entry) {
-            is VMInteger -> println(entry.intValue)
-            is VMByte -> println(entry.byteValue)
-            is StackEntry.VMNull -> println("null")
-        }
+    private fun out() {
+        val address = pop<VMInteger> { "int expected as address of UTF-8 prefexed length string for output" }.intValue
+        val length = heap.readInt(address).takeIf { it > 0 } ?: error("length of string for output can not be null")
+        val bytes = ByteArray(length)
+        heap.copyOut(source = address + 4, destination = bytes)
+        io.print(String(bytes, Charsets.UTF_8))
     }
 
     private fun checkGlobalIndex(index: Int) {

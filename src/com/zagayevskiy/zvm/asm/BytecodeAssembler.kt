@@ -67,7 +67,10 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
                 is Instruction.Operand.Id -> when (opcode) {
                     Call -> write(functionIndex(operand.name))
                     Jmp, JumpZero, JumpNotZero -> write(obtainLabel(operand.name))
-                    IntConst -> write(obtainFuncArgumentOffset(operand.name) ?: obtainFunctionIndex(operand.name) ?: TODO("May be global?"))
+                    IntConst -> write(obtainFuncArgumentOffset(operand.name)
+                            ?: obtainFunctionIndex(operand.name)
+                            ?: obtainContsantEntryPoolOffset(operand.name)
+                            ?: TODO("May be global?"))
                     LocalLoadInt, LocalStoreInt -> write(obtainFuncArgumentOffset(operand.name, DefInt) ?: error("Arg ${operand.name} not defined."))
                     LocalLoadByte, LocalStoreByte -> write(obtainFuncArgumentOffset(operand.name, DefByte) ?: error("Arg ${operand.name} not defined."))
                     else -> error("opcode ${opcode.name} can't operate with $operand")
@@ -102,6 +105,8 @@ class BytecodeAssembler(private val commands: List<Command>, private val opcodes
     }
 
     private fun obtainFunctionIndex(name: String) = functionDefinitionsIndices[name]
+
+    private fun obtainContsantEntryPoolOffset(name: String) = poolDefinitions[name]?.offset
 
     private fun defineLabel(label: Label) {
         val labelAddress = ip

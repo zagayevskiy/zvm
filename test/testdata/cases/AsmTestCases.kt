@@ -203,6 +203,11 @@ private fun Opcode.binaryIntSourceWithAdditionalCall() = TestSource("Binary $nam
         .fun f: left: int, right: int
         lloadi left
         lloadi right
+        .pool x "call f and do $name"
+        pushcp
+        consti x
+        addi
+        out
         $name
         ret
 

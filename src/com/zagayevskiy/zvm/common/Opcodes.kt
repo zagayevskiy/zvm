@@ -25,6 +25,7 @@ object Opcodes {
     const val DECSPI: Byte = 17
     const val INCSPB: Byte = 18
     const val DECSPB: Byte = 19
+    const val PUSHCP: Byte = 20
 
     //region casts opcodes
     const val ITOB: Byte = 21

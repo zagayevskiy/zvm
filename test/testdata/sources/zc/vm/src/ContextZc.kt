@@ -12,6 +12,7 @@ internal fun includeContext() = """
         var ip: int;
         var localsStackBaseAddress: [void];
         var sp: [void];
+        var constantPool: [void];
     }
 
      fn createContext(info: ProgramInfo): Context {
@@ -25,6 +26,7 @@ internal fun includeContext() = """
         result.ip = 0;
         result.localsStackBaseAddress = alloc(65536);
         result.sp = result.localsStackBaseAddress;
+        result.constantPool = info.constantPool;
 
         return result;
     }

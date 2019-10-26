@@ -60,6 +60,7 @@ internal val vmOverZc = """
                 17 -> addStackPointer(context, -4);
                 18 -> addStackPointer(context, 1);
                 19 -> addStackPointer(context, -1);
+                20 -> pushInt(context.operandsStack, cast<int>(context.constantPool));
 
                 21 -> itob(context);
                 22 -> btoi(context);
@@ -123,7 +124,7 @@ internal val vmOverZc = """
                 -64 -> gloadb(context);
                 -65 -> gstorb(context);
 
-                -10 -> asm{"out"}
+                -10 -> out(context);
                 -11 -> doAlloc(context);
                 -12 -> doFree(context);
                 else -> crash(code);
@@ -481,6 +482,15 @@ internal val vmOverZc = """
         frame.previousStackPointer = previousStackPointer;
         frame.returnAddress = returnAddress;
         return frame;
+    }
+
+    fn out(context: Context): int {
+        val address = popInt(context.operandsStack);
+        asm{"
+            lloadi 0
+            out
+        "}
+        return 0;
     }
 
     fn print(arg: [void]): int {

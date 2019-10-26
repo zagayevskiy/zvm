@@ -32,6 +32,7 @@ object OpcodesMapping {
             DecStackPointerInt to Opcodes.DECSPI,
             IncStackPointerByte to Opcodes.INCSPB,
             DecStackPointerByte to Opcodes.DECSPB,
+            PushConstantPool to Opcodes.PUSHCP,
 
             GlobalStoreInt to Opcodes.GSTORI,
             GlobalLoadInt to Opcodes.GLOADI,
@@ -142,6 +143,7 @@ object IncStackPointerInt : OpcodeImpl(name = "incspi")
 object DecStackPointerInt : OpcodeImpl(name = "decspi")
 object IncStackPointerByte : OpcodeImpl(name = "incspb")
 object DecStackPointerByte : OpcodeImpl(name = "decspb")
+object PushConstantPool : OpcodeImpl(name = "pushcp")
 
 object GlobalLoadInt : OpcodeImpl(name = "gloadi", operandCount = 1)
 object GlobalStoreInt : OpcodeImpl(name = "gstori", operandCount = 1)
