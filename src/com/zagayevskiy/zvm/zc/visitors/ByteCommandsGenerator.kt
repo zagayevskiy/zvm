@@ -78,7 +78,9 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             }
             is AstExpressionStatement -> Unit.also {
                 generate(statement.expression)
-                commands.add(Pop.instruction())
+                if (statement.expression.type !is ZcType.Void) {
+                    commands.add(Pop.instruction())
+                }
             }
             is AstWhen -> generate(statement)
         }
@@ -288,7 +290,6 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
         when (val left = assignment.assignable) {
             is AstVar -> {
                 generate(assignment.assignation)
-                commands.add(Dup.instruction())
                 val offset = left.offset.op
 
                 commands.add(instructionByType(left.type,
@@ -302,7 +303,6 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                 commands.add(IntMul.instruction())
                 generate(assignment.assignation)
                 commands.add(instructionByType(left.type, MemoryStoreInt, MemoryStoreByte))
-                commands.add(IntConst.instruction(0.op)) //TODO just to pop
             }
             is AstStructFieldDereference -> {
                 val field = left.structType.findField(left.name) ?: error("Field must be resolved before.")
@@ -310,7 +310,6 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                 commands.add(IntConst.instruction(field.offset.op))
                 generate(assignment.assignation)
                 commands.add(instructionByType(left.type, MemoryStoreInt, MemoryStoreByte))
-                commands.add(IntConst.instruction(0.op)) //TODO just to pop
             }
             else -> error("$left isn't lvalue.")
         }

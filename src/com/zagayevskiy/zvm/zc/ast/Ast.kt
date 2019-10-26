@@ -157,7 +157,7 @@ sealed class AstBinary(left: AstExpr, right: AstExpr) : AstExpr() {
 }
 
 class AstIdentifier(val name: String) : AstExpr()
-class AstAssignment(assigned: AstExpr, assignation: AstExpr) : AstExpr() {
+class AstAssignment(assigned: AstExpr, assignation: AstExpr) : AstExpr(ZcType.Void) {
     val assignable by child(assigned)
     var assignation by child(assignation)
 }
