@@ -40,6 +40,10 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                     else -> error("Unknown function body.")
                 }
             }
+
+            if (function.retType is ZcType.Void) {
+                commands.add(Ret.instruction())
+            }
         }
     }
 

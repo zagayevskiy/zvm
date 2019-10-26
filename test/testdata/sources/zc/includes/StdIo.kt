@@ -1,19 +1,10 @@
 package testdata.sources.zc.includes
 
 internal fun includeStdIo() = """
-    fn outInt(value: int): int {
+    fn print(string: [byte]) {
         asm{"
-            lloadi value
+            lloadi string
             out
         "}
-        return 0;
-    }
-
-    fn outByte(value: byte): int {
-        asm{"
-            lloadb value
-            out
-        "}
-        return 0;
     }
 """.trimIndent()

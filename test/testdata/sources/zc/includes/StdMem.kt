@@ -10,12 +10,10 @@ internal fun includeStdMem() = """
         "}
     }
 
-    fn free(memory: [void]): int {
+    fn free(memory: [void]) {
         asm {"
             lloadi memory
             free
-            consti 0
-            ret
         "}
     }
 
@@ -26,12 +24,11 @@ internal fun includeStdMem() = """
         "}
     }
 
-    fn copy(src: [void], dst: [void], count: int): int {
+    fn copy(src: [void], dst: [void], count: int) {
         val srcBytes: [byte] = src;
         val dstBytes: [byte] = dst;
         for (var i = 0; i < count; i = i + 1) {
             dstBytes[i] = srcBytes[i];
         }
-        return 0;
     }
 """
