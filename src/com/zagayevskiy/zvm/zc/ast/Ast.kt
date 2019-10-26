@@ -198,6 +198,7 @@ sealed class AstConst(type: ZcType) : AstExpr(type) {
     data class Integer(val value: Int) : AstConst(ZcType.Integer)
     data class Byte(val value: kotlin.Byte) : AstConst(ZcType.Byte)
     data class Boolean(val value: kotlin.Boolean) : AstConst(ZcType.Boolean)
+    class StringLiteral(val value: String): AstConst(ZcType.Array(ZcType.Byte))
     class DefaultValue(type: ZcType) : AstConst(type)
     object Undefined : AstConst(ZcType.Unknown)
     object Void : AstConst(ZcType.Void)

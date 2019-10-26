@@ -492,14 +492,6 @@ internal val vmOverZc = """
         return 0;
     }
 
-    fn print(arg: [void]): int {
-        asm{"
-            lloadi arg
-            out
-        "}
-        return 0;
-    }
-
     fn freeStackFrame(frame: StackFrame): int {
         return free(frame);
     }

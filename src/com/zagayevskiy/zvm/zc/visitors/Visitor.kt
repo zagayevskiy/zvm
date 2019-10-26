@@ -84,6 +84,8 @@ interface AstVisitor<R> {
 
     fun visit(ast: AstConst.Boolean): R
 
+    fun visit(ast: AstConst.StringLiteral): R
+
     fun visit(ast: AstConst.Undefined): R
 
     fun visit(ast: AstConst.Void): R
@@ -152,6 +154,7 @@ fun <R> visit(visitor: AstVisitor<R>, ast: Ast) = when (ast) {
     is AstConst.Integer -> visitor.visit(ast)
     is AstConst.Byte -> visitor.visit(ast)
     is AstConst.Boolean -> visitor.visit(ast)
+    is AstConst.StringLiteral -> visitor.visit(ast)
     is AstConst.Undefined -> visitor.visit(ast)
     is AstConst.Void -> visitor.visit(ast)
     is AstConst.DefaultValue -> visitor.visit(ast)

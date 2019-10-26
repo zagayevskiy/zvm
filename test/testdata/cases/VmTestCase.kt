@@ -19,6 +19,8 @@ interface VmTestCase {
 
     val runArgs: List<StackEntry>
 
+    fun prepare(){}
+
     fun checkResult(actualResult: StackEntry)
 }
 
@@ -41,9 +43,16 @@ internal class PrintVmTestCase(override val name: String,
                                      override val runArgs: List<StackEntry>,
                                      private val expectPrinted: List<String>) : AbsVmTestCase() {
 
-    override val io = TestVmIo()
+    private lateinit var testIo: TestVmIo
 
-    override fun checkResult(actualResult: StackEntry) = assertEquals(expectPrinted, io.printed)
+    override fun prepare() {
+        testIo = TestVmIo()
+    }
+
+    override val io: VmIo
+        get() = testIo
+
+    override fun checkResult(actualResult: StackEntry) = assertEquals(expectPrinted, testIo.printed)
 }
 
 internal class TestVmIo : VmIo {

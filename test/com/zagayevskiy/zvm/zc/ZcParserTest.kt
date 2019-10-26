@@ -140,7 +140,7 @@ internal class ZcParserTest(private val test: TestData) {
 }
 
 class PrintSpyLexer(private val lexer: Lexer) : Lexer {
-    override fun nextToken() = lexer.nextToken().also { println(it) }
+    override fun nextToken() = lexer.nextToken()
 
     override val currentLine
         get() = lexer.currentLine

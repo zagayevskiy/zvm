@@ -96,6 +96,8 @@ private object AstToStringVisitor : AstVisitor<String> {
 
     override fun visit(ast: AstConst.Boolean) = "bool:${ast.value}"
 
+    override fun visit(ast: AstConst.StringLiteral) = """"${ast.value}""""
+
     override fun visit(ast: AstConst.Undefined) = "undefined"
 
     override fun visit(ast: AstConst.Void) = "void"

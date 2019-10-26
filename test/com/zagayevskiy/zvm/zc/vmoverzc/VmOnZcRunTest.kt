@@ -49,10 +49,8 @@ internal class VmOnZcRunTest(private val testCase: VmTestCase) {
         }
 
         compiler = ZcCompiler()
+        testCase.prepare()
     }
-
-//    @Test
-//    fun
 
     @Test
     fun runTestCasesInNestedVm() {
@@ -60,7 +58,7 @@ internal class VmOnZcRunTest(private val testCase: VmTestCase) {
         val vmLoader = BytecodeLoader(compiledVm)
         val loadedVm = vmLoader.load() as LoadingResult.Success
 
-        val regularVm = VirtualMachine(loadedVm.info, heap = heap)
+        val regularVm = VirtualMachine(loadedVm.info, heap = heap, io = testCase.io)
 
         val actualResult = regularVm.run(entries(bytecodeAddress, testCase.bytecode.size, testcaseMainArgsAddress, testcastMainArgsByteSize))
 

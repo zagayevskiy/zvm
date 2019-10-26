@@ -23,10 +23,10 @@ internal class VirtualMachineProgramsTest(private val testCase: VmTestCase) {
 
     @Before
     fun setup() {
+        testCase.prepare()
         val loader = BytecodeLoader(testCase.bytecode)
         val info = (loader.load() as LoadingResult.Success).info
         vm = VirtualMachine(info, testCase.stackSize, BitTableMemory(testCase.heapSize), io = testCase.io)
-
     }
 
     @Test

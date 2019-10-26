@@ -471,11 +471,15 @@ class ZcParser(private val lexer: Lexer) {
     private fun valueExpr() = constExpr() ?: parenthesisExpr() ?: assignmentExpr() ?: sizeOfOperator() ?: castOperator() ?: functionReference()
 
     private fun constExpr(): AstConst? {
-        val constant = maybe<Token.Integer>()?.value
+        val int = maybe<Token.Integer>()?.value
                 ?: maybe<ZcToken.Minus>()?.andThan { expect<Token.Integer>().value * -1 }
-                ?: return NotMatched
 
-        return AstConst.Integer(constant)
+        if (int != null) return AstConst.Integer(int)
+
+        val stringLiteral = maybe<Token.StringConst>() ?: return NotMatched
+
+
+        return AstConst.StringLiteral(stringLiteral.value)
     }
 
     // parenthesis_expr ::= "(" expression ")" [chain]

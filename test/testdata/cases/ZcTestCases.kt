@@ -3,11 +3,7 @@ package testdata.cases
 import com.zagayevskiy.zvm.entries
 import com.zagayevskiy.zvm.vm.*
 import com.zagayevskiy.zvm.zc.ZcCompiler
-import testdata.sources.zc.ZcFactorial
-import testdata.sources.zc.ZcFibonacci
-import testdata.sources.zc.ZcReverseInt
-import testdata.sources.zc.includes.includeStdIo
-import testdata.sources.zc.stackTest
+import testdata.sources.zc.*
 
 internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
     val Sources = mutableListOf<TestSource>()
@@ -15,9 +11,13 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
 
     init {
 
+        source(Print.HelloStringLiteral) {
+            run(args = emptyList(), prints = Print.HelloStrings)
+        }
+
         source(TestSource("invoke", """
 
-                fn main(i: int): int {
+            fn main(i: int): int {
                 val doit = ::apply;
                 return doit(::inc, i);
             }
@@ -136,6 +136,15 @@ private class ZcRunBuilder(val source: TestSource) {
                 precompiledProgram,
                 runArgs = args,
                 expectedResult = ret
+        ))
+    }
+
+    fun run(args: List<StackEntry>, prints: List<String>) {
+        ZcTestCases.add(PrintVmTestCase(
+                """Zc print ${source.name} ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "")}"""",
+                precompiledProgram,
+                runArgs = args,
+                expectPrinted = prints
         ))
     }
 }

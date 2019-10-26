@@ -1,6 +1,7 @@
 package com.zagayevskiy.zvm.zc.visitors
 
 import com.zagayevskiy.zvm.asm.*
+import com.zagayevskiy.zvm.util.extensions.toSizePrefixedByteArray
 import com.zagayevskiy.zvm.zc.ast.*
 import com.zagayevskiy.zvm.zc.scopes.LocalScope
 import com.zagayevskiy.zvm.zc.types.ZcType
@@ -220,6 +221,13 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             is AstConst.Integer -> commands.add(IntConst.instruction(expression.value.op))
             is AstConst.Byte -> commands.add(ByteConst.instruction(expression.value.op))
             is AstConst.Boolean -> commands.add(ByteConst.instruction((if (expression.value) 1 else 0).op))
+            is AstConst.StringLiteral -> {
+                val poolEntryName = "zc_pool_entry@$nextId"
+                commands.add(Command.PoolEntry(poolEntryName, expression.value.toSizePrefixedByteArray()))
+                commands.add(PushConstantPool.instruction())
+                commands.add(IntConst.instruction(poolEntryName.id))
+                commands.add(IntAdd.instruction())
+            }
             is AstConst.DefaultValue -> commands.add(instructionByType(expression.type,
                     int = { IntConst.instruction(0.op) },
                     byte = { ByteConst.instruction(0.op) }))

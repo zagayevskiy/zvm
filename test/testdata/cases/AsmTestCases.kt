@@ -6,10 +6,7 @@ import com.zagayevskiy.zvm.util.extensions.and
 import com.zagayevskiy.zvm.util.extensions.or
 import com.zagayevskiy.zvm.util.extensions.xor
 import com.zagayevskiy.zvm.vm.*
-import testdata.sources.asm.AsmFactorial
-import testdata.sources.asm.AsmFibonacci
-import testdata.sources.asm.AsmReverse
-import testdata.sources.asm.AsmSimple
+import testdata.sources.asm.*
 import testdata.sources.asm.AsmSimple.JustRet0
 import testdata.sources.asm.AsmSimple.JustRetArg
 
@@ -26,8 +23,8 @@ object AsmTestCases : MutableList<VmTestCase> by mutableListOf() {
             run(arg = 12, ret = 479001600)
         }
 
-        source(AsmSimple.PrintHelloFromPool) {
-            run(args = No, prints = AsmSimple.HelloStrings)
+        source(AsmPrint.HelloFromPool) {
+            run(args = No, prints = AsmPrint.HelloStrings)
         }
 
         binarySources {

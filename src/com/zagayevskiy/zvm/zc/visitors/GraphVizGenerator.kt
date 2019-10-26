@@ -114,6 +114,8 @@ class GraphVizGenerator(private val ast: Ast) {
 
         override fun visit(ast: AstConst.Boolean) = "bool:${ast.value}" to ++id
 
+        override fun visit(ast: AstConst.StringLiteral) = """"${ast.value}"""" to ++id
+
         override fun visit(ast: AstConst.Undefined) = "undefined" to ++id
 
         override fun visit(ast: AstConst.Void) = "void" to ++id
