@@ -43,8 +43,16 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
 
             if (function.retType is ZcType.Void) {
                 commands.add(Ret.instruction())
+            } else {
+                //TODO Maybe add control flow analysis?..
+                generateFunctionFinishedGuard()
             }
         }
+    }
+
+    private fun generateFunctionFinishedGuard() {
+        commands.add(IntConst.instruction(0xBADBAD.op))
+        commands.add(Crash.instruction())
     }
 
     private fun ZcType.toAsmType() = when (this) {

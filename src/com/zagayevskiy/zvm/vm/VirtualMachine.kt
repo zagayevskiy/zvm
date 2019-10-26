@@ -94,6 +94,7 @@ import com.zagayevskiy.zvm.vm.StackEntry.*
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import java.util.*
+import kotlin.math.abs
 
 data class RuntimeFunction(val address: Address, val argTypesReversed: List<RuntimeType>) {
     val argsMemorySize = argTypesReversed.fold(0) { totalSize, arg -> totalSize + arg.size }
@@ -110,6 +111,7 @@ sealed class StackEntry {
     data class VMInteger(val intValue: Int) : StackEntry() {
         override fun toString() = "i$intValue"
     }
+
     data class VMByte(val byteValue: Byte) : StackEntry() {
         override fun toString() = "b$byteValue"
     }
@@ -148,7 +150,7 @@ interface VmIo {
     fun print(value: String)
 }
 
-object SimpleVmIo: VmIo {
+object SimpleVmIo : VmIo {
     override fun print(value: String) = println(value)
 }
 
@@ -194,7 +196,8 @@ class VirtualMachine(info: LoadedInfo,
             when {
                 value > localsStackBaseAddress + localsStackSize -> throw VMStackOverflow("Trying to increase stack size to ${value - localsStackBaseAddress} while max stack size is $localsStackSize")
                 value < localsStackBaseAddress -> throw VMStackUnderflow("Trying to set sp under the base address")
-                callStack.peekOrNull()?.previousStackPointer?.let { savedSp -> savedSp > value } ?: false -> throw VMStackCorrupted("Trying to set sp under current saved sp. value=$value, frame=${callStack.peek()}")
+                callStack.peekOrNull()?.previousStackPointer?.let { savedSp -> savedSp > value }
+                        ?: false -> throw VMStackCorrupted("Trying to set sp under current saved sp. value=$value, frame=${callStack.peek()}")
             }
             field = value
         }
@@ -211,7 +214,7 @@ class VirtualMachine(info: LoadedInfo,
         args.forEach { push(it) }
         call(mainIndex)
         loop()
-        return pop().also { if(operandsStack.isNotEmpty()) error("Operands stack is not empty: $operandsStack") }
+        return pop().also { if (operandsStack.isNotEmpty()) error("Operands stack is not empty: $operandsStack") }
     }
 
     private fun loop() {
@@ -225,7 +228,8 @@ class VirtualMachine(info: LoadedInfo,
                     ret()
                 }
                 CRASH -> {
-                    throw RuntimeException("crash ${pop()}")
+                    val crashCode = pop<VMInteger>().intValue
+                    throw RuntimeException("crash with code $crashCode(0x${crashCode.toString(16)})")
                 }
                 JCALL -> jcall(decodeNextInt())
                 JNEW -> jnew(decodeNextInt())
