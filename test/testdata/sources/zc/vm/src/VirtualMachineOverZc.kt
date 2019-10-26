@@ -52,9 +52,11 @@ internal val vmOverZc = """
                 6 -> crash(popInt(context.operandsStack));
                 7 -> invoke(context);
 
-                12 -> pop(context);
-                13 -> dup(context);
-                14 -> pushfp(context);
+                10 -> popByte(context.operandsStack);
+                11 -> pushByte(context.operandsStack, peekByte(context.operandsStack));
+                12 -> popInt(context.operandsStack);
+                13 -> pushInt(context.operandsStack, peekInt(context.operandsStack));
+                14 -> pushInt(context.operandsStack, cast<int>(peekStackFrame(context.callStack).framePointer));
                 15 -> addStackPointer(context, nextInt(context));
                 16 -> addStackPointer(context, 4);
                 17 -> addStackPointer(context, -4);
@@ -173,11 +175,7 @@ internal val vmOverZc = """
         val argument = popByte(context.operandsStack);
         if (argument != 0) jump(context, address);
     }
-    fn pop(context: Context) { popInt(context.operandsStack); }
-    fn dup(context: Context) { pushInt(context.operandsStack, peekInt(context.operandsStack)); }
-    fn pushfp(context: Context) {
-        pushInt(context.operandsStack, cast<int>(peekStackFrame(context.callStack).framePointer));
-    }
+
     fn addStackPointer(context: Context, value: int) {
         context.sp = context.sp + value;
     }

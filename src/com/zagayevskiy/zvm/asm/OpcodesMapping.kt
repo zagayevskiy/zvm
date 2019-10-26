@@ -2,7 +2,6 @@ package com.zagayevskiy.zvm.asm
 
 import com.zagayevskiy.zvm.common.Opcodes
 import com.zagayevskiy.zvm.util.BitTable
-import java.lang.IllegalStateException
 
 abstract class OpcodeImpl(override val name: String, override val operandCount: Int = 0) : Opcode {
     override fun toString() = "${javaClass.simpleName} (operands: $operandCount)"
@@ -24,8 +23,10 @@ object OpcodesMapping {
             JavaNew to Opcodes.JNEW,
             JavaDelete to Opcodes.JDEL,
 
-            Pop to Opcodes.POP,
-            Dup to Opcodes.DUP,
+            PopInt to Opcodes.POPI,
+            DupInt to Opcodes.DUPI,
+            PopByte to Opcodes.POPB,
+            DupByte to Opcodes.DUPB,
             PushFramePointer to Opcodes.PUSHFP,
             AddStackPointer to Opcodes.ADDSP,
             IncStackPointerInt to Opcodes.INCSPI,
@@ -135,8 +136,10 @@ object JavaCall : OpcodeImpl(name = "jcall", operandCount = 1)
 object JavaNew : OpcodeImpl(name = "jnew", operandCount = 1)
 object JavaDelete : OpcodeImpl(name = "jdel")
 
-object Pop : OpcodeImpl(name = "pop") //TODO make it i/b
-object Dup : OpcodeImpl(name = "dup") //TODO make it i/b
+object PopInt : OpcodeImpl(name = "popi")
+object DupInt : OpcodeImpl(name = "dupi")
+object PopByte : OpcodeImpl(name = "popb")
+object DupByte : OpcodeImpl(name = "dupb")
 object PushFramePointer : OpcodeImpl(name = "pushfp")
 object AddStackPointer : OpcodeImpl(name = "addsp", operandCount = 1)
 object IncStackPointerInt : OpcodeImpl(name = "incspi")

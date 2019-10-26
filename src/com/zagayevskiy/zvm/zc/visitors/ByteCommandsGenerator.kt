@@ -83,7 +83,7 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             is AstExpressionStatement -> Unit.also {
                 generate(statement.expression)
                 if (statement.expression.type !is ZcType.Void) {
-                    commands.add(Pop.instruction())
+                    commands.add(instructionByType(statement.expression.type, intOpcode = PopInt, byteOpcode = PopByte))
                 }
             }
             is AstWhen -> generate(statement)
@@ -124,17 +124,17 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             val currentBranchLabel = branchLabel(index)
             val nextBranchLabel = branchLabel(index + 1)
             commands.add(Command.Label(currentBranchLabel))
-            commands.add(Dup.instruction())
+            commands.add(instructionByType(whenStatement.checkValue.type,intOpcode = DupInt, byteOpcode = DupByte))
             generate(branch.case)
             commands.add(instructionByType(whenStatement.checkValue.type, IntEq, ByteEq))
             commands.add(JumpZero.instruction(nextBranchLabel.id))
-            commands.add(Pop.instruction())
+            commands.add(instructionByType(whenStatement.checkValue.type, intOpcode = PopInt, byteOpcode = PopByte))
             generate(branch.branch)
             commands.add(Jmp.instruction(endLabel.id))
         }
         val elseLabel = branchLabel(whenStatement.branches.size)
         commands.add(Command.Label(elseLabel))
-        commands.add(Pop.instruction())
+        commands.add(instructionByType(whenStatement.checkValue.type, intOpcode = PopInt, byteOpcode = PopByte))
         generate(whenStatement.elseStatement)
         commands.add(Command.Label(endLabel))
 

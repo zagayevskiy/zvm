@@ -22,7 +22,8 @@ import com.zagayevskiy.zvm.common.Opcodes.DECSPB
 import com.zagayevskiy.zvm.common.Opcodes.DECSPI
 import com.zagayevskiy.zvm.common.Opcodes.DIVB
 import com.zagayevskiy.zvm.common.Opcodes.DIVI
-import com.zagayevskiy.zvm.common.Opcodes.DUP
+import com.zagayevskiy.zvm.common.Opcodes.DUPB
+import com.zagayevskiy.zvm.common.Opcodes.DUPI
 import com.zagayevskiy.zvm.common.Opcodes.EQB
 import com.zagayevskiy.zvm.common.Opcodes.EQI
 import com.zagayevskiy.zvm.common.Opcodes.FREE
@@ -70,7 +71,8 @@ import com.zagayevskiy.zvm.common.Opcodes.NOTI
 import com.zagayevskiy.zvm.common.Opcodes.ORB
 import com.zagayevskiy.zvm.common.Opcodes.ORI
 import com.zagayevskiy.zvm.common.Opcodes.OUT
-import com.zagayevskiy.zvm.common.Opcodes.POP
+import com.zagayevskiy.zvm.common.Opcodes.POPB
+import com.zagayevskiy.zvm.common.Opcodes.POPI
 import com.zagayevskiy.zvm.common.Opcodes.PUSHCP
 import com.zagayevskiy.zvm.common.Opcodes.PUSHFP
 import com.zagayevskiy.zvm.common.Opcodes.RET
@@ -252,8 +254,10 @@ class VirtualMachine(info: LoadedInfo,
                 MLOADB -> memoryLoadByte()
                 MSTORB -> memoryStoreByte()
 
-                POP -> pop()
-                DUP -> push(peek())
+                POPI -> pop<VMInteger>()
+                DUPI -> push(peek<VMInteger>())
+                POPB -> pop<VMByte>()
+                DUPB -> push(peek<VMByte>())
                 PUSHFP -> push(callStack.peek().framePointer)
                 ADDSP -> addStackPointer(decodeNextInt())
                 INCSPI -> addStackPointer(4)
@@ -587,7 +591,11 @@ class VirtualMachine(info: LoadedInfo,
     private fun push(value: Int) = push(value.toStackEntry())
     private fun push(value: Byte) = push(value.toStackEntry())
 
-    private fun peek() = operandsStack.peek()
+    private inline fun <reified T : StackEntry> peek(lazyErrorMessage: (wrong: StackEntry) -> String = { "${T::class.simpleName} expected at top of the stack, but $it found" }): T {
+        val value = operandsStack.peek()
+        if (value !is T) error(lazyErrorMessage(value))
+        return value
+    }
     //endregion
 
     //region int expressions

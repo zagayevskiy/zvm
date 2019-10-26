@@ -17,8 +17,10 @@ object Opcodes {
     const val JDEL: Byte = -3
     //endregion
 
-    const val POP: Byte = 12
-    const val DUP: Byte = 13
+    const val POPB: Byte = 10
+    const val DUPB: Byte = 11
+    const val POPI: Byte = 12
+    const val DUPI: Byte = 13
     const val PUSHFP: Byte = 14
     const val ADDSP: Byte = 15
     const val INCSPI: Byte = 16

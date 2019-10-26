@@ -84,7 +84,7 @@ internal val overloadedConstructor = """
     btoj
     ${storeStringWithSize("안녕하세요 낯선")}
     stoj
-    dup
+    dupi
     lstori 2
 
     lloadi 0
@@ -140,11 +140,11 @@ private fun storeStringWithSize(s: String): String {
     val bytes = s.toByteArray(Charsets.UTF_8)
     return """
     consti ${bytes.size}
-    dup
+    dupi
     alloc
     ${bytes.mapIndexed { index, byte ->
         listOf(
-                "dup",
+                "dupi",
                 "consti $index",
                 "constb $byte",
                 "mstorb")

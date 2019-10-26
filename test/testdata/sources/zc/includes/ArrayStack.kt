@@ -50,7 +50,7 @@ internal fun includeStack() = """
         return cast<[byte]>(stack.stack)[newTop];
     }
 
-    fn peekByte(stack: Stack): int {
+    fn peekByte(stack: Stack): byte {
         if (stack.top == 0) crash(106);
         return cast<[byte]>(stack.stack)[stack.top - sizeof<byte>];
     }
