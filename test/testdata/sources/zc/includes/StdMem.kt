@@ -17,13 +17,6 @@ internal fun includeStdMem() = """
         "}
     }
 
-    fn null(): [void] {
-        asm {"
-            consti 0
-            ret
-        "}
-    }
-
     fn copy(src: [void], dst: [void], count: int) {
         val srcBytes: [byte] = src;
         val dstBytes: [byte] = dst;

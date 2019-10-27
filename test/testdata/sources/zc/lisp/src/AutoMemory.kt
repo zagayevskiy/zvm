@@ -16,13 +16,14 @@ fun includeAutoMemory() = """
         type: byte;
     }
 
-    
+    const CT_LIST: byte = 1;
+
     fn makeAutoMemory(maxMemorySize: int): AutoMemory {
         val result = cast<AutoMemory>(alloc(sizeof<AutoMemory>));
         result.mem = alloc(maxMemorySize);
         result.size = maxMemorySize;
         result.unlayouted = 0;
-        result.recycled = null();
+        result.recycled = nil;
         result.available = maxMemorySize / sizeof<Cons>;
 
         return result;
@@ -43,7 +44,7 @@ fun includeAutoMemory() = """
     fn alloc_cons(autoMemory: AutoMemory): Cons {
         autoMemory.available = autoMemory.available - 1;
         val recycled = autoMemory.recycled
-        if(recycled == null()) {
+        if(recycled == nil) {
             return layout_next();
         }
 
@@ -64,7 +65,7 @@ fun includeAutoMemory() = """
     }
 
     fn recycle(autoMemory: AutoMemory, cons: Cons) {
-        cons.left = null();
+        cons.left = nil;
         cons.right = autoMemory.recycled;
         cons.type = CT_LIST;
         autoMemory.recycled = cons;
@@ -72,7 +73,6 @@ fun includeAutoMemory() = """
     }
 
     const MARK_MASK: byte = 128;
-    const UNMARK_MASK: byte = ~MARK_MASK;
 
     fn mark(cons: Cons) {
         if (cons.type == CT_LIST) {
@@ -85,10 +85,11 @@ fun includeAutoMemory() = """
     fn sweep(autoMemory: AutoMemory) {
         val mem = autoMemory.mem;
         val unlayoutedAbsolete = cast<int>(mem + autoMemory.unlayouted);
+        val unmarkMask = ~MARK_MASK;
         for(var cursor = cast<int>(mem); cursor <= unlayoutedAbsolete; cursor = cursor + 9) {
             val current = cast<Cons>(cursor);
             if (current.type & MARK_MASK) {
-                current.type = current.type & UNMARK_MASK;
+                current.type = current.type & unmarkMask;
             } else {
                 recycle(current);
             }

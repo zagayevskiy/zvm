@@ -87,7 +87,6 @@ internal val linkedList = """
     }
 
     fn createList(count: int): Node {
-        val nil = null();
         var root: Node = nil;
         var tail: Node = nil;
 
@@ -110,7 +109,7 @@ internal val linkedList = """
     fn sumList(root: Node): int {
         var result = 0;
         var cursor = root;
-        while(cursor != null()) {
+        while(cursor != nil) {
             result = result + cursor.payload;
             cursor = cursor.next;
         }
@@ -132,7 +131,7 @@ internal val linkedList = """
     fn size(root: Node): int {
         var cursor = root;
         var result = 0;
-        while(cursor != null()) {
+        while(cursor != nil) {
             result = result + 1;
             cursor = cursor.next;
         }
@@ -142,10 +141,10 @@ internal val linkedList = """
 
     fn reverse(root: Node): Node {
         var current = root;
-        var prev: Node = null();
+        var prev: Node = nil;
         var next: Node;
 
-        while(current != null()) {
+        while(current != nil) {
             next = current.next;
             current.next = prev;
             prev = current;
