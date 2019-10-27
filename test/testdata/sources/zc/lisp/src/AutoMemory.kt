@@ -39,13 +39,24 @@ fun includeAutoMemory() = """
         return makeCons(autoMemory, left, right, CT_LIST);
     }
 
+    fn car(cons: Cons): Cons {
+        if (cons == nil) return cast<Cons>(nil);
+        assertType(cons, CT_LIST, "list expected");
+        return cast<Cons>(cons.left);
+    }
+
+    fn cdr(cons: Cons): Cons {
+        if(cons == nil) return cast<Cons>(nil);
+        assertType(cons, CT_LIST, "list expected");
+        return cast<Cons>(cons.right);
+    }
+
     fn makeNumber(autoMemory: AutoMemory, value: int): Cons {
         return makeCons(autoMemory, cast<[void]>(value), nil, CT_INT);
     }
 
     fn getInt(cons: Cons): int {
         assertType(cons, CT_INT, "int expected");
-
         return cast<int>(cons.left);
     }
 
