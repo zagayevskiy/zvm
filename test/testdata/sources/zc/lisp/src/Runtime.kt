@@ -1,4 +1,4 @@
-package testdata.sources.zc.lisp
+package testdata.sources.zc.lisp.src
 
 fun includeRuntime() ="""
 

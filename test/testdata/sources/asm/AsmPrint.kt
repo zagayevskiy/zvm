@@ -4,7 +4,13 @@ import testdata.cases.TestSource
 
 object AsmPrint {
 
-    val HelloStrings = listOf("Hello!")//, "'Hello' in russian из Привет!", "Hello по-гречески: Γεια!", "Japan: 今日は。!", "Qazaqsha: Сәлем!", "Кхмерский: ជំរាបសួរ!")
+    val HelloStrings = listOf("Hello!",
+            "'Hello' in russian из Привет!",
+            "Hello по-гречески: Γεια!",
+            "Japan: 今日は。!",
+            "Татарча: Сәлам!",
+            "Кхмерский: ជំរាបសួរ!",
+            "Сингальский(wat?): ආයුබෝවන්!")
 
     val HelloFromPool = TestSource("Hello",
             ".fun main" +

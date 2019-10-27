@@ -4,7 +4,12 @@ import testdata.cases.TestSource
 
 object Print {
 
-    val HelloStrings = listOf("Hello!", "'Hello' in russian из Привет!", "Hello по-гречески: Γεια!", "Japan: 今日は。!", "Qazaqsha: Сәлем!", "Кхмерский: ជំរាបសួរ!")
+    val HelloStrings = listOf("Hello!",
+            "'Hello' in russian из Привет!",
+            "Hello по-гречески: Γεια!",
+            "Japan: 今日は。!",
+            "Qazaqsha: Сәлем!",
+            "Кхмерский: ជំរាបសួរ!")
 
     val HelloStringLiteral = TestSource("Hello",
             """
