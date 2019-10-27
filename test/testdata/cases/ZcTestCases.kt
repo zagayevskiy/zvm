@@ -4,12 +4,17 @@ import com.zagayevskiy.zvm.entries
 import com.zagayevskiy.zvm.vm.*
 import com.zagayevskiy.zvm.zc.ZcCompiler
 import testdata.sources.zc.*
+import testdata.sources.zc.lisp.testsrc.AutoMemoryTestSource
 
 internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
     val Sources = mutableListOf<TestSource>()
 
 
     init {
+
+        source(AutoMemoryTestSource.Test) {
+            run(emptyList(), 0)
+        }
 
         source(Print.HelloStringLiteral) {
             run(args = emptyList(), prints = Print.HelloStrings)

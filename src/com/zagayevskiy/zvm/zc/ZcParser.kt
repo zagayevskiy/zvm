@@ -59,7 +59,7 @@ class ZcParser(private val lexer: Lexer) {
 
         expect<ZcToken.CurlyBracketOpen>()
 
-        val fieldsDeclarations = structDeclarationList()
+        val fieldsDeclarations = structDeclarationList().takeIf { it.isNotEmpty() } ?: error("At least one field declaration expected for struct $name.")
 
         expect<ZcToken.CurlyBracketClose>()
 
@@ -71,7 +71,6 @@ class ZcParser(private val lexer: Lexer) {
             add(structFieldDeclaration() ?: break)
             expect<ZcToken.Semicolon>()
         }
-        if (isEmpty()) error("At least one field declaration expected.")
     }
 
     private fun structFieldDeclaration() = varDecl()

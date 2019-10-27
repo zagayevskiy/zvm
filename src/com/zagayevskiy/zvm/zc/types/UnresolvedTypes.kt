@@ -19,7 +19,8 @@ sealed class UnresolvedType {
 fun Scope.resolveType(unresolved: UnresolvedType): ZcType = when (unresolved) {
     is UnresolvedType.Simple -> {
         val name = unresolved.name
-        ZcType.byName(name) ?: lookupStruct(name)?.type ?: error("Unknown type $name.")
+        ZcType.byName(name) ?: lookupStruct(name)?.type
+        ?: error("Unknown type $name.")
     }
     is UnresolvedType.Array -> {
         val elementsType = resolveType(unresolved.elementType)

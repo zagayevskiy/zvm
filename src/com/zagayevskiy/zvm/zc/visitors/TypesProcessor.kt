@@ -151,7 +151,7 @@ class TypesProcessor(private val program: AstProgram) {
                     if (definedFunction.args.size != params.size) error("${definedFunction.name} has ${definedFunction.args.size} params. But $params given.")
                     definedFunction.args.zip(params) { arg, param ->
                         params[arg.index] = param.tryAutoPromoteTo(arg.type)
-                                ?: error("$param can't be auto promoted to ${arg.type} for argument ${arg.index}(${arg.name})")
+                                ?: error("$param with type ${param.type} can't be auto promoted to ${arg.type} for argument ${arg.index}(${arg.name}) in ${definedFunction.name} call")
                     }
                     type = definedFunction.retType
                 } else {
@@ -187,7 +187,8 @@ class TypesProcessor(private val program: AstProgram) {
                 when (assignable) {
                     is AstVar,
                     is AstArrayIndexing,
-                    is AstStructFieldDereference -> assignation = assignation.tryAutoPromoteTo(assignable.type) ?: error("Can't auto promote ${assignation.type} to ${assignable.type} for assignment. right: $assignation")
+                    is AstStructFieldDereference -> assignation = assignation.tryAutoPromoteTo(assignable.type)
+                            ?: error("Can't auto promote ${assignation.type} to ${assignable.type} for assignment. right: $assignation")
 
                     else -> error("$assignable isn't assignable.")
                 }

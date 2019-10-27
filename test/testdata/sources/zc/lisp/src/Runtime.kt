@@ -3,7 +3,7 @@ package testdata.sources.zc.lisp.src
 fun includeRuntime() ="""
 
     struct env_t {
-
+        env: int;
     }
 
     struct runtime_t {
