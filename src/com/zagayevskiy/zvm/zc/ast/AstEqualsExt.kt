@@ -25,6 +25,8 @@ private class AstEqualityVisitor(private val other: Ast) : AstVisitor<Boolean> {
 
     override fun visit(ast: AstDefinedFunction) = ast.check { ast.args.zipWithCondition(it) { left, right -> left == right } }
 
+    override fun visit(ast: AstConstDeclaration) = ast.check { ast.name == it.name && ast.initializer == it.initializer && ast.declaredType == it.declaredType }
+
     override fun visit(ast: AstBlock) = ast.check()
 
     override fun visit(ast: AstStatementList) = ast.check()

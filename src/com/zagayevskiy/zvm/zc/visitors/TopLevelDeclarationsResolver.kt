@@ -14,6 +14,7 @@ class TopLevelDeclarationsResolver(private val ast: Ast) {
             when (ast) {
                 is AstFunctionDeclaration -> declare(ast) ?: error("Function ${ast.name} with arguments ${ast.args.map { it.type }} already defined.")
                 is AstStructDeclaration -> declare(ast) ?: error("Struct ${ast.name} already defined.")
+                is AstConstDeclaration -> ast.apply { declare(ast) }
                 else -> ast
             }
         })
@@ -63,6 +64,41 @@ class TopLevelDeclarationsResolver(private val ast: Ast) {
         }
 
         return globalScope.declareStruct(structDecl.name, ZcType.Struct(structDecl.name, fields))
+    }
+
+
+    private fun declare(constDecl: AstConstDeclaration) {
+        val type = constDecl.declaredType?.let { resolveType(it) }
+        val value = when(type) {
+            null -> {
+                when (val initializer = constDecl.initializer) {
+                    is AstConst.Integer, is AstConst.Byte, is AstConst.Boolean -> initializer
+                    else -> null
+                }
+            }
+            is ZcType.Integer -> when (val initializer = constDecl.initializer) {
+                is AstConst.Integer -> initializer
+                is AstConst.Byte -> AstConst.Integer(initializer.value.toInt())
+                is AstConst.Boolean -> AstConst.Integer(if (initializer.value) 1 else 0)
+                else -> null
+            }
+            is ZcType.Byte -> when (val  initializer = constDecl.initializer) {
+                is AstConst.Integer -> AstConst.Byte(initializer.value.toByte())
+                is AstConst.Byte -> initializer
+                is AstConst.Boolean -> AstConst.Byte(if(initializer.value) 1 else 0)
+                else -> null
+            }
+            is ZcType.Boolean ->  when (val  initializer = constDecl.initializer) {
+                is AstConst.Integer -> if (initializer.value != 0) AstConst.Boolean.True else AstConst.Boolean.False
+                is AstConst.Byte -> if (initializer.value != 0.toByte()) AstConst.Boolean.True else AstConst.Boolean.False
+                is AstConst.Boolean -> initializer
+                else -> null
+            }
+            else -> error("$type const not supported yet.")
+        } ?: error("${constDecl.initializer.type} const not supported yet.")
+
+        if (!globalScope.declareConst(constDecl.name, value)) error("${constDecl.name} already defined.")
+        constDecl.type = value.type
     }
 
     private fun resolveType(unresolved: UnresolvedType): ZcType = globalScope.resolveType(unresolved)

@@ -16,8 +16,9 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
         program.declarations.forEach { topLevelSymbol ->
             return@forEach when (topLevelSymbol) {
                 is AstFunctionDeclaration -> error("All functions must be resolved before")
-                is AstStructDeclaration, is AstDefinedStruct -> {
-                }//TODO("Structs not supported yet.")
+                is AstStructDeclaration, is AstDefinedStruct, is AstConstDeclaration -> {
+                    //Nothing to do
+                }
                 is AstDefinedFunction -> generate(topLevelSymbol)
             }
         }

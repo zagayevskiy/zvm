@@ -37,7 +37,20 @@ class ZcParser(private val lexer: Lexer) {
     }
 
     private fun topLevelDeclaration(): TopLevelDeclaration {
-        return struct() ?: function() ?: error("Top-level declaration expected.")
+        return struct() ?: function() ?: constDefinition() ?: error("Top-level declaration expected.")
+    }
+
+    private fun constDefinition(): AstConstDeclaration? {
+        maybe<ZcToken.Const>() ?: return NotMatched
+        val name = expect<Identifier>().name
+
+        val type = maybe<ZcToken.Colon>()?.andThan { type()?:error("Type expected after ':'") }
+
+        val initializer = expect<ZcToken.Assign>().andThan { constExpr() ?: error("Const initializer expected.") }
+
+        expect<ZcToken.Semicolon>()
+
+        return AstConstDeclaration(name, type, initializer)
     }
 
     private fun struct(): AstStructDeclaration? {

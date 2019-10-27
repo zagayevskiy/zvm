@@ -12,6 +12,8 @@ private object AstToStringVisitor : AstVisitor<String> {
 
     override fun visit(ast: AstDefinedFunction) = "defined fn ${ast.name}"
 
+    override fun visit(ast: AstConstDeclaration) = "const ${ast.name}"
+
     override fun visit(ast: AstDefinedStruct) = "defined struct ${ast.name}: ${ast.structType}"
 
     override fun visit(ast: AstStructFieldDereference) = "field .${ast.name} dereference"

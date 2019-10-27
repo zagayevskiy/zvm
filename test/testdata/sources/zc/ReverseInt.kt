@@ -5,8 +5,10 @@ import testdata.cases.TestSource
 internal object ZcReverseInt {
     //run with one argument(int) and reverse it bytes
      val Bytes = TestSource("Reverse int bytes", """
+        const firstByteMask = 255;
+        const secondByteMask = 65280;
         fn main(x: int): int {
-            return ((x >> 24) & 255) | ((x >> 8) & 65280) | ((x & 255) << 24) | ((x & 65280) << 8);
+            return ((x >> 24) & firstByteMask) | ((x >> 8) & secondByteMask) | ((x & firstByteMask) << 24) | ((x & secondByteMask) << 8);
         }
     """.trimIndent())
 

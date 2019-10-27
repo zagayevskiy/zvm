@@ -1,7 +1,8 @@
 program ::= top_level_definition { top_level_definition }
 
-top_level_definition ::= struct | function
+top_level_definition ::= struct | function | const_definition
 
+const_definition ::= "const" identifier [":" type] "=" const ";"
 struct ::= "struct" "{" struct_declaration_list "}"
 struct_declaration_list ::= struct_field_declaration { struct_field_declaration }
 struct_field_declaration ::= var_declaration ";"

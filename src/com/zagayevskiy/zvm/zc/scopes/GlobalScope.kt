@@ -7,6 +7,13 @@ class GlobalScope : BaseScope(null) {
 
     private val functions = mutableMapOf<String, MutableList<AstDefinedFunction>>()
     private val structs = mutableMapOf<String, AstDefinedStruct>()
+    private val consts = mutableMapOf<String, AstConst>()
+
+    init {
+        declareConst("true", AstConst.Boolean.True)
+        declareConst("false", AstConst.Boolean.False)
+        declareConst("nil", AstConst.DefaultValue(forType = ZcType.Array(itemType = ZcType.Void)))
+    }
 
     override fun declareVar(name: String, type: ZcType): AstVar? {
         TODO("Globals not supported yet")
@@ -42,10 +49,19 @@ class GlobalScope : BaseScope(null) {
         return AstDefinedStruct(name, type).also { structs[name] = it }
     }
 
+    fun declareConst(name: String, initializer: AstConst): Boolean {
+        if (consts.containsKey(name)) return false
+        consts[name] = initializer
+        return true
+    }
+
     override fun lookupFunction(name: String) = functions[name] ?: emptyList<AstDefinedFunction>()
 
-
     override fun lookupStruct(name: String) = structs[name]
+
+    override fun lookup(name: String, deep: Boolean): AstExpr? {
+        return consts[name] ?: super.lookup(name, deep)
+    }
 
     private fun List<AstFunctionArgument>.typesEquals(types: List<ZcType>) = mapIndexed { index, arg -> arg.type == types[index] }.all { it }
 }

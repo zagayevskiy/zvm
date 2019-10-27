@@ -45,7 +45,7 @@ sealed class Ast(var type: ZcType = ZcType.Unknown) : MutableIterable<Ast> {
     override fun iterator(): MutableListIterator<Ast> = children.listIterator()
 
     override fun toString() = if (children.isEmpty()) {
-        "${stringValue()}"
+        stringValue()
     } else {
         "(${stringValue()}, children=$children)"
     }
@@ -80,6 +80,8 @@ class AstDefinedFunction(val name: String, val index: Int, val args: List<AstFun
 }
 
 class AstDefinedStruct(val name: String, val structType: ZcType.Struct) : TopLevelDeclaration(structType)
+
+class AstConstDeclaration(val name: String, val declaredType: UnresolvedType?, val initializer: AstConst): TopLevelDeclaration()
 
 class AstUnknownFunctionReference(val name: String) : AstExpr()
 class AstFunctionReference(val function: AstDefinedFunction) : AstExpr(type = function.type)
@@ -197,9 +199,12 @@ class AstFunctionArgument(val name: String, val index: Int, type: ZcType) : AstE
 sealed class AstConst(type: ZcType) : AstExpr(type) {
     data class Integer(val value: Int) : AstConst(ZcType.Integer)
     data class Byte(val value: kotlin.Byte) : AstConst(ZcType.Byte)
-    data class Boolean(val value: kotlin.Boolean) : AstConst(ZcType.Boolean)
+    sealed class Boolean(val value: kotlin.Boolean) : AstConst(ZcType.Boolean) {
+        object True: Boolean(true)
+        object False: Boolean(false)
+    }
     class StringLiteral(val value: String): AstConst(ZcType.Array(ZcType.Byte))
-    class DefaultValue(type: ZcType) : AstConst(type)
+    class DefaultValue(forType: ZcType) : AstConst(forType)
     object Undefined : AstConst(ZcType.Unknown)
     object Void : AstConst(ZcType.Void)
 }

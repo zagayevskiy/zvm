@@ -46,6 +46,8 @@ class GraphVizGenerator(private val ast: Ast) {
 
         override fun visit(ast: AstDefinedFunction) = "fun ${ast.name}(${ast.args.map { it.type }}): ${ast.retType}" to ++id
 
+        override fun visit(ast: AstConstDeclaration) = "const ${ast.name} = ${ast.initializer}" to ++id
+
         override fun visit(ast: AstBlock) = "{...}" to ++id
 
         override fun visit(ast: AstStatementList) = "statement list" to ++id
@@ -154,8 +156,6 @@ fun main(args: Array<String>) {
 
             fn main(i: int): bool {
                 var divider = 2;
-                val true = 0 == 0;
-                val false = !true;
                 while(divider < i) {
                     if ((i % divider) == 0) return true;
                     divider = divider + 1;
