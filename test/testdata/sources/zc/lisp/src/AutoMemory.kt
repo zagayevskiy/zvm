@@ -5,7 +5,7 @@ fun includeAutoMemory() = """
     struct Cons {
         var left: [void];
         var right: [void];
-        var type: byte;
+        var flags: byte;
     }
 
     struct AutoMemory {
@@ -16,8 +16,13 @@ fun includeAutoMemory() = """
         var available: int;
     }
     
+    const CT_TYPE_MASK: byte = 7;
+    const CT_MARK_MASK: byte = 128;
+    const CT_UNMARK_MASK: byte = 127;
+    const CT_NIL: byte = 0;
     const CT_LIST: byte = 1;
     const CT_INT: byte = 2;
+    const CT_ATOM: byte = 3;
 
     fn makeAutoMemory(maxMemorySize: int): AutoMemory {
         val result = cast<AutoMemory>(alloc(sizeof<AutoMemory>));
@@ -55,13 +60,26 @@ fun includeAutoMemory() = """
         return makeCons(autoMemory, cast<[void]>(value), nil, CT_INT);
     }
 
+    fn makeAtom(mem: AutoMemory, name: [byte]): Cons {
+        return makeCons(mem, name, nil, CT_ATOM);
+    }
+
+    fn getAtomName(atom: Cons): [byte] {
+        return cast<[byte]>(car(atom));
+    }
+
     fn getInt(cons: Cons): int {
         assertType(cons, CT_INT, "int expected");
         return cast<int>(cons.left);
     }
+    
+    fn getType(cons: Cons): byte {
+        if (cons == nil) return CT_NIL;
+        return cons.flags & CT_TYPE_MASK;
+    }
 
     fn assertType(cons: Cons, type: byte, message: [byte]) {
-        if (cons.type != type) {
+        if (getType(cons) != type) {
             print(message);
             crash(2989);
         }
@@ -71,7 +89,7 @@ fun includeAutoMemory() = """
         val result = allocCons(autoMemory);
         result.left = left;
         result.right = right;
-        result.type = type;
+        result.flags = type;
         return result;
     }
 
@@ -104,21 +122,18 @@ fun includeAutoMemory() = """
     fn recycle(autoMemory: AutoMemory, cons: Cons) {
         cons.left = nil;
         cons.right = autoMemory.recycled;
-        cons.type = CT_LIST;
+        cons.flags = CT_LIST;
         autoMemory.recycled = cons;
         autoMemory.available = autoMemory.available + 1;
     }
 
-    const MARK_MASK: byte = 128;
-    const UNMARK_MASK: byte = 127;
-
     fn mark(cons: Cons) {
         if (cons != nil) {
-            if (cons.type == CT_LIST) {
+            if (getType(cons) == CT_LIST) {
                 mark(cons.left);
                 mark(cons.right);
             }
-            cons.type = cons.type | MARK_MASK;
+            cons.flags = cons.flags | CT_MARK_MASK;
         }
     }
 
@@ -127,8 +142,8 @@ fun includeAutoMemory() = """
         val unlayoutedAbsolete = cast<int>(mem + autoMemory.unlayouted);
         for(var cursor = cast<int>(mem); cursor < unlayoutedAbsolete; cursor = cursor + sizeof<Cons>) {
             val current = cast<Cons>(cursor);
-            if ((current.type & MARK_MASK) != 0) {
-                current.type = current.type & UNMARK_MASK;
+            if ((current.flags & CT_MARK_MASK) != 0) {
+                current.flags = current.flags & CT_UNMARK_MASK;
             } else {
                 recycle(autoMemory, current);
             }
@@ -145,5 +160,31 @@ fun includeAutoMemory() = """
         crash(code);
     }
     
+    fn compare(left: Cons, right: Cons): byte {
+        val leftType = getType(left);
+        val rightType = getType(right);
+        if (leftType < rightType) return -1;
+        if (leftType > rightType) return 1;
+        when(leftType) {
+            CT_NIL -> return 0;
+            CT_INT -> return compareInts(getInt(left), getInt(right));
+            CT_ATOM ->return orderStrings(getAtomName(left), getAtomName(right));
+            CT_LIST -> {
+                val cmpCar = compare(car(left), car(right));
+                if (cmpCar != 0) return cmpCar;
+                return compare(cdr(left), cdr(right));
+            }
+            else -> crash(12345);
+        }
+    }
 
+    fn compareInts(left: int, right: int): byte {
+        if (left == right) {
+            return cast<byte>(0);
+        } else if (left < right) {
+            return cast<byte>(-1);
+        } else {
+            return cast<byte>(1);
+        }
+    }
 """.trimIndent()

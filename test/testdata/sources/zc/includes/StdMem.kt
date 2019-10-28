@@ -24,4 +24,23 @@ internal fun includeStdMem() = """
             dstBytes[i] = srcBytes[i];
         }
     }
+
+    fn orderStrings(left: [byte], right: [byte]): byte {
+        val leftLength = stringLength(left);
+        val rightLength = stringLength(right);
+
+        if (leftLength > rightLength) return 1;
+        if (leftLength < rightLength) return -1;
+
+        for(var i = 0; i < leftLength; i = i + 1) {
+            if (left[i] > right[i]) return 1;
+            if (left[i] < right[i]) return -1;
+        }
+
+        return 0;
+    }
+
+    fn stringLength(string: [byte]): int {
+        return cast<[int]>(string)[0];
+    }
 """
