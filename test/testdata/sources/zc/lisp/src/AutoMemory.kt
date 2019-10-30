@@ -45,15 +45,147 @@ fun includeAutoMemory() = """
     }
 
     fn car(cons: Cons): Cons {
-        if (cons == nil) return cast<Cons>(nil);
-        assertType(cons, CT_LIST, "list expected");
+        if (cons == nil) return nil;
+        assertType(cons, CT_LIST, "car list expected");
         return cast<Cons>(cons.left);
     }
 
     fn cdr(cons: Cons): Cons {
-        if(cons == nil) return cast<Cons>(nil);
-        assertType(cons, CT_LIST, "list expected");
-        return cast<Cons>(cons.right);
+        if (cons == nil) return nil;
+        assertType(cons, CT_LIST, "cdr list expected");
+        return cons.right;
+    }
+
+    fn caar(cons: Cons): Cons {
+        if (cons == nil) return nil;
+        assertType(cons, CT_LIST, "caar list expected");
+        val a: Cons = cons.left;
+        if (a == nil) return nil;
+        assertType(a, CT_LIST, "caar list in head expected");
+        return a.left;
+    }
+
+    fn cadr(cons: Cons): Cons {
+        if (cons == nil) return nil;
+        assertType(cons, CT_LIST, "cadr list expected");
+        val a: Cons = cons.left;
+        if (a == nil) return nil;
+        assertType(a, CT_LIST, "cadr list in head expected");
+        return a.right;
+    }
+
+    fn cdar(cons: Cons): Cons {
+        if (cons == nil) return nil;
+        assertType(cons, CT_LIST, "cdar list expected");
+        val d: Cons = cons.right;
+        if (d == nil) return nil;
+        assertType(d, CT_LIST, "cdar list in tail expected");
+        return d.left;
+    }
+
+    fn cddr(cons: Cons): Cons {
+        if (cons == nil) return nil;
+        assertType(cons, CT_LIST, "cddr list expected");
+        val d: Cons = cons.right;
+        if (d == nil) return nil;
+        assertType(d, CT_LIST, "cddr list in tail expected");
+        return d.right;
+    }
+
+    fn caaar(cons: Cons): Cons {
+        if (cons == nil) return nil;
+        assertType(cons, CT_LIST, "caaar list in 1st car expected");
+        val a: Cons = cons.left;
+        if (a == nil) return nil;
+        assertType(a, CT_LIST, "caaar list in 2nd car expected");
+        val aa: Cons = a.left;
+        if (aa == nil) return nil;
+        assertType(aa, CT_LIST, "caaar list in 3rd car expected");
+        return aa.left;
+    }
+
+    fn caadr(cons: Cons): Cons {
+        if (cons == nil) return nil;
+        assertType(cons, CT_LIST, "caadr list in 1st car expected");
+        val a: Cons = cons.left;
+        if (a == nil) return nil;
+        assertType(a, CT_LIST, "caadr list in 2nd car expected");
+        val aa: Cons = a.left;
+        if (aa == nil) return nil;
+        assertType(aa, CT_LIST, "caadr list in cdr expected");
+        return aa.right;
+    }
+
+    fn cadar(cons: Cons): Cons {
+        if (cons == nil) return nil;
+        assertType(cons, CT_LIST, "cadar list in 1st car expected");
+        val a: Cons = cons.left;
+        if (a == nil) return nil;
+        assertType(a, CT_LIST, "cadar list in cdr expected");
+        val ad: Cons = a.right;
+        if (ad == nil) return nil;
+        assertType(ad, CT_LIST, "cadar list in 2nd car expected");
+        return ad.left;
+    }
+
+    fn caddr(cons: Cons): Cons {
+        if (cons == nil) return nil;
+        assertType(cons, CT_LIST, "caddr list in car expected");
+        val a: Cons = cons.left;
+        if (a == nil) return nil;
+        assertType(a, CT_LIST, "caddr list in 1st cdr expected");
+        val ad: Cons = a.right;
+        if (ad == nil) return nil;
+        assertType(ad, CT_LIST, "caddr list in 2nd cdr expected");
+        return ad.right;
+    }
+
+    fn cdaar(cons: Cons): Cons {
+        if (cons == nil) return nil;
+        assertType(cons, CT_LIST, "cdaar list in cdr expected");
+        val d: Cons = cons.right;
+        if (d == nil) return nil;
+        assertType(d, CT_LIST, "cdaar list in 1st car expected");
+        val da: Cons = d.left;
+        if (da == nil) return nil;
+        assertType(da, CT_LIST, "cdaar list in 2nd car expected");
+        return da.left;
+    }
+
+    fn cdadr(cons: Cons): Cons {
+        if (cons == nil) return nil;
+        assertType(cons, CT_LIST, "cdadr list in 1s cdr expected");
+        val d: Cons = cons.right;
+        if (d == nil) return nil;
+        assertType(d, CT_LIST, "cdadr list in car expected");
+        val da: Cons = d.left;
+        if (da == nil) return nil;
+        assertType(da, CT_LIST, "cdadr list in 2nd cdr expected");
+        return da.right;
+    }
+
+    fn cddar(cons: Cons): Cons {
+        if (cons == nil) return nil;
+        assertType(cons, CT_LIST, "cddar list in 1st cdr expected");
+        val d: Cons = cons.right;
+        if (d == nil) return nil;
+        assertType(d, CT_LIST, "cddar list in 2nd cdr expected");
+        val dd: Cons = d.right;
+        if (dd == nil) return nil;
+        assertType(dd, CT_LIST, "cddar list in car expected");
+        return dd.left;
+    }
+
+    fn cdddr(cons: Cons): Cons {
+        if (cons == nil) return nil;
+        assertType(cons, CT_LIST, "cdddr list in 1st cdr expected");
+        val d: Cons = cons.right;
+        if (d == nil) return nil;
+        assertType(d, CT_LIST, "cdddr list in 2nd cdr expected");
+        val dd: Cons = d.right;
+        if (dd == nil) return nil;
+        assertType(dd, CT_LIST, "cdddr list in 3rd cdr expected");
+        return dd.right;
     }
 
     fn makeNumber(autoMemory: AutoMemory, value: int): Cons {

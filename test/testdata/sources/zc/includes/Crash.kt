@@ -7,4 +7,18 @@ internal fun includeCrash() = """
             crash
         "}
     }
+
+    fn crashPrint(message: [byte]) {
+        asm{"
+            lloadi message
+            out
+        "}
+    }
+
+    fn assertIntEq(expect: int, actual: int, message: [byte]) {
+        if (expect != actual) {
+            crashPrint(message);
+            crash(actual);
+        }
+    }
 """.trimIndent()

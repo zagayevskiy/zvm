@@ -5,6 +5,7 @@ import com.zagayevskiy.zvm.vm.*
 import com.zagayevskiy.zvm.zc.ZcCompiler
 import testdata.sources.zc.*
 import testdata.sources.zc.lisp.testsrc.AutoMemoryTestSource
+import testdata.sources.zc.lisp.testsrc.LispObjectTestSource
 
 internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
     val Sources = mutableListOf<TestSource>()
@@ -13,6 +14,10 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
     init {
 
         source(AutoMemoryTestSource.Test) {
+            run(emptyList(), 0)
+        }
+
+        source(LispObjectTestSource.Test) {
             run(emptyList(), 0)
         }
 

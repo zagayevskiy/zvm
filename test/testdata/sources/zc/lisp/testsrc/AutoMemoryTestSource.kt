@@ -101,12 +101,7 @@ object AutoMemoryTestSource {
             assertIntEq(expect, recycledCount, message);
         }
 
-        fn assertIntEq(expect: int, actual: int, message: [byte]) {
-            if (expect != actual) {
-                print(message);
-                crash(actual);
-            }
-        }
+
 
         fn assertTrue(condition: bool, message: [byte]) {
             if (!condition) {

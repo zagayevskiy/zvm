@@ -14,7 +14,7 @@ fun includeRedBlackTree() = """
     }
 
     fn getRbNodeLeft(node: Cons): Cons {
-        
+
     }
 
 """.trimIndent()
@@ -23,7 +23,7 @@ fun includeRedBlackTree() = """
 /***
  * Node
  * ( ((key . value)) .+r|b ((left . right)) )
- *
+ * (key . (value . (parent . (left . right))
  *
  *
  *
