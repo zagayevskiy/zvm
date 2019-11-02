@@ -65,6 +65,7 @@ fun includeRedBlackTree() = """
         val leftRight = cons(mem, nil, nil);
         val parentLeftRight = cons(mem, parent, leftRight);
         val node = cons(mem, keyValue, parentLeftRight);
+        setNodeBlack(node);
         return node;
     }
 
@@ -91,6 +92,22 @@ fun includeRedBlackTree() = """
 
     fn nodeParent(node: Cons): Cons {
         return cdar(node);
+    }
+
+    fn setNodeRed(node: Cons) {
+        setUserBit0(node, false);
+    }
+
+    fn setNodeBlack(node: Cons) {
+        setUserBit0(node, true);
+    }
+
+    fn isNodeRed(node: Cons): bool {
+        return !userBit0(node);
+    }
+
+    fn isNodeBlack(node: Cons): bool {
+        return userBit0(node);
     }
 
     fn leftChild(node: Cons): Cons {

@@ -17,10 +17,24 @@ object LispObjectTestSource {
         const MAX_CONS = 150;
 
         fn main(): int {
+            testUserBits();
             testCaaaaddddr();
             return 0;
         }
 
+        fn testUserBits() {
+            val mem = makeAutoMemory(MAX_CONS*sizeof<Cons>);
+
+            val node = cons(mem, nil, nil);
+            setUserBit0(node, true);
+            assertTrue(userBit0(node), "0 bit must be true");
+            assertType(node, CT_LIST, "type must not be changed");
+            setUserBit0(node, false);
+            assertTrue(!userBit0(node), "0 bit must be false");
+            assertType(node, CT_LIST, "type must not be changed");
+
+            freeAutoMemory(mem);
+        }
 
         fn testCaaaaddddr() {
             val mem = makeAutoMemory(MAX_CONS*sizeof<Cons>);

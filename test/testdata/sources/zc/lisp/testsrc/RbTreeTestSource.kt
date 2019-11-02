@@ -102,11 +102,8 @@ object RbTreeTestSource {
         fn testPutGet() {
             val tree = makeRbTree();
             val mem = makeAutoMemory(27000);
-            val zero = makeNumber(mem, 0);
-            putRbTree(mem, tree, zero, makeNumber(mem, 1), ::compare);
-            assertByteEq(0, compare(findTree(tree.root, zero, ::compare), makeNumber(mem, 1)), "must be eq");
 
-            val count = 20;
+            val count = 30;
             var keyGen = 1;
             for(var i = 0; i < count; i = i + 1){
                 keyGen = (keyGen * 8121 + 28411) % 134456;
@@ -145,6 +142,72 @@ object RbTreeTestSource {
         ${includeCrash()}
 
     """.trimIndent())
+
+    val RedBlackRequirements = TestSource("rb", """
+        ${includeStdIo()}
+        ${includeStdMem()}
+        ${includeAutoMemory()}
+        ${includeRedBlackTree()}
+        ${includeCrash()}
+
+
+        fn main(): int {
+
+            val tree = makeRbTree();
+            val mem = makeAutoMemory(27000);
+
+            val count = 30;
+            var keyGen = 1;
+            for(var i = 0; i < count; i = i + 1){
+                keyGen = (keyGen * 8121 + 28411) % 134456;
+                val k = makeNumber(mem, keyGen);
+                val v = makeNumber(mem, i);
+                val minusK = makeNumber(mem, -1*keyGen);
+                val minusV = makeNumber(mem, i*keyGen);
+
+                putRbTree(mem, tree, k, v, ::compare);
+                putRbTree(mem, tree, minusK, minusV, ::compare);
+            }
+
+            checkRequirements(tree);
+
+            freeAutoMemory(mem);
+            return 0;
+        }
+
+        fn checkRequirements(tree: RbTree) {
+            checkChildrenOfRedIsBlack(tree.root, false);
+            checkAllPathsContainsSameBlackNodesCount(tree);
+        }
+
+        fn checkChildrenOfRedIsBlack(node: Cons, parentRed: bool) {
+            if (node == nil) return;
+            val currentRed = isNodeRed(node);
+            if (parentRed && currentRed) {
+                crashm(getInt(nodeKey(node)), "children of red must be black");
+            }
+
+            checkChildrenOfRedIsBlack(leftChild(node), currentRed);
+            checkChildrenOfRedIsBlack(rightChild(node), currentRed);
+        }
+
+        fn checkAllPathsContainsSameBlackNodesCount(tree: RbTree) {
+            countAndCheckBlackNodes(tree.root);
+        }
+
+        fn countAndCheckBlackNodes(node: Cons): int {
+            if (node == nil) return 0;
+            val leftCount = countAndCheckBlackNodes(leftChild(node));
+            val rightCount = countAndCheckBlackNodes(rightChild(node));
+            if (leftCount != rightCount) crashm(rightCount, "black nodes count in left and right must be same");
+            if (isNodeBlack(node)) {
+                return leftCount + 1;
+            }
+
+            return leftCount;
+        }
+    """.trimIndent())
+
 }
 
 

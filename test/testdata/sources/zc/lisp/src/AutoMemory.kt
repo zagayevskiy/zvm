@@ -23,6 +23,22 @@ fun includeAutoMemory() = """
     const CT_LIST: byte = 1;
     const CT_INT: byte = 2;
     const CT_ATOM: byte = 3;
+    const CT_USER_BIT0_MASK: byte = 16;
+    const CT_USER_BIT0_UNMASK: byte = 239;
+    const CT_USER_BIT1_MASK: byte = 32;
+    const CT_USER_BIT2_MASK: byte = 64;
+
+    fn userBit0(cons: Cons): bool {
+        return (cons.flags & CT_USER_BIT0_MASK) == CT_USER_BIT0_MASK;
+    }
+
+    fn setUserBit0(cons: Cons, flag: bool) {
+        if (flag) {
+            cons.flags = cons.flags | CT_USER_BIT0_MASK;
+        } else {
+            cons.flags = cons.flags & (~CT_USER_BIT0_MASK);
+        }
+    }
 
     fn makeAutoMemory(maxMemorySize: int): AutoMemory {
         val result = cast<AutoMemory>(alloc(sizeof<AutoMemory>));

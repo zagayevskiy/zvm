@@ -37,4 +37,11 @@ internal fun includeCrash() = """
     fn assertRefEq(expect: [void], actual: [void], message: [byte]) {
         assertIntEq(cast<int>(expect), cast<int>(actual), message);
     }
+
+    fn assertTrue(value: bool, message: [byte]) {
+        if (!value) {
+            crashPrint(message);
+            crash(0);
+        }
+    }
 """.trimIndent()

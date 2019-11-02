@@ -26,6 +26,10 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
             run(emptyList(), 0)
         }
 
+        source(RbTreeTestSource.RedBlackRequirements) {
+            run(emptyList(), 0)
+        }
+
         source(AutoMemoryTestSource.Test) {
             run(emptyList(), 0)
         }

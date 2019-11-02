@@ -73,6 +73,7 @@ object AutoMemoryTestSource {
             var root: Cons = nil;
             for (var i = 0; i < MAX_CONS/3; i = i + 1) {
                 root = cons(mem, makeNumber(mem, i), root);
+                setUserBit0(root, true);
                 makeNumber(mem, i*1000);
             }
 
@@ -100,15 +101,5 @@ object AutoMemoryTestSource {
             }
             assertIntEq(expect, recycledCount, message);
         }
-
-
-
-        fn assertTrue(condition: bool, message: [byte]) {
-            if (!condition) {
-                print(message);
-                crash(20000);
-            }
-        }
-
     """.trimIndent())
 }
