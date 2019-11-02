@@ -102,6 +102,10 @@ fun includeRedBlackTree() = """
         return cadr(node);
     }
 
+    fn nodeKeyValue(node: Cons): Cons {
+        return car(node);
+    }
+
     fn nodeParent(node: Cons): Cons {
         return cdar(node);
     }
@@ -194,6 +198,7 @@ fun includeRedBlackTree() = """
         setNodeParent(p, l);
 
     }
+
 """.trimIndent()
 
 

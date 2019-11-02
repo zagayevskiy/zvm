@@ -110,27 +110,15 @@ object RbTreeTestSource {
         }
 
         ${isBinarySearchTree()}
+        ${makeCongruentTree()}
 
         fn testPutGet() {
-            val tree = makeRbTree();
             val mem = makeAutoMemory(27000);
 
             val count = 30;
+            val tree = makeCongruentTree(mem, count);
+
             var keyGen = 1;
-            for(var i = 0; i < count; i = i + 1){
-                keyGen = (keyGen * 8121 + 28411) % 134456;
-                val k = makeNumber(mem, keyGen);
-                val v = makeNumber(mem, i);
-                val minusK = makeNumber(mem, -1*keyGen);
-                val minusV = makeNumber(mem, i*keyGen);
-
-                putRbTree(mem, tree, k, v, ::compare);
-                checkIsBst(tree, ::compare);
-                putRbTree(mem, tree, minusK, minusV, ::compare);
-                checkIsBst(tree, ::compare);
-            }
-
-            keyGen = 1;
             for (var i = 0 ; i < count; i = i + 1) {
                 keyGen = (keyGen * 8121 + 28411) % 134456;
                 val k = makeNumber(mem, keyGen);
@@ -157,24 +145,12 @@ object RbTreeTestSource {
         ${includeRedBlackTree()}
         ${includeCrash()}
 
+        ${makeCongruentTree()}
 
         fn main(): int {
-
-            val tree = makeRbTree();
             val mem = makeAutoMemory(27000);
 
-            val count = 30;
-            var keyGen = 1;
-            for(var i = 0; i < count; i = i + 1){
-                keyGen = (keyGen * 8121 + 28411) % 134456;
-                val k = makeNumber(mem, keyGen);
-                val v = makeNumber(mem, i);
-                val minusK = makeNumber(mem, -1*keyGen);
-                val minusV = makeNumber(mem, i*keyGen);
-
-                putRbTree(mem, tree, k, v, ::compare);
-                putRbTree(mem, tree, minusK, minusV, ::compare);
-            }
+            val tree = makeCongruentTree(mem, 30);
 
             checkRequirements(tree);
 
@@ -257,6 +233,132 @@ object RbTreeTestSource {
 
     """.trimIndent())
 
+    val TreeEqualityChecks = TestSource("tree equality checks", """
+
+        ${includeStdIo()}
+        ${includeStdMem()}
+        ${includeAutoMemory()}
+        ${includeRedBlackTree()}
+        ${includeCrash()}
+
+        ${makeCongruentTree()}
+        ${isTreesEquals()}
+        ${copyTree()}
+        ${checkParentLinks()}
+
+        fn main(): int {
+            testTreeEqualsItself();
+            testTreeEqualsToItsCopy();
+            testTreeCopyIndependent();
+            return 0;
+        }
+
+        fn testTreeEqualsItself() {
+            val mem = makeAutoMemory(27000);
+            val tree = makeCongruentTree(mem, 32);
+
+            assertTrue(isTreesEquals(tree.root, tree.root, ::compare), "tree must be equals to itself");
+
+            freeAutoMemory(mem);
+        }
+
+        fn testTreeEqualsToItsCopy() {
+            val mem = makeAutoMemory(27000);
+            val tree = makeCongruentTree(mem, 32);
+            val copy = copyTree(mem, tree);
+            checkParentLinks(copy.root, nil);
+
+            assertTrue(isTreesEquals(tree.root, copy.root, ::compare), "tree must be equals to it copy");
+
+            freeAutoMemory(mem);
+        }
+
+        fn testTreeCopyIndependent() {
+            val mem = makeAutoMemory(27000);
+            val tree = makeCongruentTree(mem, 32);
+            val copy = copyTree(mem, tree);
+            val insertedKey = makeNumber(mem, 100500);
+            val inserted = makeNumber(mem, 300400);
+            putRbTree(mem, copy, insertedKey, inserted, ::compare);
+
+            assertRefEq(inserted, findTree(copy.root, insertedKey, ::compare), "100500 must be inserted to copy");
+            assertRefEq(nil, findTree(tree.root, insertedKey, ::compare), "100500 must NOT be inserted to tree");
+            assertTrue(!isTreesEquals(tree.root, copy.root, ::compare), "tree and it's copy must be independent");
+
+            putRbTree(mem,tree, insertedKey, inserted, ::compare);
+            assertTrue(isTreesEquals(tree.root, copy.root, ::compare), "tree must be deterministic");
+
+            freeAutoMemory(mem);
+        }
+
+    """.trimIndent())
+
+    val TreeRotationsChecks = TestSource("tree rotations check", """
+        ${includeStdIo()}
+        ${includeStdMem()}
+        ${includeAutoMemory()}
+        ${includeRedBlackTree()}
+        ${includeCrash()}
+
+        ${makeCongruentTree()}
+        ${isTreesEquals()}
+        ${copyTree()}
+        ${isBinarySearchTree()}
+        ${checkParentLinks()}
+
+        fn main(): int {
+            val mem = makeAutoMemory(27000);
+            val tree = makeCongruentTree(mem, 32);
+            val copy = copyTree(mem, tree);
+
+            rotateLeft(tree, leftChild(tree.root));
+            checkIsBst(tree, ::compare);
+            rotateLeft(tree, rightChild(tree.root));
+            checkIsBst(tree, ::compare);
+            rotateLeft(tree, tree.root);
+            checkIsBst(tree, ::compare);
+            rotateLeft(tree, leftChild(rightChild(tree.root)));
+            checkIsBst(tree, ::compare);
+            rotateLeft(tree, rightChild(leftChild(tree.root)));
+            checkIsBst(tree, ::compare);
+            checkParentLinks(tree.root, nil);
+
+            rotateRight(tree, rightChild(leftChild(tree.root)));
+            checkIsBst(tree, ::compare);
+            rotateRight(tree, leftChild(rightChild(tree.root)));
+            checkIsBst(tree, ::compare);
+            rotateRight(tree, tree.root);
+            checkIsBst(tree, ::compare);
+            rotateRight(tree, rightChild(tree.root));
+            checkIsBst(tree, ::compare);
+            rotateRight(tree, leftChild(tree.root));
+            checkIsBst(tree, ::compare);
+
+            assertTrue(isTreesEquals(tree.root, copy.root, ::compare), "must be in same state after all rotations");
+
+            return 0;
+        }
+
+    """.trimIndent())
+
+    private fun makeCongruentTree() = """
+        fn makeCongruentTree(mem: AutoMemory, count: int): RbTree {
+            val tree = makeRbTree();
+            var keyGen = 1;
+            for(var i = 0; i < count; i = i + 1){
+                keyGen = (keyGen * 8121 + 28411) % 134456;
+                val k = makeNumber(mem, keyGen);
+                val v = makeNumber(mem, i);
+                val minusK = makeNumber(mem, -1*keyGen);
+                val minusV = makeNumber(mem, i*keyGen);
+
+                putRbTree(mem, tree, k, v, ::compare);
+                putRbTree(mem, tree, minusK, minusV, ::compare);
+            }
+            return tree;
+        }
+    """.trimIndent()
+
     private fun isBinarySearchTree() = """
         fn checkIsBst(tree: RbTree, compare:(Cons, Cons) -> byte) {
             checkBstNodes(tree.root, nil, nil, compare);
@@ -278,6 +380,43 @@ object RbTreeTestSource {
             if (max != nil) {
                 if (compare(value, max) >= 0) crashm(2, "value greater then max");
             }
+        }
+    """.trimIndent()
+
+    private fun copyTree() = """
+        fn copyTree(mem: AutoMemory, tree: RbTree): RbTree {
+            val copy = makeRbTree();
+            copy.root = copyNode(mem, tree.root, nil);
+            return copy;
+        }
+
+        fn copyNode(mem: AutoMemory, node: Cons, parentCopy: Cons): Cons {
+            if (node == nil) return nil;
+            val copy = makeRbNode(mem, nodeKey(node), nodeValue(node), parentCopy);
+            setNodeLeft(copy, copyNode(mem, leftChild(node), copy));
+            setNodeRight(copy, copyNode(mem, rightChild(node), copy));
+
+            return copy;
+        }
+
+    """.trimIndent()
+
+    private fun isTreesEquals() = """
+        fn isTreesEquals(left: Cons, right: Cons, compare: (Cons, Cons) -> byte): bool {
+            if (left == nil) return right == nil;
+            if (compare(nodeKeyValue(left), nodeKeyValue(right)) != 0) return false;
+            if (isTreesEquals(leftChild(left), leftChild(right), compare)) return isTreesEquals(rightChild(left), rightChild(right), compare);
+            return false;
+        }
+
+    """.trimIndent()
+
+    private fun checkParentLinks() = """
+        fn checkParentLinks(node: Cons, parent: Cons) {
+            if (node == nil) return;
+            assertRefEq (nodeParent(node), parent, "Link to parent must be equals by reference");
+            checkParentLinks(leftChild(node), node);
+            checkParentLinks(rightChild(node), node);
         }
     """.trimIndent()
 }

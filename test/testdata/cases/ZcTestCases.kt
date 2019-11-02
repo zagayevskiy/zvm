@@ -22,6 +22,14 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
             run(emptyList(), prints = listOf("value less then min"), crashCode = 1)
         }
 
+        source(RbTreeTestSource.TreeEqualityChecks) {
+            run(emptyList(), 0)
+        }
+
+        source(RbTreeTestSource.TreeRotationsChecks) {
+            run(emptyList(), 0)
+        }
+
         source(RbTreeTestSource.AllPuttedKeysExistsAndValuesCorrect) {
             run(emptyList(), 0)
         }
