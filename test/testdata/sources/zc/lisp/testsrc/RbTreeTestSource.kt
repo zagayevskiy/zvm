@@ -101,30 +101,38 @@ object RbTreeTestSource {
 
         fn testPutGet() {
             val tree = makeRbTree();
-            val mem = makeAutoMemory(2700);
+            val mem = makeAutoMemory(27000);
             val zero = makeNumber(mem, 0);
             putRbTree(mem, tree, zero, makeNumber(mem, 1), ::compare);
             assertByteEq(0, compare(findTree(tree.root, zero, ::compare), makeNumber(mem, 1)), "must be eq");
 
+            val count = 20;
             var keyGen = 1;
-            for(var i = 0; i < 10; i = i + 1){
-                keyGen = (keyGen * (i + 17)) % 317;
-                val k = makeNumber(mem, keyGen % (i + 19));
+            for(var i = 0; i < count; i = i + 1){
+                keyGen = (keyGen * 8121 + 28411) % 134456;
+                val k = makeNumber(mem, keyGen);
                 val v = makeNumber(mem, i);
-                putRbTree(mem, tree, k, v, ::compare);
-
-                keyGen = (keyGen * (i + 13)) % 317;
                 val minusK = makeNumber(mem, -1*keyGen);
                 val minusV = makeNumber(mem, i*keyGen);
+
+                putRbTree(mem, tree, k, v, ::compare);
                 putRbTree(mem, tree, minusK, minusV, ::compare);
+            }
+
+            keyGen = 1;
+            for (var i = 0 ; i < count; i = i + 1) {
+                keyGen = (keyGen * 8121 + 28411) % 134456;
+                val k = makeNumber(mem, keyGen);
+                val v = makeNumber(mem, i);
+                val minusK = makeNumber(mem, -1*keyGen);
+                val minusV = makeNumber(mem, i*keyGen);
+
 
                 val actual = findTree(tree.root, k, ::compare);
-                assertRefEq(v, actual, "expect ref equality");
-                assertByteEq(0, compare(v, actual), "expect values eq");
-
                 val minusActual = findTree(tree.root, minusK, ::compare);
-                assertRefEq(minusV, minusActual, "expect ref equality");
-                assertByteEq(0, compare(minusV, minusActual), "expect values eq");
+
+                assertByteEq(0, compare(v, actual), "expect values eq 1");
+                assertByteEq(0, compare(minusV, minusActual), "expect values eq 2");
             }
 
             freeAutoMemory(mem);
