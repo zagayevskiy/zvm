@@ -6,12 +6,25 @@ import com.zagayevskiy.zvm.zc.ZcCompiler
 import testdata.sources.zc.*
 import testdata.sources.zc.lisp.testsrc.AutoMemoryTestSource
 import testdata.sources.zc.lisp.testsrc.LispObjectTestSource
+import testdata.sources.zc.lisp.testsrc.RbTreeTestSource
 
 internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
     val Sources = mutableListOf<TestSource>()
 
 
     init {
+
+        source(RbTreeTestSource.MakeNode) {
+            run(emptyList(), 0)
+        }
+
+        source(RbTreeTestSource.AllPuttedKeysExistsAndValuesCorrect) {
+            run(emptyList(), 0)
+        }
+
+        source((RbTreeTestSource.PutGet)) {
+            run(emptyList(), 0)
+        }
 
         source(AutoMemoryTestSource.Test) {
             run(emptyList(), 0)

@@ -8,6 +8,11 @@ internal fun includeCrash() = """
         "}
     }
 
+    fn crashm(code: int, message: [byte]) {
+        crashPrint(message);
+        crash(code);
+    }
+
     fn crashPrint(message: [byte]) {
         asm{"
             lloadi message
@@ -20,5 +25,16 @@ internal fun includeCrash() = """
             crashPrint(message);
             crash(actual);
         }
+    }
+
+    fn assertByteEq(expect: byte, actual: byte, message: [byte]) {
+        if (expect != actual) {
+            crashPrint(message);
+            crash(cast<int>(actual));
+        }
+    }
+
+    fn assertRefEq(expect: [void], actual: [void], message: [byte]) {
+        assertIntEq(cast<int>(expect), cast<int>(actual), message);
     }
 """.trimIndent()

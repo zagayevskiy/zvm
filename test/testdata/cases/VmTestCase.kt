@@ -9,10 +9,10 @@ interface VmTestCase {
     val bytecode: ByteArray
 
     val stackSize: Int
-        get() = 1024
+        get() = 2048
 
     val heapSize: Int
-        get() = 10000
+        get() = 100000
 
     val io: VmIo
         get() = SimpleVmIo

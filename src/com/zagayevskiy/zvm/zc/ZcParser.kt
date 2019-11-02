@@ -309,7 +309,7 @@ class ZcParser(private val lexer: Lexer) {
 
     private fun functionReturnStatement(): AstFunctionReturn? {
         maybe<ZcToken.Return>() ?: return NotMatched
-        val expression = expression() ?: error("Expression expected.")
+        val expression = expression() ?: AstConst.Void
         expect<ZcToken.Semicolon>()
         return AstFunctionReturn(expression)
     }
@@ -602,7 +602,7 @@ class ZcParser(private val lexer: Lexer) {
         }
     }
 
-    private fun error(message: String = "Syntax error at token $token"): Nothing = throw ParseException("Line ${lexer.currentLine}: $message")
+    private fun error(message: String = "Syntax error at token $token"): Nothing = throw ParseException("Line [${lexer.currentLineNumber}](${lexer.currentLine}): $message")
 
     private inline fun <reified T : Token> expect() = maybe<T>()
             ?: error("Unexpected token $token. Token of type ${T::class.simpleName} expected.")

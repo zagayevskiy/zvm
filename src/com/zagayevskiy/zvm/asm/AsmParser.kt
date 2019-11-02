@@ -6,7 +6,6 @@ import com.zagayevskiy.zvm.asm.AsmToken.Colon
 import com.zagayevskiy.zvm.asm.AsmToken.Comma
 import com.zagayevskiy.zvm.asm.AsmToken.Fun
 import com.zagayevskiy.zvm.asm.AsmToken.Globals
-import com.zagayevskiy.zvm.asm.AsmToken.Locals
 import com.zagayevskiy.zvm.asm.AsmToken.Minus
 import com.zagayevskiy.zvm.asm.Command.*
 import com.zagayevskiy.zvm.asm.Command.Instruction.Operand
@@ -69,7 +68,7 @@ class AsmParser(private val lexer: Lexer, supportedOpcodes: Iterable<Opcode>) {
                 command()
             }
         } catch (e: ParseException) {
-            return ParseResult.Failure(lexer.currentLine, e.message, commands, e)
+            return ParseResult.Failure(lexer.currentLineNumber, e.message, commands, e)
         }
 
         return ParseResult.Success(commands)

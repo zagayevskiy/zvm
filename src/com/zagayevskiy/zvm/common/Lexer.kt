@@ -14,7 +14,8 @@ interface Token {
 interface Lexer {
     fun nextToken(): Token
 
-    val currentLine: Int
+    val currentLineNumber: Int
+    val currentLine: String
 }
 
 class SequenceLexer(private val sequence: Sequence<Char>,
@@ -26,14 +27,19 @@ class SequenceLexer(private val sequence: Sequence<Char>,
                     private val eolAsToken: Boolean = true,
                     private val stringConstDelimitator: (Char) -> Char? = { null }) : Lexer {
 
-    override var currentLine = 0
+    override var currentLineNumber = 0
+        private set
+
+    private val lineBuilder = StringBuilder()
+
+    override val currentLine: String
+        get() = lineBuilder.toString().trim()
 
     private val sortedSymbols = symbols.keys.sorted()
 
     private val iterator by lazy { sequence.iterator() }
     private var currentChar: Char? = null
     private var parsingStarted = false
-
 
     override fun nextToken(): Token {
         if (!parsingStarted) {
@@ -87,7 +93,7 @@ class SequenceLexer(private val sequence: Sequence<Char>,
             return Token.StringConst(builder.toString())
         }
 
-        return Token.Error(currentLine, current.toString())
+        return Token.Error(currentLineNumber, current.toString())
     }
 
     private fun keywordOrId(buffer: String) = keywords[buffer] ?: Token.Identifier(buffer)
@@ -109,12 +115,12 @@ class SequenceLexer(private val sequence: Sequence<Char>,
             return symbols[mayBeFound]!!
         }
 
-        return Token.Error(currentLine, builder.toString())
+        return Token.Error(currentLineNumber, builder.toString())
     }
 
     private fun symbolOrError(buffer: String, possibleSymbol: String) = when {
         (buffer == possibleSymbol) -> symbols[possibleSymbol]!!
-        else -> Token.Error(currentLine, buffer)
+        else -> Token.Error(currentLineNumber, buffer)
     }
 
     private fun consumeEol(): Token {
@@ -123,7 +129,8 @@ class SequenceLexer(private val sequence: Sequence<Char>,
         if ((currentChar == '\n' && prev == '\r') || (currentChar == '\r' && prev == '\r')) {
             nextChar()
         }
-        ++currentLine
+        ++currentLineNumber
+        lineBuilder.delete(0, lineBuilder.length)
 
         return Token.Eol
     }
@@ -138,7 +145,10 @@ class SequenceLexer(private val sequence: Sequence<Char>,
         return int.toToken()
     }
 
-    private fun nextChar(): Char? = (if (iterator.hasNext()) iterator.next() else null).also { currentChar = it }
+    private fun nextChar(): Char? = (if (iterator.hasNext()) iterator.next() else null).also {
+        currentChar = it
+        lineBuilder.append(currentChar)
+    }
 }
 
 private fun Char.isEol() = this == '\n' || this == '\r'
