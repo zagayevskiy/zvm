@@ -56,6 +56,8 @@ object RbTreeTestSource {
         ${includeRedBlackTree()}
         ${includeCrash()}
 
+        ${isBinarySearchTree()}
+
         fn main(): int {
             val tree = makeRbTree();
             val mem = makeAutoMemory(2700);
@@ -70,6 +72,8 @@ object RbTreeTestSource {
             for (var i = 0; i < count; i = i + 1) {
                 if(!exists[i]) crashm(i, "key not exists");
             }
+
+            checkIsBst(tree, ::compare);
             
             free(exists);
             freeAutoMemory(mem);
@@ -94,10 +98,18 @@ object RbTreeTestSource {
 
     val PutGet = TestSource("put/get", """
 
+        ${includeStdIo()}
+        ${includeStdMem()}
+        ${includeAutoMemory()}
+        ${includeRedBlackTree()}
+        ${includeCrash()}
+
         fn main(): int {
             testPutGet();
             return 0;
         }
+
+        ${isBinarySearchTree()}
 
         fn testPutGet() {
             val tree = makeRbTree();
@@ -113,7 +125,9 @@ object RbTreeTestSource {
                 val minusV = makeNumber(mem, i*keyGen);
 
                 putRbTree(mem, tree, k, v, ::compare);
+                checkIsBst(tree, ::compare);
                 putRbTree(mem, tree, minusK, minusV, ::compare);
+                checkIsBst(tree, ::compare);
             }
 
             keyGen = 1;
@@ -124,7 +138,6 @@ object RbTreeTestSource {
                 val minusK = makeNumber(mem, -1*keyGen);
                 val minusV = makeNumber(mem, i*keyGen);
 
-
                 val actual = findTree(tree.root, k, ::compare);
                 val minusActual = findTree(tree.root, minusK, ::compare);
 
@@ -134,12 +147,6 @@ object RbTreeTestSource {
 
             freeAutoMemory(mem);
         }
-
-        ${includeStdIo()}
-        ${includeStdMem()}
-        ${includeAutoMemory()}
-        ${includeRedBlackTree()}
-        ${includeCrash()}
 
     """.trimIndent())
 
@@ -176,15 +183,24 @@ object RbTreeTestSource {
         }
 
         fn checkRequirements(tree: RbTree) {
+            checkRootBlack(tree);
             checkChildrenOfRedIsBlack(tree.root, false);
             checkAllPathsContainsSameBlackNodesCount(tree);
+        }
+
+        fn checkRootBlack(tree: RbTree) {
+            if (tree.root != nil) {
+                if (isNodeRed(tree.root)) {
+                    crashm(getInt(nodeValue(tree.root)), "root of rb-tree must be black");
+                }
+            }
         }
 
         fn checkChildrenOfRedIsBlack(node: Cons, parentRed: bool) {
             if (node == nil) return;
             val currentRed = isNodeRed(node);
             if (parentRed && currentRed) {
-                crashm(getInt(nodeKey(node)), "children of red must be black");
+                crashm(getInt(nodeKey(node)), "children of red node must be black");
             }
 
             checkChildrenOfRedIsBlack(leftChild(node), currentRed);
@@ -208,6 +224,60 @@ object RbTreeTestSource {
         }
     """.trimIndent())
 
+    val IsBstCrashedOnNoBst = TestSource("crash on no-bst", """
+
+        ${includeStdIo()}
+        ${includeStdMem()}
+        ${includeAutoMemory()}
+        ${includeRedBlackTree()}
+        ${includeCrash()}
+        ${isBinarySearchTree()}
+        fn main(): int {
+            val tree = makeRbTree();
+            val mem = makeAutoMemory(27000);
+
+            val one = makeNumber(mem, 1);
+            val two = makeNumber(mem, 2);
+            val three = makeNumber(mem, 3);
+            val four = makeNumber(mem, 4);
+            val five = makeNumber(mem, 5);
+
+            val twoNode = makeRbNode(mem, two, two, nil);
+            val threeNode = makeRbNode(mem, three, three, twoNode);
+            val oneNode = makeRbNode(mem, one, one, threeNode);
+            setNodeRight(twoNode, threeNode);
+            setNodeLeft(threeNode, oneNode);
+
+            tree.root = twoNode;
+
+            checkIsBst(tree, ::compare);
+
+            return 0;
+        }
+
+    """.trimIndent())
+
+    private fun isBinarySearchTree() = """
+        fn checkIsBst(tree: RbTree, compare:(Cons, Cons) -> byte) {
+            checkBstNodes(tree.root, nil, nil, compare);
+        }
+
+        fn checkBstNodes(node: Cons, min: Cons, max: Cons, compare:(Cons, Cons) -> byte) {
+            if (node == nil) return;
+            val nodeKey = nodeKey(node);
+            checkBounds(nodeKey, min, max, compare);
+
+            checkBstNodes(leftChild(node), min, nodeKey, compare);
+            checkBstNodes(rightChild(node), nodeKey, max, compare);
+        }
+
+        fn checkBounds(value: Cons, min: Cons, max: Cons, compare:(Cons, Cons) -> byte) {
+            if (min != nil) {
+                if (compare(min, value) >= 0) crashm(1, "value less then min");
+            }
+            if (max != nil) {
+                if (compare(value, max) >= 0) crashm(2, "value greater then max");
+            }
+        }
+    """.trimIndent()
 }
-
-

@@ -16,6 +16,7 @@ fun includeRedBlackTree() = """
         var cursor = tree.root;
         if (cursor == nil) {
             tree.root = makeRbNode(mem, key, value, nil);
+            setNodeBlack(tree.root);
         } else {
             var parent: Cons = nil;
             while (true) {
@@ -29,18 +30,25 @@ fun includeRedBlackTree() = """
                 if (compared < 0) {
                     cursor = leftChild(cursor);
                     if (cursor == nil) {
-                        setNodeLeft(parent, makeRbNode(mem, key, value, parent));
+                        val insertedNode = makeRbNode(mem, key, value, parent);
+                        setNodeLeft(parent, insertedNode);
+                        fixAfterInsert(tree, insertedNode, compare);
                         return;
                     }
                 } else {
                     cursor = rightChild(cursor);
                     if (cursor == nil) {
-                        setNodeRight(parent, makeRbNode(mem, key, value, parent));
+                        val insertedNode = makeRbNode(mem, key, value, parent);
+                        setNodeRight(parent, insertedNode);
+                        fixAfterInsert(tree, insertedNode, compare);
                         return;
                     }
                 }
             }
         }
+    }
+
+    fn fixAfterInsert(tree: RbTree, insertedNode: Cons, compare: (Cons, Cons) -> byte) {
     }
 
     fn findTree(root: Cons, key: Cons, compare: (Cons, Cons) -> byte): Cons {
@@ -63,9 +71,9 @@ fun includeRedBlackTree() = """
     fn makeRbNode(mem: AutoMemory, key: Cons, value: Cons, parent: Cons): Cons {
         val keyValue = cons(mem, key, value);
         val leftRight = cons(mem, nil, nil);
-        val parentLeftRight = cons(mem, parent, leftRight);
-        val node = cons(mem, keyValue, parentLeftRight);
-        setNodeBlack(node);
+        val parentAndChildren = cons(mem, parent, leftRight);
+        val node = cons(mem, keyValue, parentAndChildren);
+        setNodeRed(node);
         return node;
     }
 
@@ -81,6 +89,10 @@ fun includeRedBlackTree() = """
     fn setNodeRight(node: Cons, rightNode: Cons) {
         nodeChildren(node).right = rightNode;
     }
+    
+    fn setNodeParent(node: Cons, parent: Cons) {
+        cdr(node).left = parent;
+    }
 
     fn nodeKey(node: Cons): Cons {
         return caar(node);
@@ -92,6 +104,24 @@ fun includeRedBlackTree() = """
 
     fn nodeParent(node: Cons): Cons {
         return cdar(node);
+    }
+
+    fn nodeGrandparent(node: Cons): Cons {
+        if (node == nil) return nil;
+        val parent = nodeParent(node);
+        if (parent == nil) return nil;
+        return nodeParent(parent);
+    }
+
+    fn nodeUncle(node: Cons): Cons {
+        val grandparent = nodeGrandparent(node);
+        if (grandparent == nil) return nil;
+        val children = nodeChildren(grandparent);
+        if (children.left == node) {
+            return children.right;
+        } else {
+            return children.left;
+        }
     }
 
     fn setNodeRed(node: Cons) {
@@ -110,18 +140,60 @@ fun includeRedBlackTree() = """
         return userBit0(node);
     }
 
-    fn leftChild(node: Cons): Cons {
-        return cddar(node);
-    }
-
     fn nodeChildren(node: Cons): Cons {
         return cddr(node);
+    }
+
+    fn leftChild(node: Cons): Cons {
+        return cddar(node);
     }
 
     fn rightChild(node: Cons): Cons {
         return cdddr(node);
     }
 
+    fn rotateLeft(tree: RbTree, p: Cons) {
+        if (p == nil) return;
+        val r = rightChild(p);
+        val rLeft = leftChild(r);
+        setNodeRight(p, rLeft);
+        if (rLeft != nil) {
+            setNodeParent(rLeft, p);
+        }
+        val pParent = nodeParent(p);
+        setNodeParent(r, pParent);
+        if (pParent == nil) {
+            tree.root = r;
+        } else if (leftChild(pParent) == p) {
+            setNodeLeft(pParent, r);
+        } else {
+            setNodeRight(pParent, r);
+        }
+        setNodeLeft(r, p);
+        setNodeParent(p, r);
+    }
+
+    fn rotateRight(tree: RbTree, p: Cons) {
+        if (p == nil) return;
+        val l = leftChild(p);
+        val lRight = rightChild(l);
+        setNodeLeft(p, lRight);
+        if (lRight != nil) {
+            setNodeParent(lRight, p);
+        }
+        val pParent = nodeParent(p);
+        setNodeParent(l, pParent);
+        if (pParent == nil) {
+            tree.root = l;
+        } else if (rightChild(pParent) == p) {
+            setNodeRight(pParent, l);
+        } else {
+            setNodeLeft(pParent, l);
+        }
+        setNodeRight(l, p);
+        setNodeParent(p, l);
+
+    }
 """.trimIndent()
 
 

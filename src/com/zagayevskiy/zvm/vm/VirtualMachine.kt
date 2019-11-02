@@ -150,6 +150,17 @@ interface VmIo {
     fun print(value: String)
 }
 
+interface CrashHandler {
+    fun handleCrash(code: Int)
+}
+
+object SimpleCrashHandler: CrashHandler {
+    override fun handleCrash(code: Int) {
+        val sign = if (code >= 0) "" else "-"
+        throw RuntimeException("crash with code $code(${sign}0x${abs(code).toString(16)})")
+    }
+}
+
 object SimpleVmIo : VmIo {
     override fun print(value: String) = println(value)
 }
@@ -169,7 +180,8 @@ class VirtualMachine(info: LoadedInfo,
                      private val localsStackSize: Int = 1024,
                      private val heap: Memory = BitTableMemory(localsStackSize),
                      private val javaInterop: JavaInterop = DisabledJavaInterop,
-                     private val io: VmIo = SimpleVmIo) {
+                     private val io: VmIo = SimpleVmIo,
+                     private val crashHandler: CrashHandler = SimpleCrashHandler) {
 
     private val functions = info.functions
     private val mainIndex = info.mainIndex
@@ -227,10 +239,7 @@ class VirtualMachine(info: LoadedInfo,
                     if (callStack.size == 1) return
                     ret()
                 }
-                CRASH -> {
-                    val crashCode = pop<VMInteger>().intValue
-                    throw RuntimeException("crash with code $crashCode(0x${crashCode.toString(16)})")
-                }
+                CRASH -> crashHandler.handleCrash(pop<VMInteger>().intValue)
                 JCALL -> jcall(decodeNextInt())
                 JNEW -> jnew(decodeNextInt())
                 JDEL -> jdel()

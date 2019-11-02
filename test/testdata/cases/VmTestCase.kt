@@ -1,8 +1,6 @@
 package testdata.cases
 
-import com.zagayevskiy.zvm.vm.SimpleVmIo
-import com.zagayevskiy.zvm.vm.StackEntry
-import com.zagayevskiy.zvm.vm.VmIo
+import com.zagayevskiy.zvm.vm.*
 import kotlin.test.assertEquals
 
 interface VmTestCase {
@@ -17,9 +15,12 @@ interface VmTestCase {
     val io: VmIo
         get() = SimpleVmIo
 
+    val crashHandler: CrashHandler
+        get() = SimpleCrashHandler
+
     val runArgs: List<StackEntry>
 
-    fun prepare(){}
+    fun prepare() {}
 
     fun checkResult(actualResult: StackEntry)
 }
@@ -39,9 +40,10 @@ internal class SimpleVmTestCase(override val name: String,
 }
 
 internal class PrintVmTestCase(override val name: String,
-                                     override val bytecode: ByteArray,
-                                     override val runArgs: List<StackEntry>,
-                                     private val expectPrinted: List<String>) : AbsVmTestCase() {
+                               override val bytecode: ByteArray,
+                               override val runArgs: List<StackEntry>,
+                               private val expectPrinted: List<String>,
+                               private val expectCrashCode: Int? = null) : AbsVmTestCase() {
 
     private lateinit var testIo: TestVmIo
 
@@ -52,7 +54,18 @@ internal class PrintVmTestCase(override val name: String,
     override val io: VmIo
         get() = testIo
 
+    override val crashHandler: CrashHandler
+        get() = expectCrashCode?.let { TestCrashHandler(it) } ?: SimpleCrashHandler
+
     override fun checkResult(actualResult: StackEntry) = assertEquals(expectPrinted, testIo.printed)
+}
+
+internal class TestCrashHandler(private val expectedCrashCode: Int) : CrashHandler {
+
+    override fun handleCrash(code: Int) {
+        if (expectedCrashCode != code) SimpleCrashHandler.handleCrash(code)
+    }
+
 }
 
 internal class TestVmIo : VmIo {

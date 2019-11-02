@@ -18,6 +18,10 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
             run(emptyList(), 0)
         }
 
+        source(RbTreeTestSource.IsBstCrashedOnNoBst) {
+            run(emptyList(), prints = listOf("value less then min"), crashCode = 1)
+        }
+
         source(RbTreeTestSource.AllPuttedKeysExistsAndValuesCorrect) {
             run(emptyList(), 0)
         }
@@ -166,12 +170,13 @@ private class ZcRunBuilder(val source: TestSource) {
         ))
     }
 
-    fun run(args: List<StackEntry>, prints: List<String>) {
+    fun run(args: List<StackEntry>, prints: List<String>, crashCode: Int? = null) {
         ZcTestCases.add(PrintVmTestCase(
                 """Zc print ${source.name} ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "")}"""",
                 precompiledProgram,
                 runArgs = args,
-                expectPrinted = prints
+                expectPrinted = prints,
+                expectCrashCode = crashCode
         ))
     }
 }
