@@ -32,7 +32,7 @@ fun includeRedBlackTree() = """
                     if (cursor == nil) {
                         val insertedNode = makeRbNode(mem, key, value, parent);
                         setNodeLeft(parent, insertedNode);
-                        fixAfterInsert(tree, insertedNode, compare);
+                        fixAfterInsert(tree, insertedNode);
                         return;
                     }
                 } else {
@@ -40,7 +40,7 @@ fun includeRedBlackTree() = """
                     if (cursor == nil) {
                         val insertedNode = makeRbNode(mem, key, value, parent);
                         setNodeRight(parent, insertedNode);
-                        fixAfterInsert(tree, insertedNode, compare);
+                        fixAfterInsert(tree, insertedNode);
                         return;
                     }
                 }
@@ -48,7 +48,60 @@ fun includeRedBlackTree() = """
         }
     }
 
-    fn fixAfterInsert(tree: RbTree, insertedNode: Cons, compare: (Cons, Cons) -> byte) {
+    fn fixAfterInsert(tree: RbTree, insertedNode: Cons) {
+        setNodeRed(insertedNode);
+        var x = insertedNode;
+
+        while(fixAfterInsertLoopCondition(x)) {
+            var xParent = nodeParent(x);
+            var xGrandParent = nodeParent(xParent);
+            if (xParent == leftChild(xGrandParent)) {
+                val y = rightChild(xGrandParent);
+                if (isNodeRed(y)) {
+                    setNodeBlack(xParent);
+                    setNodeBlack(y);
+                    setNodeRed(xGrandParent);
+                    x = xGrandParent;
+                } else {
+                    if (x == rightChild(xParent)) {
+                        x = xParent;
+                        rotateLeft(tree, x);
+                        xParent = nodeParent(x);
+                        xGrandParent = nodeParent(xParent);
+                    }
+                    setNodeBlack(xParent);
+                    setNodeRed(xGrandParent);
+                    rotateRight(tree, xGrandParent);
+                }
+            } else {
+                val y = leftChild(xGrandParent);
+                if (isNodeRed(y)) {
+                    setNodeBlack(xParent);
+                    setNodeBlack(y);
+                    setNodeRed(xGrandParent);
+                    x = xGrandParent;
+                } else {
+                    if (x == leftChild(xParent)) {
+                        x = xParent;
+                        rotateRight(tree, x);
+                        xParent = nodeParent(x);
+                        xGrandParent = nodeParent(xParent);
+                    }
+                    setNodeBlack(xParent);
+                    setNodeRed(xGrandParent);
+                    rotateLeft(tree, xGrandParent);
+                }
+            }
+        }
+
+        setNodeBlack(tree.root);
+    }
+
+    fn fixAfterInsertLoopCondition(x: Cons): bool {
+        if (x == nil) return false;
+        val xParent = nodeParent(x);
+        if (xParent == nil) return false;
+        return isNodeRed(xParent);
     }
 
     fn findTree(root: Cons, key: Cons, compare: (Cons, Cons) -> byte): Cons {
@@ -107,14 +160,15 @@ fun includeRedBlackTree() = """
     }
 
     fn nodeParent(node: Cons): Cons {
+        if (node == nil) return nil;
         return cdar(node);
     }
 
     fn nodeGrandparent(node: Cons): Cons {
         if (node == nil) return nil;
-        val parent = nodeParent(node);
+        val parent = cdar(node);
         if (parent == nil) return nil;
-        return nodeParent(parent);
+        return cdar(parent);
     }
 
     fn nodeUncle(node: Cons): Cons {
@@ -129,18 +183,24 @@ fun includeRedBlackTree() = """
     }
 
     fn setNodeRed(node: Cons) {
-        setUserBit0(node, false);
+        if (node != nil) {
+            setUserBit0(node, false);
+        }
     }
 
     fn setNodeBlack(node: Cons) {
-        setUserBit0(node, true);
+        if(node != nil) {
+            setUserBit0(node, true);
+        }
     }
 
     fn isNodeRed(node: Cons): bool {
+        if (node == nil) return false;
         return !userBit0(node);
     }
 
     fn isNodeBlack(node: Cons): bool {
+        if (node == nil) return true;
         return userBit0(node);
     }
 
@@ -149,10 +209,12 @@ fun includeRedBlackTree() = """
     }
 
     fn leftChild(node: Cons): Cons {
+        if (node == nil) return nil;
         return cddar(node);
     }
 
     fn rightChild(node: Cons): Cons {
+        if (node == nil) return nil;
         return cdddr(node);
     }
 
