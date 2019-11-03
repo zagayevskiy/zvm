@@ -98,7 +98,6 @@ fun includeRedBlackTree() = """
     }
 
     fn fixAfterInsertLoopCondition(x: Cons): bool {
-        if (x == nil) return false;
         val xParent = nodeParent(x);
         if (xParent == nil) return false;
         return isNodeRed(xParent);

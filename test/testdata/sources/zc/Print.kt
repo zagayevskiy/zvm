@@ -1,6 +1,8 @@
 package testdata.sources.zc
 
 import testdata.cases.TestSource
+import testdata.sources.zc.includes.includeStdIo
+import testdata.sources.zc.includes.includeStdMem
 
 object Print {
 
@@ -32,5 +34,38 @@ object Print {
                         }
                     """.trimIndent()
     )
+
+    val ExpectedInts = (Int.MIN_VALUE until Int.MAX_VALUE step Int.MAX_VALUE / 512).toList()
+
+    val Ints = TestSource("ints", """
+        ${includeStdIo()}
+        ${includeStdMem()}
+
+        fn main(): int {
+            val buffer: [byte] = alloc(32);
+            ${
+                ExpectedInts.joinToString(separator = "\n") { int ->
+                    "       itos($int, buffer); print(buffer);"
+                }
+            }
+
+            free(buffer);
+            return 0;
+        }
+
+    """.trimIndent())
+
+    val ExternalInt = TestSource("external int", """
+        fn main(x: int): int {
+            val buffer: [byte] = alloc(32);
+            itos(x, buffer);
+            print(buffer);
+            free(buffer);
+            return 0;
+        }
+
+        ${includeStdIo()}
+        ${includeStdMem()}
+    """.trimIndent())
 
 }

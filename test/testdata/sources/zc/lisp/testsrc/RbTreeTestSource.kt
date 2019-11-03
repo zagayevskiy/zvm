@@ -157,7 +157,9 @@ object RbTreeTestSource {
             freeAutoMemory(mem);
             return 0;
         }
+    """.trimIndent())
 
+    private fun rbTreeRequirements() = """
         fn checkRequirements(tree: RbTree) {
             checkRootBlack(tree);
             checkChildrenOfRedIsBlack(tree.root, false);
@@ -198,7 +200,7 @@ object RbTreeTestSource {
 
             return leftCount;
         }
-    """.trimIndent())
+    """.trimIndent()
 
     val IsBstCrashedOnNoBst = TestSource("crash on no-bst", """
 
@@ -342,10 +344,16 @@ object RbTreeTestSource {
     """.trimIndent())
 
     private fun makeCongruentTree() = """
+        ${rbTreeRequirements()}
+
         fn makeCongruentTree(mem: AutoMemory, count: int): RbTree {
             val tree = makeRbTree();
             var keyGen = 1;
+            val buffer: [byte] = alloc(32);
+
             for(var i = 0; i < count; i = i + 1){
+                itos(i, buffer);
+                print(buffer);
                 keyGen = (keyGen * 8121 + 28411) % 134456;
                 val k = makeNumber(mem, keyGen);
                 val v = makeNumber(mem, i);

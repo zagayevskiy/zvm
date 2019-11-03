@@ -25,6 +25,47 @@ internal fun includeStdMem() = """
         }
     }
 
+    fn itos(value: int, buffer: [byte]) {
+        var cursor: int;
+        var v: int;
+        val zero: byte = 48;
+        when(value) {
+            0 -> {
+                cast<[int]>(buffer)[0] = 1;
+                buffer[4] = zero;
+                return;
+            }
+            -2147483648 -> {
+                copy("-2147483648", buffer, 15);
+                return;
+            }
+        }
+
+        var digitsBegin: int;
+        if (value > 0) {
+            v = value;
+            digitsBegin = 4;
+        } else {
+            v = -1*value;
+            buffer[4] = 45;
+            digitsBegin = 5;
+        }
+        cursor = digitsBegin;
+
+        while(v != 0) {
+            buffer[cursor] = zero + cast<byte>(v % 10);
+            v = v / 10;
+            cursor = cursor + 1;
+        }
+        cast<[int]>(buffer)[0] = (cursor - 4);
+        cursor = cursor - 1;
+        for (var i = digitsBegin; i < cursor; i = i + 1, cursor = cursor - 1) {
+            val tmp = buffer[cursor];
+            buffer[cursor] = buffer[i];
+            buffer[i] = tmp;
+        }
+    }
+
     fn orderStrings(left: [byte], right: [byte]): byte {
         val leftLength = stringLength(left);
         val rightLength = stringLength(right);

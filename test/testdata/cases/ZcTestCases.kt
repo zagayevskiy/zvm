@@ -54,6 +54,24 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
             run(args = emptyList(), prints = Print.HelloStrings)
         }
 
+        source(Print.Ints) {
+            run(args = emptyList(), prints = Print.ExpectedInts.map { it.toString() })
+        }
+
+        source(Print.ExternalInt) {
+            run(arg = 0, prints = "0")
+            run(arg = -1, prints = "-1")
+            run(arg = -20, prints = "-20")
+            run(arg = -300, prints = "-300")
+            run(arg = -4444, prints = "-4444")
+            run(arg = -56789, prints = "-56789")
+            run(arg = -1011121314, prints = "-1011121314")
+            run(arg = 100500, prints = "100500")
+            run(arg = Int.MIN_VALUE+1, prints = (Int.MIN_VALUE+1).toString())
+            run(arg = Int.MIN_VALUE, prints = (Int.MIN_VALUE).toString())
+            run(arg = Int.MAX_VALUE, prints = Int.MAX_VALUE.toString())
+        }
+
         source(TestSource("invoke", """
 
             fn main(i: int): int {
@@ -176,6 +194,10 @@ private class ZcRunBuilder(val source: TestSource) {
                 runArgs = args,
                 expectedResult = ret
         ))
+    }
+
+    fun run(arg: Int, prints: String) {
+        run(args = listOf(arg.toStackEntry()), prints = listOf(prints))
     }
 
     fun run(args: List<StackEntry>, prints: List<String>, crashCode: Int? = null) {
