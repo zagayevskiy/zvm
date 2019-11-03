@@ -79,8 +79,8 @@ private val symbolsMap = mapOf(
         "/" to ZcToken.Slash,
         "%" to ZcToken.Percent,
 
-        "&&" to ZcToken.Disjunction,
-        "||" to ZcToken.Conjunction,
+        "||" to ZcToken.Disjunction,
+        "&&" to ZcToken.Conjunction,
         "!" to ZcToken.LogicalNot,
 
         "|" to ZcToken.BitOr,

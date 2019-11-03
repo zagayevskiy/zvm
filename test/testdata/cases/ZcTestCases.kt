@@ -14,6 +14,27 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
 
     init {
 
+        source(TestSource("and_or", """
+
+            fn main(x: int, y: int, z: int): int {
+                if (x > 0 && y > 0 && z > 0) return 3;
+                if ((x > 0 && y > 0) || (x > 0 && z > 0) || (y > 0 && z > 0)) return 2;
+                if (x > 0 || y > 0 || z > 0 ) return 1;
+                return 0;
+            }
+
+        """.trimIndent())) {
+            run(args = entries(-1, -2, -3), ret = 0)
+            run(args = entries(1, 2, 3), ret = 3)
+            run(args = entries(-1, 2, 3), ret = 2)
+            run(args = entries(1, -2, 3), ret = 2)
+            run(args = entries(1, 2, -3), ret = 2)
+            run(args = entries(-1, 2, -3), ret = 1)
+            run(args = entries(1, -2, -3), ret = 1)
+            run(args = entries(-1, -2, 3), ret = 1)
+
+        }
+
         source(RbTreeTestSource.MakeNode) {
             run(emptyList(), 0)
         }

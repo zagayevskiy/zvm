@@ -67,7 +67,7 @@ internal class ZcParserTest(private val test: TestData) {
                 "fn ifelse(c: bool){ if ((1 + 2) || c) val x = 0; else return 3; } " expect program(
                         fn("ifelse", args = listOf(Arg("c") withType "bool"), body = AstBlock(listOf(
                                 AstIfElse(
-                                        condition = AstConjunction(AstSum(1.const, 2.const), "c".id),
+                                        condition = AstDisjunction(AstSum(1.const, 2.const), "c".id),
                                         ifBody = AstValDecl("x", null, initializer = 0.const),
                                         elseBody = AstFunctionReturn(3.const))
                         )))),
