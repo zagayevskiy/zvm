@@ -133,7 +133,7 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             val currentBranchLabel = branchLabel(index)
             val nextBranchLabel = branchLabel(index + 1)
             commands.add(Command.Label(currentBranchLabel))
-            commands.add(instructionByType(whenStatement.checkValue.type,intOpcode = DupInt, byteOpcode = DupByte))
+            commands.add(instructionByType(whenStatement.checkValue.type, intOpcode = DupInt, byteOpcode = DupByte))
             generate(branch.case)
             commands.add(instructionByType(whenStatement.checkValue.type, IntEq, ByteEq))
             commands.add(JumpZero.instruction(nextBranchLabel.id))
@@ -247,7 +247,8 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
                     int = { IntConst.instruction(0.op) },
                     byte = { ByteConst.instruction(0.op) }))
             AstConst.Undefined -> TODO("What to do with undefined?")
-            AstConst.Void -> { /* Nothing to do */ }
+            AstConst.Void -> { /* Nothing to do */
+            }
             is AstLogicalNot -> {
                 generate(expression.expression)
                 commands.add(ByteLogicalNot.instruction())
@@ -261,6 +262,11 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
     }
 
     private fun generate(binary: AstBinary) {
+        if (binary is AstLogicalBinary) {
+            generate(binary)
+            return
+        }
+
         generate(binary.left)
         generate(binary.right)
 
@@ -284,6 +290,32 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
             is AstDiv -> instructionByType(binary.type, IntDiv, ByteDiv)
             is AstMod -> instructionByType(binary.type, IntMod, ByteMod)
         })
+    }
+
+    private fun generate(binaryLogical: AstLogicalBinary) {
+        return when (binaryLogical) {
+            is AstDisjunction -> {
+                generate(binaryLogical.left)
+                commands.add(DupByte.instruction())
+                val skipLabel = "disj_skip_$nextId"
+                commands.add(JumpNotZero.instruction(skipLabel.id))
+                generate(binaryLogical.right)
+                commands.add(ByteOr.instruction())
+                commands.add(Command.Label(skipLabel))
+                Unit
+            }
+
+            is AstConjunction -> {
+                generate(binaryLogical.left)
+                commands.add(DupByte.instruction())
+                val skipLabel = "conj_skip_$nextId"
+                commands.add(JumpZero.instruction(skipLabel.id))
+                generate(binaryLogical.right)
+                commands.add(ByteAnd.instruction())
+                commands.add(Command.Label(skipLabel))
+                Unit
+            }
+        }
     }
 
     private fun generate(call: AstFunctionCall) {

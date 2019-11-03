@@ -14,16 +14,7 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
 
     init {
 
-        source(TestSource("and_or", """
-
-            fn main(x: int, y: int, z: int): int {
-                if (x > 0 && y > 0 && z > 0) return 3;
-                if ((x > 0 && y > 0) || (x > 0 && z > 0) || (y > 0 && z > 0)) return 2;
-                if (x > 0 || y > 0 || z > 0 ) return 1;
-                return 0;
-            }
-
-        """.trimIndent())) {
+        source(LogicalBinary.CountPositives) {
             run(args = entries(-1, -2, -3), ret = 0)
             run(args = entries(1, 2, 3), ret = 3)
             run(args = entries(-1, 2, 3), ret = 2)
@@ -32,7 +23,14 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
             run(args = entries(-1, 2, -3), ret = 1)
             run(args = entries(1, -2, -3), ret = 1)
             run(args = entries(-1, -2, 3), ret = 1)
+        }
 
+        source(LogicalBinary.AndLazy) {
+            run(args = emptyList(), ret = 0)
+        }
+
+        source(LogicalBinary.OrLazy) {
+            run(args = emptyList(), ret = 0)
         }
 
         source(RbTreeTestSource.MakeNode) {
@@ -60,7 +58,7 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
         }
 
         source(RbTreeTestSource.HeterogeneousData) {
-            heapSize = 1024*1024
+            heapSize = 1024 * 1024
             run(emptyList(), 0)
         }
 
