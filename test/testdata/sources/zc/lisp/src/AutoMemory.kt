@@ -14,6 +14,7 @@ fun includeAutoMemory() = """
         var unlayouted: int;
         var recycled: Cons;
         var available: int;
+        var allocated: int;
     }
     
     const CT_TYPE_MASK: byte = 7;
@@ -47,6 +48,7 @@ fun includeAutoMemory() = """
         result.unlayouted = 0;
         result.recycled = nil;
         result.available = maxMemorySize / sizeof<Cons>;
+        result.allocated = 0;
 
         return result;
     }
@@ -213,7 +215,7 @@ fun includeAutoMemory() = """
     }
 
     fn getAtomName(atom: Cons): [byte] {
-        return cast<[byte]>(car(atom));
+        return cast<[byte]>(atom.left);
     }
 
     fn getInt(cons: Cons): int {
@@ -228,7 +230,12 @@ fun includeAutoMemory() = """
 
     fn assertType(cons: Cons, type: byte, message: [byte]) {
         if (getType(cons) != type) {
+            val buffer: [byte] = alloc(16);
             print(message);
+            print(" type: ");
+            itos(cast<int>(getType(cons)), buffer);
+            print(buffer);
+            free(buffer);
             crash(2989);
         }
     }
@@ -243,9 +250,11 @@ fun includeAutoMemory() = """
 
     fn allocCons(autoMemory: AutoMemory): Cons {
         if(autoMemory.available <= 0) {
+            printAutoMemoryInfo(autoMemory);
             crashWithMessage(autoMemory.available, "OOM");
         }
         autoMemory.available = autoMemory.available - 1;
+        autoMemory.allocated = autoMemory.allocated + 1;
         val recycled = autoMemory.recycled;
         if(recycled == nil) {
             return layoutNext(autoMemory);
@@ -273,6 +282,7 @@ fun includeAutoMemory() = """
         cons.flags = CT_LIST;
         autoMemory.recycled = cons;
         autoMemory.available = autoMemory.available + 1;
+        autoMemory.allocated = autoMemory.allocated - 1;
     }
 
     fn mark(cons: Cons) {
@@ -307,8 +317,26 @@ fun includeAutoMemory() = """
         print(message);
         crash(code);
     }
+
+    fn printAutoMemoryInfo(autoMemory: AutoMemory) {
+        val buffer: [byte] = alloc(16);
+        print("Memory info:");
+        printStringAndInt("\nsize: ", autoMemory.size, buffer);
+        printStringAndInt("\nunlayouted index: ", autoMemory.unlayouted, buffer);
+        printStringAndInt("\navailable: ", autoMemory.available, buffer);
+        printStringAndInt("\nallocated: ", autoMemory.allocated, buffer);
+        print("\n");
+        free(buffer);
+    }
+
+    fn printStringAndInt(s: [byte], i: int, buffer: [byte]) {
+        print(s);
+        itos(i, buffer);
+        print(buffer);
+    }
     
     fn compare(left: Cons, right: Cons): byte {
+
         val leftType = getType(left);
         val rightType = getType(right);
         if (leftType < rightType) return -1;
@@ -316,7 +344,7 @@ fun includeAutoMemory() = """
         when(leftType) {
             CT_NIL -> return 0;
             CT_INT -> return compareInts(getInt(left), getInt(right));
-            CT_ATOM ->return orderStrings(getAtomName(left), getAtomName(right));
+            CT_ATOM -> return orderStrings(getAtomName(left), getAtomName(right));
             CT_LIST -> {
                 val cmpCar = compare(car(left), car(right));
                 if (cmpCar != 0) return cmpCar;
@@ -333,6 +361,29 @@ fun includeAutoMemory() = """
             return cast<byte>(-1);
         } else {
             return cast<byte>(1);
+        }
+    }
+
+    fn printCons(cons: Cons) {
+        when(getType(cons)) {
+            CT_NIL -> print('nil');
+            CT_INT -> {
+                val b: [byte] = alloc(16);
+                itos(getInt(cons), b);
+                print(b);
+                free(b);
+            }
+            CT_ATOM -> {
+                print('atom:');
+                print(getAtomName(cons));
+            }
+            CT_LIST -> {
+                print('(');
+                printCons(car(cons));
+                print(" . ");
+                printCons(cdr(cons));
+                print(')');
+            }
         }
     }
 """.trimIndent()

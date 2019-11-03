@@ -96,7 +96,7 @@ object RbTreeTestSource {
 
     """.trimIndent())
 
-    val PutGet = TestSource("put/get", """
+    val PutGet = TestSource("put/get ints", """
 
         ${includeStdIo()}
         ${includeStdMem()}
@@ -138,7 +138,7 @@ object RbTreeTestSource {
 
     """.trimIndent())
 
-    val RedBlackRequirements = TestSource("rb", """
+    val RedBlackRequirements = TestSource("check requirements", """
         ${includeStdIo()}
         ${includeStdMem()}
         ${includeAutoMemory()}
@@ -159,51 +159,58 @@ object RbTreeTestSource {
         }
     """.trimIndent())
 
-    private fun rbTreeRequirements() = """
-        fn checkRequirements(tree: RbTree) {
-            checkRootBlack(tree);
-            checkChildrenOfRedIsBlack(tree.root, false);
-            checkAllPathsContainsSameBlackNodesCount(tree);
-        }
+    val HeterogeneousData = TestSource("Heterogeneous", """
 
-        fn checkRootBlack(tree: RbTree) {
-            if (tree.root != nil) {
-                if (isNodeRed(tree.root)) {
-                    crashm(getInt(nodeValue(tree.root)), "root of rb-tree must be black");
-                }
-            }
-        }
+        ${includeStdIo()}
+        ${includeStdMem()}
+        ${includeAutoMemory()}
+        ${includeRedBlackTree()}
+        ${includeCrash()}
 
-        fn checkChildrenOfRedIsBlack(node: Cons, parentRed: bool) {
-            if (node == nil) return;
-            val currentRed = isNodeRed(node);
-            if (parentRed) {
-                if (currentRed) {
-                    printSubTree(nodeParent(node), 0);
-                    crashm(getInt(nodeKey(node)), "\nchildren of red node must be black");
-                }
-            }
 
-            checkChildrenOfRedIsBlack(leftChild(node), currentRed);
-            checkChildrenOfRedIsBlack(rightChild(node), currentRed);
-        }
+        fn main(): int {
 
-        fn checkAllPathsContainsSameBlackNodesCount(tree: RbTree) {
-            countAndCheckBlackNodes(tree.root);
-        }
+            var buffer: [byte];
+            val mem = makeAutoMemory(6000*sizeof<Cons>);
+            val tree = makeRbTree();
+            val iFrom = -1000000;
+            val iTo = 1000000;
+            val iStep = 10000;
+            for (var i = iFrom; i <= iTo; i = i + iStep) {
+                buffer = alloc(16);
+                val p = makeNumber(mem, i);
+                itos(i, buffer);
+                val s = makeAtom(mem, buffer);
+                val c_ps = cons(mem, p, s);
+                val c_s_c_ps = cons(mem, s, c_ps);
 
-        fn countAndCheckBlackNodes(node: Cons): int {
-            if (node == nil) return 0;
-            val leftCount = countAndCheckBlackNodes(leftChild(node));
-            val rightCount = countAndCheckBlackNodes(rightChild(node));
-            if (leftCount != rightCount) crashm(rightCount, "black nodes count in left and right must be same");
-            if (isNodeBlack(node)) {
-                return leftCount + 1;
+                putRbTree(mem, tree, p, s, ::compare);
+                putRbTree(mem, tree, s, p, ::compare);
+                putRbTree(mem, tree, c_ps, c_s_c_ps, ::compare);
+                putRbTree(mem, tree, c_s_c_ps, s, ::compare);
+                putRbTree(mem, tree, c_s_c_ps, c_ps, ::compare);
             }
 
-            return leftCount;
+            for (var i = iFrom; i <= iTo; i = i + iStep) {
+                buffer = alloc(16);
+                val p = makeNumber(mem, i);
+                itos(i, buffer);
+                val s = makeAtom(mem, buffer);
+                val c_ps = cons(mem, p, s);
+                val c_s_c_ps = cons(mem, s, c_ps);
+
+                assertByteEq(0, compare(s, findTree(tree.root, p, ::compare)), "find by int");
+                assertIntEq(i, getInt(findTree(tree.root, s, ::compare)), "find by atom");
+                assertByteEq(0, compare(c_s_c_ps, findTree(tree.root, c_ps, ::compare)), "find by complex cons 1");
+                assertByteEq(0, compare(c_ps, findTree(tree.root, c_s_c_ps, ::compare)), "find by complex cons 2");
+            }
+
+            freeAutoMemory(mem);
+            free(buffer);
+            return  0;
         }
-    """.trimIndent()
+
+    """.trimIndent())
 
     val IsBstCrashedOnNoBst = TestSource("crash on no-bst", """
 
@@ -298,53 +305,51 @@ object RbTreeTestSource {
 
     """.trimIndent())
 
-    val TreeRotationsChecks = TestSource("tree rotations check", """
-        ${includeStdIo()}
-        ${includeStdMem()}
-        ${includeAutoMemory()}
-        ${includeRedBlackTree()}
-        ${includeCrash()}
-
-        ${makeCongruentTree()}
-        ${isTreesEquals()}
-        ${copyTree()}
-        ${isBinarySearchTree()}
-        ${checkParentLinks()}
-
-        fn main(): int {
-            val mem = makeAutoMemory(27000);
-            val tree = makeCongruentTree(mem, 32);
-            val copy = copyTree(mem, tree);
-
-            rotateLeft(tree, leftChild(tree.root));
-            checkIsBst(tree, ::compare);
-            rotateLeft(tree, rightChild(tree.root));
-            checkIsBst(tree, ::compare);
-            rotateLeft(tree, tree.root);
-            checkIsBst(tree, ::compare);
-            rotateLeft(tree, leftChild(rightChild(tree.root)));
-            checkIsBst(tree, ::compare);
-            rotateLeft(tree, rightChild(leftChild(tree.root)));
-            checkIsBst(tree, ::compare);
-            checkParentLinks(tree.root, nil);
-
-            rotateRight(tree, rightChild(leftChild(tree.root)));
-            checkIsBst(tree, ::compare);
-            rotateRight(tree, leftChild(rightChild(tree.root)));
-            checkIsBst(tree, ::compare);
-            rotateRight(tree, tree.root);
-            checkIsBst(tree, ::compare);
-            rotateRight(tree, rightChild(tree.root));
-            checkIsBst(tree, ::compare);
-            rotateRight(tree, leftChild(tree.root));
-            checkIsBst(tree, ::compare);
-
-            assertTrue(isTreesEquals(tree.root, copy.root, ::compare), "must be in same state after all rotations");
-
-            return 0;
+    private fun rbTreeRequirements() = """
+        fn checkRequirements(tree: RbTree) {
+            checkRootBlack(tree);
+            checkChildrenOfRedIsBlack(tree.root, false);
+            checkAllPathsContainsSameBlackNodesCount(tree);
         }
 
-    """.trimIndent())
+        fn checkRootBlack(tree: RbTree) {
+            if (tree.root != nil) {
+                if (isNodeRed(tree.root)) {
+                    crashm(getInt(nodeValue(tree.root)), "root of rb-tree must be black");
+                }
+            }
+        }
+
+        fn checkChildrenOfRedIsBlack(node: Cons, parentRed: bool) {
+            if (node == nil) return;
+            val currentRed = isNodeRed(node);
+            if (parentRed) {
+                if (currentRed) {
+                    printSubTree(nodeParent(node), 0);
+                    crashm(getInt(nodeKey(node)), "\nchildren of red node must be black");
+                }
+            }
+
+            checkChildrenOfRedIsBlack(leftChild(node), currentRed);
+            checkChildrenOfRedIsBlack(rightChild(node), currentRed);
+        }
+
+        fn checkAllPathsContainsSameBlackNodesCount(tree: RbTree) {
+            countAndCheckBlackNodes(tree.root);
+        }
+
+        fn countAndCheckBlackNodes(node: Cons): int {
+            if (node == nil) return 0;
+            val leftCount = countAndCheckBlackNodes(leftChild(node));
+            val rightCount = countAndCheckBlackNodes(rightChild(node));
+            if (leftCount != rightCount) crashm(rightCount, "black nodes count in left and right must be same");
+            if (isNodeBlack(node)) {
+                return leftCount + 1;
+            }
+
+            return leftCount;
+        }
+    """.trimIndent()
 
     private fun makeCongruentTree() = """
         ${rbTreeRequirements()}

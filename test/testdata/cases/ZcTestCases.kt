@@ -26,10 +26,6 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
             run(emptyList(), 0)
         }
 
-//        source(RbTreeTestSource.TreeRotationsChecks) {
-//            run(emptyList(), 0)
-//        }
-
         source(RbTreeTestSource.AllPuttedKeysExistsAndValuesCorrect) {
             run(emptyList(), 0)
         }
@@ -39,6 +35,11 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
         }
 
         source(RbTreeTestSource.RedBlackRequirements) {
+            run(emptyList(), 0)
+        }
+
+        source(RbTreeTestSource.HeterogeneousData) {
+            heapSize = 1024*1024
             run(emptyList(), 0)
         }
 
@@ -67,7 +68,7 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
             run(arg = -56789, prints = "-56789")
             run(arg = -1011121314, prints = "-1011121314")
             run(arg = 100500, prints = "100500")
-            run(arg = Int.MIN_VALUE+1, prints = (Int.MIN_VALUE+1).toString())
+            run(arg = Int.MIN_VALUE + 1, prints = (Int.MIN_VALUE + 1).toString())
             run(arg = Int.MIN_VALUE, prints = (Int.MIN_VALUE).toString())
             run(arg = Int.MAX_VALUE, prints = Int.MAX_VALUE.toString())
         }
@@ -177,6 +178,7 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
 
 private class ZcRunBuilder(val source: TestSource) {
     private val precompiledProgram: ByteArray
+    var heapSize: Int = VmTestCase.DefaultHeapSize
 
     init {
         val compiler = ZcCompiler()
@@ -192,7 +194,8 @@ private class ZcRunBuilder(val source: TestSource) {
                 """Zc ${source.name} ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "")} -> $ret"""",
                 precompiledProgram,
                 runArgs = args,
-                expectedResult = ret
+                expectedResult = ret,
+                heapSize = heapSize
         ))
     }
 

@@ -4,13 +4,16 @@ import com.zagayevskiy.zvm.vm.*
 import kotlin.test.assertEquals
 
 interface VmTestCase {
+    companion object {
+        const val DefaultHeapSize = 100000
+    }
     val bytecode: ByteArray
 
     val stackSize: Int
         get() = 2048
 
     val heapSize: Int
-        get() = 100000
+        get() = DefaultHeapSize
 
     val io: VmIo
         get() = SimpleVmIo
@@ -34,7 +37,8 @@ internal abstract class AbsVmTestCase : VmTestCase {
 internal class SimpleVmTestCase(override val name: String,
                                 override val bytecode: ByteArray,
                                 override val runArgs: List<StackEntry>,
-                                private val expectedResult: StackEntry) : AbsVmTestCase() {
+                                private val expectedResult: StackEntry,
+                                override val heapSize: Int = VmTestCase.DefaultHeapSize) : AbsVmTestCase() {
 
     override fun checkResult(actualResult: StackEntry) = assertEquals(expectedResult, actualResult)
 }

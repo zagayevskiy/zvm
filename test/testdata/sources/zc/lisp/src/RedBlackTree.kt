@@ -163,24 +163,6 @@ fun includeRedBlackTree() = """
         return cdar(node);
     }
 
-    fn nodeGrandparent(node: Cons): Cons {
-        if (node == nil) return nil;
-        val parent = cdar(node);
-        if (parent == nil) return nil;
-        return cdar(parent);
-    }
-
-    fn nodeUncle(node: Cons): Cons {
-        val grandparent = nodeGrandparent(node);
-        if (grandparent == nil) return nil;
-        val children = nodeChildren(grandparent);
-        if (children.left == node) {
-            return children.right;
-        } else {
-            return children.left;
-        }
-    }
-
     fn setNodeRed(node: Cons) {
         if (node != nil) {
             setUserBit0(node, false);
@@ -266,25 +248,22 @@ fun includeRedBlackTree() = """
             return;
         }
 
-        val buffer: [byte] = alloc(32);
+
         print("{");
         if (isNodeRed(node)) {
             print('"color":"Red"');
         } else {
             print('"color":"Black"');
         }
-        print(',"key":');
-        itos(getInt(nodeKey(node)), buffer);
-        print(buffer);
-        print(',"value":');
-        print(buffer);
-        itos(getInt(nodeValue(node)), buffer);
-        print(',"left":');
+        print(',"key":"');
+        printCons(nodeKey(node));
+        print('","value":"');
+        printCons(nodeValue(node));
+        print('","left":');
         printSubTree(leftChild(node), indent + 2);
         print(',"right":');
         printSubTree(rightChild(node), indent + 2);
         print("}");
-        free(buffer);
     }
 
 
