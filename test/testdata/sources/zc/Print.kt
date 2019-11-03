@@ -35,7 +35,7 @@ object Print {
                     """.trimIndent()
     )
 
-    val ExpectedInts = (Int.MIN_VALUE until Int.MAX_VALUE step Int.MAX_VALUE / 512).toList()
+    val ExpectedInts = (Int.MIN_VALUE until Int.MAX_VALUE step Int.MAX_VALUE / 32).toList()
 
     val Ints = TestSource("ints", """
         ${includeStdIo()}

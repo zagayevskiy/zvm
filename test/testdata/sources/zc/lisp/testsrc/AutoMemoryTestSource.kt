@@ -22,6 +22,7 @@ object AutoMemoryTestSource {
             testEntireMemoryAllocated();
             testEntireMemoryGc();
             testReachableNoGcAndUnreachableGc();
+            testRecycleCycle();
             return 0;
         }
 
@@ -90,6 +91,25 @@ object AutoMemoryTestSource {
                 n = n - 1;
                 cursor = cdr(cursor);
             }
+        }
+
+        fn testRecycleCycle() {
+            val mem = makeAutoMemory(MAX_CONS*sizeof<Cons>);
+            val rootWithLoop = cons(mem, nil, nil);
+            val x = cons(mem, rootWithLoop, nil);
+            rootWithLoop.left = x;
+            rootWithLoop.right = x;
+
+            val anotherLoop = cons(mem, nil, nil);
+            val y = cons(mem, anotherLoop, nil);
+            val z = cons(mem, y, anotherLoop);
+            anotherLoop.right = y;
+            anotherLoop.left = z;
+            y.right = z;
+            setUserBit0(y, true);
+
+            gc(mem, rootWithLoop);
+            assertRecycledCount(3, mem, "loop must be recycled");
         }
 
         fn assertRecycledCount(expect: int, mem: AutoMemory, message: [byte]) {

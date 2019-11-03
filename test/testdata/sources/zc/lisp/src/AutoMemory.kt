@@ -286,12 +286,12 @@ fun includeAutoMemory() = """
     }
 
     fn mark(cons: Cons) {
-        if (cons != nil) {
+        if (cons != nil && (cons.flags & CT_MARK_MASK) == 0) {
+            cons.flags = cons.flags | CT_MARK_MASK;
             if (getType(cons) == CT_LIST) {
                 mark(cons.left);
                 mark(cons.right);
             }
-            cons.flags = cons.flags | CT_MARK_MASK;
         }
     }
 
