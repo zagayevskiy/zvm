@@ -267,6 +267,76 @@ fun includeRedBlackTree() = """
     }
 
 
+    fn printGraphViz(tree: RbTree) {
+        val buffer: [byte] = alloc(16);
+        print("\ndigraph RBTree {\n");
+        printGraphVizNode(tree.root, 0, buffer);
+        print("}\n");
+        free(buffer);
+    }
+
+    fn printGraphVizNode(node: Cons, index: int, buffer: [byte]): int {
+        print("node_");
+        itos(index, buffer);
+        print(buffer);
+
+        if (node == nil) {
+            print('[label = "nil" shape=box style=filled fillcolor=black fontcolor=white]\n');
+            return index;
+        }
+
+        print("[");
+        print("shape=oval fontcolor=white ");
+
+        print("style=filled fillcolor=");
+        if (isNodeRed(node)) {
+            print("red ");
+        } else {
+            print("black ");
+        }
+
+        print('label = "');
+        print(", key:");
+        printCons(nodeKey(node));
+        print(", value:");
+        printCons(nodeValue(node));
+        print('"');
+
+        print("]\n");
+
+        val leftIndex = index + 1;
+        val rightIndex = printGraphVizNode(leftChild(node), leftIndex, buffer) + 1;
+        val retIndex = printGraphVizNode(rightChild(node), rightIndex, buffer);
+
+        printLinks(index, leftIndex, rightIndex, buffer);
+
+        return retIndex;
+    }
+
+    fn printLinks(index: int, leftIndex: int, rightIndex: int, buffer: [byte]) {
+        print("node_");
+        itos(index, buffer);
+        print(buffer);
+
+        print(" -> ");
+
+        print("node_");
+        itos(leftIndex, buffer);
+        print(buffer);
+        print("\n");
+
+        print("node_");
+        itos(index, buffer);
+        print(buffer);
+
+        print(" -> ");
+
+        print("node_");
+        itos(rightIndex, buffer);
+        print(buffer);
+        print("\n");
+    }
+
 """.trimIndent()
 
 
