@@ -26,9 +26,9 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
             run(emptyList(), 0)
         }
 
-        source(RbTreeTestSource.TreeRotationsChecks) {
-            run(emptyList(), 0)
-        }
+//        source(RbTreeTestSource.TreeRotationsChecks) {
+//            run(emptyList(), 0)
+//        }
 
         source(RbTreeTestSource.AllPuttedKeysExistsAndValuesCorrect) {
             run(emptyList(), 0)

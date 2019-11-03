@@ -257,8 +257,36 @@ fun includeRedBlackTree() = """
         }
         setNodeRight(l, p);
         setNodeParent(p, l);
-
     }
+
+
+    fn printSubTree(node: Cons, indent: int) {
+        if (node == nil) {
+            print('null');
+            return;
+        }
+
+        val buffer: [byte] = alloc(32);
+        print("{");
+        if (isNodeRed(node)) {
+            print('"color":"Red"');
+        } else {
+            print('"color":"Black"');
+        }
+        print(',"key":');
+        itos(getInt(nodeKey(node)), buffer);
+        print(buffer);
+        print(',"value":');
+        print(buffer);
+        itos(getInt(nodeValue(node)), buffer);
+        print(',"left":');
+        printSubTree(leftChild(node), indent + 2);
+        print(',"right":');
+        printSubTree(rightChild(node), indent + 2);
+        print("}");
+        free(buffer);
+    }
+
 
 """.trimIndent()
 

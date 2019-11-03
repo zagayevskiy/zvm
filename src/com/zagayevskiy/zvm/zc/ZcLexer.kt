@@ -129,5 +129,5 @@ class ZcSequenceLexer(sequence: Sequence<Char>) : Lexer by SequenceLexer(
         idStart = { isLetter() },
         idPart = { isLetterOrDigit() || this == '_' },
         eolAsToken = false,
-        stringConstDelimitator = { it.takeIf { limiter -> limiter == '"' } }
+        stringConstDelimitator = { it.takeIf { limiter -> limiter == '"' || limiter == '\'' } }
 )

@@ -78,7 +78,7 @@ class SequenceLexer(private val sequence: Sequence<Char>,
                 current = nextChar() ?: return keywordOrId(builder.toString())
             }
 
-            return keywordOrId(builder.toString())
+            return keywordOrId(builder.toString().replace("\\n", "\n"))
         }
 
         val stringEnd = stringConstDelimitator(current)
@@ -90,7 +90,7 @@ class SequenceLexer(private val sequence: Sequence<Char>,
                 current = nextChar() ?: error("""Unexpected eof, string constant not finished. Has "$builder"""")
             }
             nextChar()
-            return Token.StringConst(builder.toString())
+            return Token.StringConst(builder.toString().replace("\\n", "\n"))
         }
 
         return Token.Error(currentLineNumber, current.toString())

@@ -162,7 +162,9 @@ object SimpleCrashHandler: CrashHandler {
 }
 
 object SimpleVmIo : VmIo {
-    override fun print(value: String) = println(value)
+    override fun print(value: String) {
+        kotlin.io.print(value)
+    }
 }
 
 private object DisabledJavaInterop : JavaInterop {

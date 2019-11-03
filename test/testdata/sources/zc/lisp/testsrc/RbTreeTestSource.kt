@@ -177,8 +177,11 @@ object RbTreeTestSource {
         fn checkChildrenOfRedIsBlack(node: Cons, parentRed: bool) {
             if (node == nil) return;
             val currentRed = isNodeRed(node);
-            if (parentRed && currentRed) {
-                crashm(getInt(nodeKey(node)), "children of red node must be black");
+            if (parentRed) {
+                if (currentRed) {
+                    printSubTree(nodeParent(node), 0);
+                    crashm(getInt(nodeKey(node)), "\nchildren of red node must be black");
+                }
             }
 
             checkChildrenOfRedIsBlack(leftChild(node), currentRed);
@@ -349,11 +352,8 @@ object RbTreeTestSource {
         fn makeCongruentTree(mem: AutoMemory, count: int): RbTree {
             val tree = makeRbTree();
             var keyGen = 1;
-            val buffer: [byte] = alloc(32);
 
             for(var i = 0; i < count; i = i + 1){
-                itos(i, buffer);
-                print(buffer);
                 keyGen = (keyGen * 8121 + 28411) % 134456;
                 val k = makeNumber(mem, keyGen);
                 val v = makeNumber(mem, i);
