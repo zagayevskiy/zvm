@@ -1,6 +1,8 @@
 package com.zagayevskiy.zvm.zc
 
+import com.zagayevskiy.zvm.common.AbsParser
 import com.zagayevskiy.zvm.common.Lexer
+import com.zagayevskiy.zvm.common.ParseException
 import com.zagayevskiy.zvm.common.Token
 import com.zagayevskiy.zvm.common.Token.Eof
 import com.zagayevskiy.zvm.common.Token.Identifier
@@ -12,13 +14,7 @@ sealed class ParseResult {
     object Failure : ParseResult()
 }
 
-class ZcParser(private val lexer: Lexer) {
-
-    companion object {
-        private val NotMatched = null
-    }
-
-    private lateinit var token: Token
+class ZcParser(override val lexer: Lexer): AbsParser() {
     fun program(): ParseResult {
         try {
             val topLevelDeclarations = mutableListOf<TopLevelDeclaration>().apply {
@@ -596,27 +592,6 @@ class ZcParser(private val lexer: Lexer) {
         return chain(dereference)
     }
 
-    private fun nextToken() {
-        token = lexer.nextToken().also { currentToken ->
-            (currentToken as? Token.Error)?.let { error("Lexical error at sequence ${it.sequence}") }
-        }
-    }
 
-    private fun error(message: String = "Syntax error at token $token"): Nothing = throw ParseException("Line [${lexer.currentLineNumber}](${lexer.currentLine}): $message")
-
-    private inline fun <reified T : Token> expect() = maybe<T>()
-            ?: error("Unexpected token $token. Token of type ${T::class.simpleName} expected.")
-
-    private inline fun <reified T : Token> maybe() = (token as? T)?.also { nextToken() }
-
-    private inline fun <T : Token, R> T.andThan(block: (T) -> R): R = block(this)
-
-    private inline fun <reified T : Token, R : Any> matchList(element: () -> R?): List<R>? {
-        val first = element() ?: return NotMatched
-        return mutableListOf(first).apply {
-            while (maybe<T>() != null) add(element() ?: error())
-        }
-    }
 }
 
-class ParseException(override val message: String) : Exception()

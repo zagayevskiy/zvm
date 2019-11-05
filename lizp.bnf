@@ -1,0 +1,7 @@
+s_expression ::= atom | dot_pair | list
+
+dot_pair ::= "(" s_expression "." s_expression ")"
+
+list ::= "(" { s_expression } ")"
+
+atom ::= identiefier
