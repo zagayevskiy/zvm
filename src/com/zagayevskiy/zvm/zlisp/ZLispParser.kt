@@ -17,6 +17,11 @@ sealed class Sexpr {
             return name
         }
     }
+    data class Number(val value: Int): Sexpr() {
+        override fun toString(): String {
+            return value.toString()
+        }
+    }
 
     object Nil: Sexpr() {
         override fun toString(): String {
@@ -29,13 +34,13 @@ infix fun Sexpr.dot(tail: Sexpr) = DotPair(head = this, tail = tail)
 
 sealed class LispParseResult {
     data class Success(val program: List<Sexpr>): LispParseResult()
-    object Failure : LispParseResult()
+    class Failure(val exception: ParseException) : LispParseResult()
 }
 
 class ZLispParser(override val lexer: Lexer) : AbsParser() {
     fun parse(): LispParseResult {
-        nextToken()
         return try {
+            nextToken()
             val program = mutableListOf<Sexpr>().apply {
                 while (token != Token.Eof) {
                     add(sexpr())
@@ -44,11 +49,12 @@ class ZLispParser(override val lexer: Lexer) : AbsParser() {
 
             LispParseResult.Success(program)
         } catch (e: ParseException) {
-            throw e
+            LispParseResult.Failure(e)
         }
     }
 
     private fun sexpr(): Sexpr {
+        maybe<Token.Integer>()?.value?.let { return Sexpr.Number(it) }
         maybe<Token.Identifier>()?.name?.let { atom -> return if (atom == "nil") Nil else Atom(atom) }
 
         return dotPairOrList()

@@ -10,6 +10,8 @@ import org.junit.runners.Parameterized
 
 private val String.atom
     get() = Atom(this)
+private val Int.num
+    get() = Sexpr.Number(this)
 
 private fun slist(vararg sexprs: Sexpr): DotPair {
     return slist(sexprs.first(), sexprs.drop(1))
@@ -44,15 +46,15 @@ class ZLispParserTest(private val testCase: Pair<String, List<Sexpr>>) {
                     ()
                     atom
                     (a.b)
-                    (a (b (c (d (e (f (g)))))))
-                    (a b c d e f g)
+                    (a (b (c (d (e (f (100500)))))))
+                    (a b c d 1 2 3 4)
                 """.trimIndent() to listOf(
                         Nil,
                         Nil,
                         Atom("atom"),
                         "a".atom dot "b".atom,
-                        slist("a".atom, slist("b".atom, slist("c".atom, slist("d".atom, slist("e".atom, slist("f".atom, slist("g".atom))))))),
-                        slist("a".atom, "b".atom, "c".atom, "d".atom, "e".atom, "f".atom, "g".atom)
+                        slist("a".atom, slist("b".atom, slist("c".atom, slist("d".atom, slist("e".atom, slist("f".atom, slist(100500.num))))))),
+                        slist("a".atom, "b".atom, "c".atom, "d".atom, 1.num, 2.num, 3.num, 4.num)
                 )
         )
     }

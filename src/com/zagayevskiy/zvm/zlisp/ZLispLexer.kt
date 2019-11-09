@@ -19,7 +19,7 @@ private val symbolsMap = mapOf(
 private val idSymbols = setOf('-', '+', '*', '/', '!')
 
 class ZLispLexer(sequence: Sequence<Char>) : Lexer by SequenceLexer(sequence, symbolsMap, emptyMap(),
-        idStart = { isJavaIdentifierStart() },
+        idStart = { isJavaIdentifierStart() || this in idSymbols },
         idPart = { isJavaIdentifierStart() || this in idSymbols },
         eolAsToken = false,
         stringConstDelimitator = { symbol -> symbol.takeIf { it == '"' } })
