@@ -21,3 +21,5 @@ fun <T> Iterable<T>.zipWithCondition(other: Iterable<T>, condition: (T, T) -> Bo
 
     return !iter1.hasNext() && !iter2.hasNext()
 }
+
+fun <T> Sequence<T>.slidingWindow(size: Int) = windowed(size = size, step = 1)
