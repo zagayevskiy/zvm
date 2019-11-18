@@ -6,25 +6,13 @@ typealias BuiltInFunctionSignature = (LispEnv, Sexpr) -> Sexpr
 
 class LispEnv(private val outerEnv: LispEnv? = null) {
 
-    sealed class Entity {
-        class BuiltInFunc(private val name: String,val evalArgs: Boolean, private val impl: BuiltInFunctionSignature) : BuiltInFunctionSignature by impl, Entity() {
-            override fun toString() = "function $name"
-        }
+    private val map: MutableMap<Sexpr, Sexpr> = mutableMapOf()
 
-        data class Expr(val sexpr: Sexpr) : Entity()
-    }
+    fun find(key: Sexpr): Sexpr? = get(key) ?: outerEnv?.get(key)
 
-    private val map: MutableMap<Sexpr, Entity> = mutableMapOf()
-
-    fun find(key: Sexpr): Entity? = get(key) ?: outerEnv?.get(key)
-
-    operator fun get(key: Sexpr): Entity? = map[key]
-
-    operator fun set(key: Sexpr, value: Entity) {
-        map[key] = value
-    }
+    operator fun get(key: Sexpr): Sexpr? = map[key]
 
     operator fun set(key: Sexpr, value: Sexpr) {
-        set(key, Entity.Expr(value))
+        map[key] = value
     }
 }

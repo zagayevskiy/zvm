@@ -28,6 +28,8 @@ sealed class Sexpr {
             return "nil"
         }
     }
+
+    abstract class RuntimeOnly: Sexpr()
 }
 
 infix fun Sexpr.dot(tail: Sexpr) = DotPair(head = this, tail = tail)

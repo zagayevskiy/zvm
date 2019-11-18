@@ -34,20 +34,29 @@ private fun Sequence<Sexpr>.asSexpr(): Sexpr {
 
 class LispRepl {
 
-    fun loop() {
-        val replEnv = LispEnv().apply {
-            putArithmetic("+", Int::plus)
-            putArithmetic("-", Int::minus)
-            putArithmetic("*", Int::times)
-            putArithmetic("/", Int::div)
+    private var nextId: Int = 0
+        get() = field++
 
-            put("def!", false) { env, definition ->
+    fun loop() {
+        val atomT = "T".atom
+        val replEnv = LispEnv().apply {
+            set(atomT, atomT)
+            putArithmeticFunction("+", Int::plus)
+            putArithmeticFunction("-", Int::minus)
+            putArithmeticFunction("*", Int::times)
+            putArithmeticFunction("/", Int::div)
+            putFunction("=", true) { _, args ->
+                val (left, right) = args.requireList(2)
+                if(left == right) atomT else Sexpr.Nil
+            }
+
+            putFunction("def!", false) { env, definition ->
                 val (key, value) = definition.requireList(2)
                 eval(env, value).also { evaluatedValue -> env[key] = evaluatedValue }
 
             }
 
-            put("let*", false) { env, args ->
+            putTcoFunction("let*", false) { env, args ->
                 val (bindings, function) = args.requireList(2)
 
                 val letEnv = LispEnv(outerEnv = env)
@@ -55,21 +64,31 @@ class LispRepl {
                     letEnv[name] = eval(letEnv, value)
                 }
 
-                eval(letEnv, function)
+                letEnv to function
             }
 
-            put("cond", false) { env, args ->
+            putFunction("fn*", false) { outerEnv, definition ->
+                val (binds, body) = definition.requireList(2)
+                if (binds.asSequence().any { it !is Sexpr.Atom }) throw IllegalStateException("Only atoms required in binds list")
+                LispTailCallFunction("lambda#$nextId", true) { _, args ->
+                    val lambdaEnv = binds.asSequence()
+                            .zip(args.asSequence() + infiniteNilSequence()) { bind, arg -> bind to arg }
+                            .fold(LispEnv(outerEnv)) { lambdaEnv, (bind, arg) ->
+                                lambdaEnv[bind] = arg
+                                lambdaEnv
+                            }
+                    lambdaEnv to body
+                }
+            }
+
+            putTcoFunction("cond", false) { env, args ->
                 args.asSequence().mapNotNull { case ->
                     val (condition, body) = case.requireList(2)
-                    grabIf(eval(env, condition) != Sexpr.Nil) { eval(env, body) }
-                }.firstOrNull() ?: Sexpr.Nil
+                    grabIf(eval(env, condition) != Sexpr.Nil) { env to body }
+                }.firstOrNull() ?: (env to Sexpr.Nil)
             }
 
-//            put("fn*", false) { env, definition ->
-//
-//            }
-
-            put("quote", false) { env, args ->
+            putFunction("quote", false) { env, args ->
                 args.requireList(1).first()
             }
         }
@@ -92,25 +111,43 @@ class LispRepl {
 
     }
 
-    private fun eval(env: LispEnv, sexpr: Sexpr): Sexpr {
-        return when (sexpr) {
-            is Sexpr.DotPair -> when (val f = env.lookup(sexpr.head)) {
-                is LispEnv.Entity.BuiltInFunc -> {
-                    val args = if (f.evalArgs) {
-                        sexpr.tail.asSequence().map { arg -> eval(env, arg) }.asSexpr()
-                    } else {
-                        sexpr.tail
-                    }
-                    f(env, args)
-                }
-                else -> throw IllegalStateException("can't call $f")
-            }
-            is Sexpr.Atom -> when (val resolved = env.lookup(sexpr)) {
-                is LispEnv.Entity.BuiltInFunc -> throw IllegalStateException("$resolved can not be evaluated directly")
-                is LispEnv.Entity.Expr -> resolved.sexpr
-            }
+    private fun eval(env: LispEnv, expr: Sexpr): Sexpr {
+        var currentEnv = env
+        var evaluatingSexpr = expr
 
-            else -> sexpr
+        do {
+            when (evaluatingSexpr) {
+                is Sexpr.DotPair -> when (val f = eval(currentEnv, evaluatingSexpr.head)) {
+                    is LispFunction -> {
+                        val args = if (f.evalArgs) {
+                            evaluatingSexpr.tail.asSequence().map { arg -> eval(currentEnv, arg) }.asSexpr()
+                        } else {
+                            evaluatingSexpr.tail
+                        }
+                        return f(currentEnv, args)
+                    }
+                    is LispTailCallFunction -> {
+                        val args = if (f.evalArgs) {
+                            evaluatingSexpr.tail.asSequence().map { arg -> eval(currentEnv, arg) }.asSexpr()
+                        } else {
+                            evaluatingSexpr.tail
+                        }
+                        val (tcoEnv, tcoExpr) = f(currentEnv, args)
+                        currentEnv = tcoEnv
+                        evaluatingSexpr = tcoExpr
+                    }
+                    else -> throw IllegalStateException("can't call $f")
+                }
+                is Sexpr.Atom -> return currentEnv.lookup(evaluatingSexpr)
+                else -> return evaluatingSexpr
+            }
+        } while (true)
+    }
+
+    private fun infiniteNilSequence() = Sequence {
+        object : Iterator<Sexpr.Nil> {
+            override fun hasNext() = true
+            override fun next() = Sexpr.Nil
         }
     }
 
@@ -118,18 +155,22 @@ class LispRepl {
         return asSequence().toList().takeIf { it.size == size } ?: throw IllegalStateException("$this required to be a list")
     }
 
-    private fun LispEnv.lookup(sexpr: Sexpr) = get(sexpr) ?: throw IllegalArgumentException("Unknown symbol $sexpr")
+    private fun LispEnv.lookup(sexpr: Sexpr) = find(sexpr) ?: throw IllegalArgumentException("Unknown symbol $sexpr")
 
     private fun print(sexpr: Sexpr) {
         println(sexpr.toString())
     }
 
-    private fun LispEnv.put(name: String, evalArgs: Boolean, function: BuiltInFunctionSignature) {
-        set(name.atom, LispEnv.Entity.BuiltInFunc(name, evalArgs, function))
+    private fun LispEnv.putTcoFunction(name: String, evalArgs: Boolean, function: LispTailCallLambdaSignature) {
+        set(name.atom, LispTailCallFunction(name, evalArgs, function))
     }
 
-    private fun LispEnv.putArithmetic(name: String, operator: Int.(Int) -> Int) {
-        put(name, true) { _: LispEnv, args: Sexpr ->
+    private fun LispEnv.putFunction(name: String, evalArgs: Boolean, function: LispLambdaSignature) {
+        set(name.atom, LispFunction(name, evalArgs, function))
+    }
+
+    private fun LispEnv.putArithmeticFunction(name: String, operator: Int.(Int) -> Int) {
+        putFunction(name, true) { _: LispEnv, args: Sexpr ->
 
             val ints = args.asSequence().map {
                 when (it) {
