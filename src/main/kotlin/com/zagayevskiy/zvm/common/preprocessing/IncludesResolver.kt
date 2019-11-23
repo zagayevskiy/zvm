@@ -12,7 +12,7 @@ abstract class AbsIncludesResolver : IncludesResolver {
         return doResolve(path)
     }
 
-    abstract fun doResolve(path: String): Sequence<Char>
+    protected abstract fun doResolve(path: String): Sequence<Char>
 }
 
 class CompositeIncludesResolver(private val resolvers: List<IncludesResolver>): AbsIncludesResolver() {

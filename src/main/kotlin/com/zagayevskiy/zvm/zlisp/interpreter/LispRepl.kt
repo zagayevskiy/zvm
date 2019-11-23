@@ -1,5 +1,7 @@
 package com.zagayevskiy.zvm.zlisp.interpreter
 
+import com.zagayevskiy.zvm.common.preprocessing.CompositeIncludesResolver
+import com.zagayevskiy.zvm.common.preprocessing.JavaAssetsIncludesResolver
 import com.zagayevskiy.zvm.zlisp.LispParseResult
 import com.zagayevskiy.zvm.zlisp.Sexpr
 import com.zagayevskiy.zvm.zlisp.ZLispLexer
@@ -8,7 +10,7 @@ import com.zagayevskiy.zvm.zlisp.ZLispParser
 
 class LispRepl {
     fun loop() {
-        val evaluator = LispEvaluator()
+        val evaluator = LispEvaluator(CompositeIncludesResolver(listOf(JavaAssetsIncludesResolver("/includes/lisp"))))
 
         do {
             val line = readLine() ?: return

@@ -1,8 +1,8 @@
 package com.zagayevskiy.zvm.zlisp.interpreter
 
+import com.zagayevskiy.zvm.common.preprocessing.IncludesResolver
 import com.zagayevskiy.zvm.util.grabIf
-import com.zagayevskiy.zvm.zlisp.Sexpr
-import com.zagayevskiy.zvm.zlisp.dot
+import com.zagayevskiy.zvm.zlisp.*
 
 private val String.atom: Sexpr.Atom
     get() = Sexpr.Atom(this)
@@ -33,7 +33,7 @@ private fun Sequence<Sexpr>.asSexpr(): Sexpr {
     return head dot tail.asSexpr()
 }
 
-class LispEvaluator {
+class LispEvaluator(private val includesResolver: IncludesResolver) {
 
     private var nextId: Int = 0
         get() = field++
@@ -57,6 +57,22 @@ class LispEvaluator {
         }
 
         putFunction("def!", false, ::evalDef)
+
+        putFunction("include!", true) { _, args ->
+            args.asSequence().map { path ->
+                val pathString = path as Sexpr.Str
+                val lexer = ZLispLexer(includesResolver.resolve(pathString.value))
+                val parser = ZLispParser(lexer)
+                val parsed = parser.parse()
+                when (parsed) {
+                    is LispParseResult.Success -> parsed.program
+                    is LispParseResult.Failure -> throw RuntimeException(parsed.exception)
+                }
+                parsed.program.map { expr -> eval(expr) }.lastOrNull() ?: Sexpr.Nil
+            }.lastOrNull() ?: Sexpr.Nil
+
+        }
+
         putTcoFunction("let*", false) { env, args ->
             val (bindings, function) = args.requireList(2)
 

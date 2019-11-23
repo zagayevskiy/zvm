@@ -7,7 +7,7 @@ import java.io.InputStreamReader
 fun InputStream.asSequence() = object : Sequence<String> {
     override fun iterator() = object : Iterator<String> {
         private val reader = BufferedReader(InputStreamReader(this@asSequence))
-        private var next: String? = reader.readLine()
+        private var next: String? = null
         private var readingStarted = false
         override fun hasNext(): Boolean {
             if (!readingStarted) {

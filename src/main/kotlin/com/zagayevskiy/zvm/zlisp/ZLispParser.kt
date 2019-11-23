@@ -8,25 +8,20 @@ import com.zagayevskiy.zvm.zlisp.Sexpr.*
 
 sealed class Sexpr {
     data class DotPair(val head: Sexpr, val tail: Sexpr): Sexpr() {
-        override fun toString(): String {
-            return "($head . $tail)"
-        }
+        override fun toString() = "($head . $tail)"
     }
     data class Atom(val name: String): Sexpr() {
-        override fun toString(): String {
-            return name
-        }
+        override fun toString() = name
     }
     data class Number(val value: Int): Sexpr() {
-        override fun toString(): String {
-            return value.toString()
-        }
+        override fun toString() = value.toString()
+    }
+    data class Str(val value: String): Sexpr() {
+        override fun toString() =  """"$value""""
     }
 
     object Nil: Sexpr() {
-        override fun toString(): String {
-            return "nil"
-        }
+        override fun toString() = "nil"
     }
 
     abstract class RuntimeOnly: Sexpr()
@@ -58,6 +53,7 @@ class ZLispParser(override val lexer: Lexer) : AbsParser() {
     private fun sexpr(): Sexpr {
         maybe<Token.Integer>()?.value?.let { return Sexpr.Number(it) }
         maybe<Token.Identifier>()?.name?.let { atom -> return if (atom == "nil") Nil else Atom(atom) }
+        maybe<Token.StringConst>()?.value?.let { return Sexpr.Str(it) }
 
         return dotPairOrList()
     }
