@@ -55,6 +55,12 @@ class LispEvaluator(private val includesResolver: IncludesResolver) {
             val (left, right) = args.requireList(2)
             if(left == right) atomT else Sexpr.Nil
         }
+        putFunction("&&", true) { _, args ->
+            if (args.asSequence().any { it == Sexpr.Nil }) Sexpr.Nil else atomT
+        }
+        putFunction("||", true) { _, args ->
+            if (args.asSequence().any { it != Sexpr.Nil }) atomT else Sexpr.Nil
+        }
 
         putFunction("def!", false, ::evalDef)
 

@@ -16,7 +16,7 @@ private val symbolsMap = mapOf(
         "." to ZLispToken.Dot
 )
 
-private val idSymbols: Set<Char> = setOf('-', '+', '*', '/', '%', '!', '?', '=', '<', '>')
+private val idSymbols: Set<Char> = setOf('-', '+', '*', '/', '%', '!', '?', '=', '<', '>', '&', '|')
 
 class ZLispLexer(sequence: Sequence<Char>) : Lexer by SequenceLexer(sequence, symbolsMap, emptyMap(),
         idStart = { isJavaIdentifierStart() || this in idSymbols },
