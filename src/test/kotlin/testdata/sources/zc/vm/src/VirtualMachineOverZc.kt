@@ -139,10 +139,12 @@ internal val vmOverZc = """
         val function = context.functions[functionIndex];
         val sp = context.sp;
         val argsMemorySize = function.argsMemorySize;
-        context.sp = sp + argsMemorySize;
-        copy(context.operandsStack.stack, sp, argsMemorySize);
-        drop(context.operandsStack, argsMemorySize);
-
+        if (argsMemorySize != 0) {
+            context.sp = sp + argsMemorySize;
+            val operandsStack = context.operandsStack;
+            copy(operandsStack.stack + (operandsStack.top - argsMemorySize), sp, argsMemorySize);
+            drop(operandsStack, argsMemorySize);
+        }
         var frame = createStackFrame(context.sp, sp, context.ip);
         pushStackFrame(context.callStack, frame);
         context.ip = function.address;
@@ -282,7 +284,7 @@ internal val vmOverZc = """
     }
     fn noti(context: Context) {
         val stack = context.operandsStack;
-        pushInt(stack, !popInt(stack));
+        pushInt(stack, ~popInt(stack));
     }
 
     fn shli(context: Context) {
@@ -390,7 +392,7 @@ internal val vmOverZc = """
     }
     fn notb(context: Context) {
         val stack = context.operandsStack;
-        pushByte(stack, !popByte(stack));
+        pushByte(stack, ~popByte(stack));
     }
     fn cmpb(context: Context) {
         val stack = context.operandsStack;

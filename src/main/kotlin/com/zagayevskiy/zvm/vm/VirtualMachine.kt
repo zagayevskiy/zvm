@@ -759,7 +759,7 @@ class VirtualMachine(info: LoadedInfo,
 
     private fun out() {
         val address = pop<VMInteger> { "int expected as address of UTF-8 prefexed length string for output" }.intValue
-        val length = heap.readInt(address).takeIf { it > 0 } ?: error("length of string for output can not be null")
+        val length = heap.readInt(address).takeIf { it > 0 } ?: error("length of string for output must not be 0. Address: $address(0x${address.toString(16)})")
         val bytes = ByteArray(length)
         heap.copyOut(source = address + 4, destination = bytes)
         io.print(String(bytes, Charsets.UTF_8))
