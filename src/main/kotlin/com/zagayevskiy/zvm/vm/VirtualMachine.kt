@@ -56,6 +56,7 @@ import com.zagayevskiy.zvm.common.Opcodes.LLOADI
 import com.zagayevskiy.zvm.common.Opcodes.LNOTB
 import com.zagayevskiy.zvm.common.Opcodes.LSTORB
 import com.zagayevskiy.zvm.common.Opcodes.LSTORI
+import com.zagayevskiy.zvm.common.Opcodes.MEMCP
 import com.zagayevskiy.zvm.common.Opcodes.MLOADB
 import com.zagayevskiy.zvm.common.Opcodes.MLOADI
 import com.zagayevskiy.zvm.common.Opcodes.MODB
@@ -327,6 +328,7 @@ class VirtualMachine(info: LoadedInfo,
 
                 ALLOC -> alloc()
                 FREE -> free()
+                MEMCP -> memcp()
 
                 BTOI -> btoi()
                 ITOB -> itob()
@@ -420,6 +422,14 @@ class VirtualMachine(info: LoadedInfo,
     private fun free() {
         val address = pop<VMInteger> { "free argument must be Address(int), $it found" }.intValue
         heap.free(address)
+    }
+
+    private fun memcp() {
+        val count = pop<VMInteger> { "memcp 1st argument must be Count(int), $it found" }.intValue
+        val dstAddress = pop<VMInteger>{ "memcp 2nd argument must be Destination Address(int), $it found" }.intValue
+        val srcAddress = pop<VMInteger>{ "memcp 3rd argument must be Source Address(int), $it found" }.intValue
+
+        heap.copyMemory(source = srcAddress, destination = dstAddress, count = count)
     }
 
     private inline fun <reified T : StackEntry> globalLoad() {

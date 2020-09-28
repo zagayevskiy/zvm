@@ -18,11 +18,12 @@ internal fun includeStdMem() = """
     }
 
     fn copy(src: [void], dst: [void], count: int) {
-        val srcBytes: [byte] = src;
-        val dstBytes: [byte] = dst;
-        for (var i = 0; i < count; i = i + 1) {
-            dstBytes[i] = srcBytes[i];
-        }
+        asm{"
+            lloadi src
+            lloadi dst
+            lloadi count
+            memcp
+        "}
     }
 
     fn itos(value: int, buffer: [byte]) {

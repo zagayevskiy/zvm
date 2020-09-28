@@ -12,6 +12,7 @@ private const val INT_BYTES_COUNT = 4
 class BitTableMemory(desirableSize: Int, private val blockSize: Int = 64) : Memory {
 
     init {
+        if (blockSize <= 0) throw IllegalArgumentException("blockSize(=$blockSize) must be positive")
         if (blockSize % INT_BYTES_COUNT != 0) throw IllegalArgumentException("blockSize(=$blockSize) must be divisible by $INT_BYTES_COUNT")
     }
 
@@ -20,13 +21,13 @@ class BitTableMemory(desirableSize: Int, private val blockSize: Int = 64) : Memo
 
     private val table = BitTable(size / blockSize)
 
-    //visible just for tests
     private val memory = ByteArray(size)
 
     override fun allocate(size: Int): Address {
         val actualSize = computeActualSize(size + allocationInfoSize)
         val blockCount = actualSize / blockSize
-        val firstBlockIndex = findEmptyPiece(blockCount) ?: throw VMOutOfMemory("OOM while allocating $size bytes. Memory size: ${memory.size}. Free blocks count: ${table.size - table.cardinality()}. Free memory: ${(table.size - table.cardinality()) * blockSize}. \n ${dump()}")
+        val firstBlockIndex = findEmptyPiece(blockCount)
+                ?: throw VMOutOfMemory("OOM while allocating $size bytes. Memory size: ${memory.size}. Free blocks count: ${table.size - table.cardinality()}. Free memory: ${(table.size - table.cardinality()) * blockSize}. \n ${dump()}")
         val address = firstBlockIndex * blockSize
         writeServiceInfo(address, blockCount)
         table.fill(firstBlockIndex, firstBlockIndex + blockCount, true)
@@ -55,6 +56,10 @@ class BitTableMemory(desirableSize: Int, private val blockSize: Int = 64) : Memo
         copy(memory, source, destination, destinationOffset, count)
     }
 
+    override fun copyMemory(source: Address, destination: Address, count: Int) {
+        copy(src = memory, srcPos = source, dst = memory, dstPos = destination, count = count)
+    }
+
     override operator fun get(address: Address) = memory[address]
 
     override operator fun set(address: Address, value: Byte) {
@@ -69,7 +74,7 @@ class BitTableMemory(desirableSize: Int, private val blockSize: Int = 64) : Memo
 
     private fun dump(): String {
         val template =
-        """
+                """
         === TABLE:
         %s
         === END OF TABLE
@@ -82,7 +87,7 @@ class BitTableMemory(desirableSize: Int, private val blockSize: Int = 64) : Memo
 
         val tableDump = table
                 .chunked(64)
-                .joinToString(separator = "\n") { line -> line.joinToString(separator = " ") { if(it) "1" else "0" } }
+                .joinToString(separator = "\n") { line -> line.joinToString(separator = " ") { if (it) "1" else "0" } }
         val heapDump = memory.asIterable()
                 .chunked(blockSize)
                 .joinToString(separator = "\n") { line -> line.joinToString(separator = " ") { it.toString(16) } }

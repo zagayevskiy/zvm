@@ -97,6 +97,7 @@ object OpcodesMapping {
 
             Alloc to Opcodes.ALLOC,
             Free to Opcodes.FREE,
+            CopyMemory to Opcodes.MEMCP,
 
             ByteToInt to Opcodes.BTOI,
             IntToByte to Opcodes.ITOB,
@@ -209,6 +210,7 @@ object Out : OpcodeImpl(name = "out")
 
 object Alloc : OpcodeImpl(name = "alloc")
 object Free : OpcodeImpl(name = "free")
+object CopyMemory: OpcodeImpl(name = "memcp")
 
 object ByteToInt : OpcodeImpl(name = "btoi")
 object IntToByte : OpcodeImpl(name = "itob")

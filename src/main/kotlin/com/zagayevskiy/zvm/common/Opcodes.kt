@@ -102,6 +102,7 @@ object Opcodes {
     //region memory opcodes
     const val ALLOC: Byte = -11
     const val FREE: Byte = -12
+    const val MEMCP: Byte = -13
     //endregion
 
 }

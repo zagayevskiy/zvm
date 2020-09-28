@@ -16,6 +16,7 @@ interface Memory {
 
     fun copyIn(source: ByteArray, destination: Address, count: Int = source.size, sourceOffset: Int = 0)
     fun copyOut(source: Address, destination: ByteArray, count: Int = destination.size, destinationOffset: Int = 0)
+    fun copyMemory(source: Address, destination: Address, count: Int)
 
     operator fun get(address: Address): Byte
     operator fun set(address: Address, value: Byte)

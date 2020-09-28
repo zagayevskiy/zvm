@@ -129,6 +129,7 @@ internal val vmOverZc = """
                 -10 -> out(popInt(context.operandsStack));
                 -11 -> doAlloc(context);
                 -12 -> doFree(context);
+                -13 -> memcp(context);
                 else -> crash(code);
             }
         }
@@ -439,8 +440,17 @@ internal val vmOverZc = """
         val stack = context.operandsStack;
         pushInt(stack, cast<int>(alloc(popInt(stack))));
     }
+
     fn doFree(context: Context) {
         free(cast<[void]>(popInt(context.operandsStack)));
+    }
+
+    fn memcp(context: Context) {
+        val stack = context.operandsStack;
+        val count = popInt(stack);
+        val dst = cast<[void]>(popInt(stack));
+        val src = cast<[void]>(popInt(stack));
+        copy(src, dst, count);
     }
 
     fn nextInt(context: Context): int {
