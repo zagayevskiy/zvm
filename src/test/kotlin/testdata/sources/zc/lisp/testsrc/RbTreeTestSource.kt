@@ -59,8 +59,8 @@ object RbTreeTestSource {
         ${isBinarySearchTree()}
 
         fn main(): int {
-            val tree = makeRbTree();
-            val mem = makeAutoMemory(2700);
+            val mem = makeAutoMemory(301*sizeof<Cons>);
+            val tree = makeRbTree(mem);
 
             val count = 50;
             val exists: [bool] = alloc(count*sizeof<bool>);
@@ -172,7 +172,7 @@ object RbTreeTestSource {
 
             var buffer: [byte];
             val mem = makeAutoMemory(6000*sizeof<Cons>);
-            val tree = makeRbTree();
+            val tree = makeRbTree(mem);
             val iFrom = -1000000;
             val iTo = 1000000;
             val iStep = 10000;
@@ -221,8 +221,8 @@ object RbTreeTestSource {
         ${includeCrash()}
         ${isBinarySearchTree()}
         fn main(): int {
-            val tree = makeRbTree();
             val mem = makeAutoMemory(27000);
+            val tree = makeRbTree(mem);
 
             val one = makeNumber(mem, 1);
             val two = makeNumber(mem, 2);
@@ -355,7 +355,7 @@ object RbTreeTestSource {
         ${rbTreeRequirements()}
 
         fn makeCongruentTree(mem: AutoMemory, count: int): RbTree {
-            val tree = makeRbTree();
+            val tree = makeRbTree(mem);
             var keyGen = 1;
 
             for(var i = 0; i < count; i = i + 1){
@@ -398,7 +398,7 @@ object RbTreeTestSource {
 
     private fun copyTree() = """
         fn copyTree(mem: AutoMemory, tree: RbTree): RbTree {
-            val copy = makeRbTree();
+            val copy = makeRbTree(mem);
             copy.root = copyNode(mem, tree.root, nil);
             return copy;
         }

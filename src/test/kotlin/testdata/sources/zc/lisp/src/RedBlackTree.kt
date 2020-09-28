@@ -6,9 +6,8 @@ fun includeRedBlackTree() = """
         var root: Cons;
     }
 
-    fn makeRbTree(): RbTree {
-        val tree: RbTree = alloc(sizeof<RbTree>);
-        tree.root = nil;
+    fn makeRbTree(mem: AutoMemory): RbTree {
+        val tree: RbTree = cast<[void]>(makeCons(mem, nil, nil, CT_DICT));
         return tree;
     }
 
