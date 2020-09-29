@@ -1,6 +1,7 @@
 package com.zagayevskiy.zvm.zc
 
 import com.zagayevskiy.zvm.common.Lexer
+import com.zagayevskiy.zvm.common.LineComment
 import com.zagayevskiy.zvm.common.SequenceLexer
 import com.zagayevskiy.zvm.common.Token
 
@@ -62,7 +63,10 @@ object ZcToken {
     object Const: Token
 }
 
+
 private val symbolsMap = mapOf(
+        "#" to LineComment,
+
         "->" to ZcToken.Arrow,
         "=" to ZcToken.Assign,
         ":" to ZcToken.Colon,

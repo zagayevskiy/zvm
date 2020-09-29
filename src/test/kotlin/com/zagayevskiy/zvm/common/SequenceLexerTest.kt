@@ -20,14 +20,16 @@ private object Minus : Token
 private val keywords = mapOf(
         "t-e-s-t" to TestToken,
         "func" to Fun,
-        "label" to Label
+        "label" to Label,
+        "comment" to LineComment //keywords can mark comment start too
 )
 
 private val symbols = mapOf(
         "+" to Plus,
         "++" to PlusPlus,
         "+++" to PlusPlusPlus,
-        "-" to Minus
+        "-" to Minus,
+        "--" to LineComment
 )
 
 @RunWith(Parameterized::class)
@@ -52,9 +54,10 @@ internal class SequenceLexerTest(private val test: TestData) {
                 "+ ++ +++ + ++ ++ ++ + + + +++ +++ +++" expects listOf(Plus, PlusPlus, PlusPlusPlus, Plus, PlusPlus, PlusPlus, PlusPlus, Plus, Plus, Plus, PlusPlusPlus, PlusPlusPlus, PlusPlusPlus, Eof),
                 """
                     func 1 label
-                    func 2 label
+                    func 2 label -- this is a comment and must be skipped
                     func 3 label
-                    123++ + ++456
+                    123++ + ++456 -- this is a comment and must be skipped
+                    -- this is a comment and must be skipped
 
                     qwerty
              """.trimIndent() expects listOf(
@@ -63,6 +66,7 @@ internal class SequenceLexerTest(private val test: TestData) {
                         Fun, 3.tkn, Label, Eol,
                         123.tkn, PlusPlus, Plus, PlusPlus, 456.tkn, Eol,
                         Eol,
+                        Eol,
                         "qwerty".id,
                         Eof
                 ),
@@ -70,7 +74,7 @@ internal class SequenceLexerTest(private val test: TestData) {
                 "a - 1-bc+2+d345" expects listOf("a".id, Minus, 1.tkn, Minus, "bc".id, Plus, 2.tkn, Plus, "d345".id, Eof),
                 """
                     1
-                    2
+                    2 -- this is a comment and must be skipped
                     3
                     t-e-s-t""".trimIndent() expects listOf(
                         1.tkn, Eol,
@@ -80,21 +84,24 @@ internal class SequenceLexerTest(private val test: TestData) {
                         Eof),
                 "#1###2######3" expects listOf(1.tkn, 2.tkn, 3.tkn, Eof), // # is whitespace
                 ("""
-                    1
+                    -- this is a comment and must be skipped
+                    1 -- this is a comment and must be skipped
                     2
                     3
+                    -- this is a comment and must be skipped
+                    comment this is a comment because keywords can mark line comment too
                 """.trimIndent() expects listOf(1.tkn, 2.tkn, 3.tkn, Eof)).copy(eolAsToken = false),
                 """
                     %123%%234567%987%qwe%asdf"%%%"
                 """.trimIndent() expects listOf("123".tkn, "234567".tkn, 987.tkn, "qwe".tkn, "asdf".id, "%%%".tkn, Eof),
                 ("""
-                    "this is a string"
+                    "this is a string -- this is not a comment and must NOT be skipped"
                     %this is a string too%
                     "%%"
                     %""%
                     notastring
                 """.trimIndent() expects listOf(
-                        "this is a string".tkn,
+                        "this is a string -- this is not a comment and must NOT be skipped".tkn,
                         "this is a string too".tkn,
                         "%%".tkn,
                         """""""".tkn,

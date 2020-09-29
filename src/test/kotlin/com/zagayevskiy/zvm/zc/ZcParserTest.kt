@@ -113,7 +113,7 @@ internal class ZcParserTest(private val test: TestData) {
                         )))),
                 """fn variables() {
                     val a = 0;
-                    val b: int = 1;
+                    val b: int = 1; #comment
                     var c: byte;
                     var d = 2;
                     var e: bool = 3;

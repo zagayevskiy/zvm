@@ -9,7 +9,13 @@ interface Token {
     data class Identifier(val name: String) : Token
     data class Integer(val value: Int) : Token
     data class StringConst(val value: String): Token
+
 }
+
+/**
+ * When Lexer see that token it must skip all symbols to the end of line.
+ */
+object LineComment: Token
 
 interface Lexer {
     fun nextToken(): Token
@@ -67,18 +73,20 @@ class SequenceLexer(private val sequence: Sequence<Char>,
             return consumeNumber()
         }
 
-        sortedSymbols.tail(current).takeIf { it.isNotEmpty() }?.let { tail -> return consumeSymbol(tail) }
+        sortedSymbols.tail(current).takeIf { it.isNotEmpty() }?.let { tail ->
+            return skipLineComment(consumeSymbol(tail))
+        }
 
         if (current.idStart()) {
             val builder = StringBuilder().append(current)
 
-            current = nextChar() ?: return keywordOrId(builder.toString())
+            current = nextChar() ?: return skipLineComment(keywordOrId(builder.toString()))
             while (current.idPart()) {
                 builder.append(current)
-                current = nextChar() ?: return keywordOrId(builder.toString())
+                current = nextChar() ?: return skipLineComment(keywordOrId(builder.toString()))
             }
 
-            return keywordOrId(builder.toString().replace("\\n", "\n"))
+            return skipLineComment(keywordOrId(builder.toString().replace("\\n", "\n")))
         }
 
         val stringEnd = stringConstDelimitator(current)
@@ -94,6 +102,20 @@ class SequenceLexer(private val sequence: Sequence<Char>,
         }
 
         return Token.Error(currentLineNumber, current.toString())
+    }
+
+    private fun skipLineComment(token: Token): Token {
+        if (token == LineComment) {
+            while(currentChar?.isEol() == false) {
+                nextChar()
+            }
+            return if (eolAsToken) {
+                consumeEol()
+            } else {
+                return nextToken()
+            }
+        }
+        return token
     }
 
     private fun keywordOrId(buffer: String) = keywords[buffer] ?: Token.Identifier(buffer)
