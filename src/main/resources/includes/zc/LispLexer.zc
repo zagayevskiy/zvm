@@ -1,0 +1,116 @@
+struct LispLexerContext {
+    var text: [byte];
+    var textLength: int;
+    var cursor: int;
+    var current: byte;
+    var tokenCurlyBraceOpen: LispToken;
+    var tokenCurlyBraceClose: LispToken;
+    var tokenDot: LispToken;
+}
+
+struct LispToken {
+    var type: byte; # see LTT_* const
+    var data: [byte];
+}
+
+const LTT_CBO: byte = 40;
+const LTT_CBC: byte = 41;
+const LTT_DOT: byte = 46;
+const LTT_STRING: byte = 34;
+const LTT_ID: byte = 1;
+
+fn lispLexerCreate(text: [byte]): LispLexerContext {
+    val context: LispLexerContext = alloc(sizeof<LispLexerContext>);
+    context.textLength = stringLength(context.text);
+    context.text = alloc(textLength + sizeof<int>);
+    copy(text, context.text, textLength + sizeof<int>);
+    context.cursor = 0;
+    context.current = charAt(text, 0);
+    context.tokenCurlyBraceOpen = lispCreateToken(LTT_CBO, nil);
+    context.tokenCurlyBraceClose = lispCreateToken(LTT_CBC, nil);
+    context.tokenDot = lispCreateToken(LTT_DOT, nil);
+}
+
+fn lispTokenCreate(type: byte, data: [byte]): LispToken {
+    val token: LispToken = alloc(sizeof<LispToken>);
+    token.type = type;
+    token.data = data;
+    return token;
+}
+
+fn lispTokenFree(token: LispToken) {
+    if (token.data != nil) {
+        free(token.data);
+    }
+    free(token);
+}
+
+fn lispLexerFree(context: ListLexerContext) {
+    free
+    free(context);
+}
+
+fn lispLexerNextToken(context: LispLexerContext): LispToken {
+    if (context.textLength >= context.cursor) return nil;
+
+    while(listLexerIsWhitespace(context.current)) {
+        lispLexerNext(context);
+    }
+
+    when (context.current) {
+        LTT_CBO -> return context.tokenCurlyBraceOpen;
+        LTT_CBC -> return context.tokenCurlyBraceClose;
+        LTT_DOT -> return context.tokenDot;
+        LTT_STRING -> return lispLexerConsumeString(context);
+        else -> {
+            val idToken = lispLexerTryConsumeId(context);
+            if (idToken == nil) {
+                print("unknown character code")
+                crash(cast<int>(context.current));
+            }
+        }
+    }
+}
+
+fn listLexerNext(context: LispLexerContext) {
+    val nextCursor = context.cursor + 1;
+    context.cursor = nextCursor;
+    context.current = charAt(context.text, nextCursor);
+}
+
+fn lispLexerConsumeString(context: LispLexerContext): LispToken {
+    val stringBase = context.cursor;
+    while(context.current != LTT_STRING) {
+        lispLexerNext(context);
+    }
+    val string = newSubString(context.text, stringBase, context.cursor);
+
+    lispLexerNext(context); # skip last "
+
+    return lispTokenCreate(LTT_STRING, string);
+}
+
+fn lispLexerTryConsumeId(context: LispLexerContext): LispToken {
+    val idBase = context.cursor;
+    while(lispLexerIsIdChar(context.current)) {
+        lispLexerNext(context);
+    }
+    if (context.cursor == idBase) return nil; # so it's not id...
+
+    return createLispToken(LTT_ID, newSubString(context.text, idBase, context.cursor));
+}
+
+fn lispLexerIsIdChar(char: byte): boolean {
+    return stringContainsChar(char, "1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM-+*/%!?=<>&|");
+}
+
+fn listLexerIsWhitespace(char: byte): boolean {
+    when(char) {
+        32 -> return true; # SPACE
+        10 -> return true; # LF
+        13 -> return true; # CR
+        9 -> return true; # TAB
+    }
+
+    return false;
+}

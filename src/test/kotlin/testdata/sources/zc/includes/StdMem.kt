@@ -26,6 +26,33 @@ internal fun includeStdMem() = """
         "}
     }
 
+    fn charAt(string: [byte], index: int): byte {
+        return (string + sizeof<int>)[index];
+    }
+
+    fn newSubString(string: [byte], fromInclusive: int, toExclusive: int): [byte] {
+        val size = toExclusive - fromInclusive;
+        if (size < 0) {
+            # print("fromInclusive must be less than toExclusive");
+            # crash(0);
+            return nil; # TODO crash it
+        }
+        val result: [byte] = alloc(size + sizeof<int>);
+        cast<[int]>(result)[0] = size;
+        copy(string + sizeof<int>, result + sizeof<int>, size);
+        return result;
+    }
+
+    fn stringContainsChar(char: byte, string: [byte]): bool {
+        val length = stringLength(string);
+        val stringBase = string + sizeof<int>;
+        for (var cursor = 0; cursor < length; cursor = cursor + 1) {
+            if (stringBase[cursor] == char) return true;
+        }
+
+        return false;
+    }
+
     fn itos(value: int, buffer: [byte]) {
         var cursor: int;
         var v: int;
