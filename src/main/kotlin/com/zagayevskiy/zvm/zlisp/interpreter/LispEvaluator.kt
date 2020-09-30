@@ -67,7 +67,7 @@ class LispEvaluator(private val includesResolver: IncludesResolver) {
         putFunction("include!", true) { _, args ->
             args.asSequence().map { path ->
                 val pathString = path as Sexpr.Str
-                val lexer = ZLispLexer(includesResolver.resolve(pathString.value))
+                val lexer = ZLispLexer(includesResolver.resolve(pathString.value)?.asSequence() ?: throw IllegalStateException("Can'r resolve include ${pathString.value}"))
                 val parser = ZLispParser(lexer)
                 val parsed = parser.parse()
                 when (parsed) {

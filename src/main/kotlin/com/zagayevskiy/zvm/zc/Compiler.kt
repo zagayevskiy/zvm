@@ -2,6 +2,7 @@ package com.zagayevskiy.zvm.zc
 
 import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.asm.*
+import com.zagayevskiy.zvm.common.preprocessing.JavaAssetsIncludesResolver
 import com.zagayevskiy.zvm.vm.BytecodeLoader
 import com.zagayevskiy.zvm.vm.LoadingResult
 import com.zagayevskiy.zvm.vm.StackEntry
@@ -35,28 +36,11 @@ class ZcCompiler {
 }
 
 
-private val stdMem = """
-    fn alloc(size: int): [void] {
-        asm{"
-            aloadi 0
-            alloc
-            ret
-        "}
-    }
 
-    fn free(memory: [void]): int {
-        asm {"
-            aloadi 0
-            free
-            consti 0
-            ret
-        "}
-    }
-""".trimIndent()
 
 internal val linkedList ="""
 
-    $stdMem
+    @include<std/mem.zc>
 
     struct Node {
         var payload: byte;
@@ -144,8 +128,8 @@ fun main(args: Array<String>) {
     val text = """
         $linkedList
 
-        fn main(count: int): [byte] {
-            val list = createList(int);
+        fn main(): [byte] {
+            val list = createList(5);
 
             return toArray(reverse(list));
         }
@@ -153,7 +137,10 @@ fun main(args: Array<String>) {
     """.trimIndent()
 
     val compiler = ZcCompiler()
-    val loader = BytecodeLoader(compiler.compile(text))
+    val preprocessor = ZcPreprocessor(text, JavaAssetsIncludesResolver("/includes/zc"))
+    val preprocessedText = preprocessor.preprocess()
+    print(preprocessedText)
+    val loader = BytecodeLoader(compiler.compile(preprocessedText))
     val heap = BitTableMemory(1000000)
     val vm = VirtualMachine((loader.load() as LoadingResult.Success).info, heap = heap)
     val result = vm.run(emptyList())
