@@ -1,9 +1,6 @@
 package testdata.sources.zc.lisp.testsrc
 
 import testdata.cases.TestSource
-import testdata.sources.zc.includes.includeCrash
-import testdata.sources.zc.includes.includeStdIo
-import testdata.sources.zc.includes.includeStdMem
 import testdata.sources.zc.lisp.src.includeAutoMemory
 import testdata.sources.zc.lisp.src.includeRedBlackTree
 
@@ -41,20 +38,20 @@ object RbTreeTestSource {
             freeAutoMemory(mem);
         }
 
-        ${includeStdIo()}
-        ${includeStdMem()}
+        @include<std/io.zc>
+        @include<std/mem.zc>
         ${includeAutoMemory()}
         ${includeRedBlackTree()}
-        ${includeCrash()}
+        @include<std/assert.zc>
 
     """.trimIndent())
 
     val AllPuttedKeysExistsAndValuesCorrect = TestSource("putted exists", """
-        ${includeStdIo()}
-        ${includeStdMem()}
+        @include<std/io.zc>
+        @include<std/mem.zc>
         ${includeAutoMemory()}
         ${includeRedBlackTree()}
-        ${includeCrash()}
+        @include<std/assert.zc>
 
         ${isBinarySearchTree()}
 
@@ -98,11 +95,11 @@ object RbTreeTestSource {
 
     val PutGet = TestSource("put/get ints", """
 
-        ${includeStdIo()}
-        ${includeStdMem()}
+        @include<std/io.zc>
+        @include<std/mem.zc>
         ${includeAutoMemory()}
         ${includeRedBlackTree()}
-        ${includeCrash()}
+        @include<std/assert.zc>
 
         fn main(): int {
             testPutGet();
@@ -139,11 +136,11 @@ object RbTreeTestSource {
     """.trimIndent())
 
     val RedBlackRequirements = TestSource("check requirements", """
-        ${includeStdIo()}
-        ${includeStdMem()}
+        @include<std/io.zc>
+        @include<std/mem.zc>
         ${includeAutoMemory()}
         ${includeRedBlackTree()}
-        ${includeCrash()}
+        @include<std/assert.zc>
 
         ${makeCongruentTree()}
 
@@ -161,11 +158,11 @@ object RbTreeTestSource {
 
     val HeterogeneousData = TestSource("Heterogeneous", """
 
-        ${includeStdIo()}
-        ${includeStdMem()}
+        @include<std/io.zc>
+        @include<std/mem.zc>
         ${includeAutoMemory()}
         ${includeRedBlackTree()}
-        ${includeCrash()}
+        @include<std/assert.zc>
 
 
         fn main(): int {
@@ -214,11 +211,11 @@ object RbTreeTestSource {
 
     val IsBstCrashedOnNoBst = TestSource("crash on no-bst", """
 
-        ${includeStdIo()}
-        ${includeStdMem()}
+        @include<std/io.zc>
+        @include<std/mem.zc>
         ${includeAutoMemory()}
         ${includeRedBlackTree()}
-        ${includeCrash()}
+        @include<std/assert.zc>
         ${isBinarySearchTree()}
         fn main(): int {
             val mem = makeAutoMemory(27000);
@@ -247,11 +244,11 @@ object RbTreeTestSource {
 
     val TreeEqualityChecks = TestSource("tree equality checks", """
 
-        ${includeStdIo()}
-        ${includeStdMem()}
+        @include<std/io.zc>
+        @include<std/mem.zc>
         ${includeAutoMemory()}
         ${includeRedBlackTree()}
-        ${includeCrash()}
+        @include<std/assert.zc>
 
         ${makeCongruentTree()}
         ${isTreesEquals()}

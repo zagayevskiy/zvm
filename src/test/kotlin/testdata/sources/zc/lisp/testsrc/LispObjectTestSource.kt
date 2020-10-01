@@ -1,17 +1,14 @@
 package testdata.sources.zc.lisp.testsrc
 
 import testdata.cases.TestSource
-import testdata.sources.zc.includes.includeCrash
-import testdata.sources.zc.includes.includeStdIo
-import testdata.sources.zc.includes.includeStdMem
 import testdata.sources.zc.lisp.src.includeAutoMemory
 
 object LispObjectTestSource {
     val Test = TestSource("LispObject test", """
 
-        ${includeStdMem()}
-        ${includeStdIo()}
-        ${includeCrash()}
+        @include<std/mem.zc>
+        @include<std/io.zc>
+        @include<std/assert.zc>
         ${includeAutoMemory()}
 
         const MAX_CONS = 150;

@@ -1,10 +1,7 @@
 package testdata.sources.zc
 
 import testdata.cases.TestSource
-import testdata.sources.zc.includes.includeCrash
-import testdata.sources.zc.includes.includeStack
-import testdata.sources.zc.includes.includeStdIo
-import testdata.sources.zc.includes.includeStdMem
+
 
 internal val stackTest = TestSource("Stack test", """
     fn main(): int {
@@ -50,10 +47,10 @@ internal val stackTest = TestSource("Stack test", """
         return 0;
     }
 
-    ${includeStdMem()}
-    ${includeStack()}
-    ${includeCrash()}
-    ${includeStdIo()}
+    @include<std/mem.zc>
+    @include<std/assert.zc>
+    @include<std/io.zc>
+    @include<container/arraystack.zc>
 
 
     fn assert(condition: bool, message: int): int {

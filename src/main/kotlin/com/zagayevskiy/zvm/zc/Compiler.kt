@@ -15,7 +15,9 @@ import com.zagayevskiy.zvm.zc.visitors.TypesProcessor
 class ZcCompiler {
 
     fun compile(programText: String): ByteArray {
-        val lexer = ZcSequenceLexer(programText.asSequence())
+        val preprocessor = ZcPreprocessor(programText, JavaAssetsIncludesResolver("/includes/zc"))
+        val preprocessedText = preprocessor.preprocess()
+        val lexer = ZcSequenceLexer(preprocessedText.asSequence())
         val parser = ZcParser(lexer)
         val program = (parser.program() as ParseResult.Success).program
         val resolver = TopLevelDeclarationsResolver(program)
@@ -137,10 +139,8 @@ fun main(args: Array<String>) {
     """.trimIndent()
 
     val compiler = ZcCompiler()
-    val preprocessor = ZcPreprocessor(text, JavaAssetsIncludesResolver("/includes/zc"))
-    val preprocessedText = preprocessor.preprocess()
-    print(preprocessedText)
-    val loader = BytecodeLoader(compiler.compile(preprocessedText))
+    text
+    val loader = BytecodeLoader(compiler.compile(text))
     val heap = BitTableMemory(1000000)
     val vm = VirtualMachine((loader.load() as LoadingResult.Success).info, heap = heap)
     val result = vm.run(emptyList())

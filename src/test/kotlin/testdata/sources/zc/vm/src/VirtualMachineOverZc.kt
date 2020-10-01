@@ -1,18 +1,13 @@
 package testdata.sources.zc.vm.src
 
-import testdata.sources.zc.includes.includeCrash
-import testdata.sources.zc.includes.includeStack
-import testdata.sources.zc.includes.includeStdIo
-import testdata.sources.zc.includes.includeStdMem
-
 
 internal val vmOverZc = """
-    ${includeCrash()}
-    ${includeStdMem()}
-    ${includeStack()}
+    @include<std/assert.zc>
+    @include<std/mem.zc>
+    @include<container/arraystack.zc>
     ${includeBytecodeParser()}
     ${includeContext()}
-    ${includeStdIo()}
+    @include<std/io.zc>
 
     struct StackFrame {
         var framePointer: [void];

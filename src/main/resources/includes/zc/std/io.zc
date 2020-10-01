@@ -1,0 +1,6 @@
+fn print(string: [byte]) {
+    asm{"
+        lloadi string
+        out
+    "}
+}

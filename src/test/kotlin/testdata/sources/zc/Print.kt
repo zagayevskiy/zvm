@@ -1,8 +1,6 @@
 package testdata.sources.zc
 
 import testdata.cases.TestSource
-import testdata.sources.zc.includes.includeStdIo
-import testdata.sources.zc.includes.includeStdMem
 
 object Print {
 
@@ -38,8 +36,8 @@ object Print {
     val ExpectedInts = (Int.MIN_VALUE until Int.MAX_VALUE step Int.MAX_VALUE / 32).toList()
 
     val Ints = TestSource("ints", """
-        ${includeStdIo()}
-        ${includeStdMem()}
+        @include<std/io.zc>
+        @include<std/mem.zc>
 
         fn main(): int {
             val buffer: [byte] = alloc(32);
@@ -64,8 +62,8 @@ object Print {
             return 0;
         }
 
-        ${includeStdIo()}
-        ${includeStdMem()}
+        @include<std/io.zc>
+        @include<std/mem.zc>
     """.trimIndent())
 
 }
