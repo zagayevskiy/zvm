@@ -1,3 +1,5 @@
+@include<std/mem.zc>
+
 struct LispLexerContext {
     var text: [byte];
     var textLength: int;
@@ -6,70 +8,86 @@ struct LispLexerContext {
     var tokenCurlyBraceOpen: LispToken;
     var tokenCurlyBraceClose: LispToken;
     var tokenDot: LispToken;
+    var tokenEot: LispToken;
+    var currentToken: LispToken;
 }
 
+# user free to capture token.data pointer because it WILL NOT be released
+# user can call cast<[byte]>(token.data) in case of LTT_STRING and LTT_ID
+# user must call free(token.data) in case of LTT_STRING and LTT_ID when data no more needed
+# user can call cast<int>(token.data) in cast of LTT_INT
+# user must not release LispToken obtained by lispLexerNextToken(..) manually
 struct LispToken {
     var type: byte; # see LTT_* const
-    var data: [byte];
+    var data: [void];
+    var reusable: boolean;
 }
 
-const LTT_CBO: byte = 40;
-const LTT_CBC: byte = 41;
-const LTT_DOT: byte = 46;
-const LTT_STRING: byte = 34;
-const LTT_ID: byte = 1;
+const LTT_CBO: byte = 40; # symbol (
+const LTT_CBC: byte = 41; # symbol )
+const LTT_DOT: byte = 46; # symbol .
+const LTT_STRING: byte = 34; # "any string"
+const LTT_ID: byte = 1; # identifier
+const LTT_EOT: byte = 3; # end of text
+const LTT_INT: byte = 2;
 
 fn lispLexerCreate(text: [byte]): LispLexerContext {
     val context: LispLexerContext = alloc(sizeof<LispLexerContext>);
-    context.textLength = stringLength(context.text);
     context.text = alloc(textLength + sizeof<int>);
-    copy(text, context.text, textLength + sizeof<int>);
+    context.textLength = stringLength(text);
     context.cursor = 0;
     context.current = charAt(text, 0);
-    context.tokenCurlyBraceOpen = lispCreateToken(LTT_CBO, nil);
-    context.tokenCurlyBraceClose = lispCreateToken(LTT_CBC, nil);
-    context.tokenDot = lispCreateToken(LTT_DOT, nil);
+    context.tokenCurlyBraceOpen = lispCreateToken(LTT_CBO, nil,  true);
+    context.tokenCurlyBraceClose = lispCreateToken(LTT_CBC, nil, true);
+    context.tokenDot = lispCreateToken(LTT_DOT, nil, true);
+    context.tokenEot = lispCreateToken(LTT_EOT, nil, true);
 }
 
-fn lispTokenCreate(type: byte, data: [byte]): LispToken {
+fn lispTokenCreate(type: byte, data: [byte], reusable: boolean): LispToken {
     val token: LispToken = alloc(sizeof<LispToken>);
     token.type = type;
     token.data = data;
+    token.reusable = reusable;
     return token;
 }
 
 fn lispTokenFree(token: LispToken) {
-    if (token.data != nil) {
-        free(token.data);
-    }
+    if (token.reusable) return;
     free(token);
 }
 
 fn lispLexerFree(context: ListLexerContext) {
-    free
+    if (context.currentToken != nil) lispTokenFree(context.currentToken);
+    free(context.tokenCurlyBraceOpen);
+    free(context.tokenCurlyBraceClose);
+    free(context.tokenDot);
+    free(context.tokenEot);
     free(context);
 }
 
 fn lispLexerNextToken(context: LispLexerContext): LispToken {
-    if (context.textLength >= context.cursor) return nil;
+    if (context.textLength >= context.cursor) return context.tokenEot;
+    if (context.currentToken != nil) lispTokenFree(context.currentToken);
 
     while(listLexerIsWhitespace(context.current)) {
         lispLexerNext(context);
     }
 
+    var result: LispToken;
     when (context.current) {
-        LTT_CBO -> return context.tokenCurlyBraceOpen;
-        LTT_CBC -> return context.tokenCurlyBraceClose;
-        LTT_DOT -> return context.tokenDot;
-        LTT_STRING -> return lispLexerConsumeString(context);
-        else -> {
-            val idToken = lispLexerTryConsumeId(context);
-            if (idToken == nil) {
-                print("unknown character code")
-                crash(cast<int>(context.current));
-            }
-        }
+        LTT_CBO -> result = context.tokenCurlyBraceOpen;
+        LTT_CBC -> result = context.tokenCurlyBraceClose;
+        LTT_DOT -> result = context.tokenDot;
+        LTT_STRING -> result = lispLexerConsumeString(context);
+        else -> result = lispLexerTryConsumeId(context);
     }
+    if (result == nil) {
+        print("unknown character code")
+        crash(cast<int>(context.current));
+    }
+    context.currentToken = result;
+
+    return result;
 }
 
 fn listLexerNext(context: LispLexerContext) {
@@ -79,6 +97,8 @@ fn listLexerNext(context: LispLexerContext) {
 }
 
 fn lispLexerConsumeString(context: LispLexerContext): LispToken {
+    lispLexerNext(context); # skip first "
+
     val stringBase = context.cursor;
     while(context.current != LTT_STRING) {
         lispLexerNext(context);

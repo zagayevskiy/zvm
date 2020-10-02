@@ -7,7 +7,7 @@ fun includeRedBlackTree() = """
     }
 
     fn makeRbTree(mem: AutoMemory): RbTree {
-        val tree: RbTree = cast<[void]>(makeCons(mem, nil, nil, CT_DICT));
+        val tree: RbTree = cast<[void]>(makeCons(mem, nil, nil, CT_LIST));
         return tree;
     }
 

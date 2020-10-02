@@ -1,5 +1,98 @@
 
+@include<LispLexer.zc>
 
-struct LispParseContext {
+struct LispParserContext {
+    var mem: AutoMemory;
+    var lexer: LispLexerContext;
+    var current: LispToken;
+    var consNil: Cons;
+}
 
+fn lispParserNextToken(context: LispParserContext) {
+    context.current = lispLexerNextToken(context.lexer);
+}
+
+fn lispParserCreate(mem: AutoMemory, lexer: LispLexerContext): LispParserContext {
+    val context: LispParserContext = alloc(sizeof<LispParserContext>);
+    context.mem = mem;
+    context.lexer = lexer;
+    context.consNil = makeCons(mem, nil, nil, CT_NIL);
+
+    lispParserNextToken(context);
+
+    return context;
+}
+
+fn lispParserFree(context: LispParserContext) {
+    free(context);
+}
+
+fn parseLisp(mem: AutoMemory, text: [byte]): Cons {
+    val lexer = lispLexerCreate(text);
+    val parser = lispParserCreate(mem, lexer);
+
+    val result = lispParserSexpr(parser);
+
+    lispLexerFree(lexer);
+    lispParserFree(parser);
+
+    return result;
+}
+
+fn lispParserSexpr(context: LispParserContext): Cons {
+    var result = lispParserNumber(context);
+    if (result != nil) return result;
+
+    result = lispParserAtom(context);
+    if (result != nil) return result;
+
+    result = lispParserString(context);
+    if (result != nil) return result;
+
+    result = lispParserAtom(context);
+    if (result != nil) return result;
+
+    return lispParserDotPairOrList(context);
+}
+
+fn lispParserNumber(context: LispParserContext): Cons {
+    if (context.current.type != LTT_INT) return nil;
+    val number = makeNumber(context.mem, cast<int>(context.current.data));
+    lispParserNextToken(context);
+    return number;
+}
+
+fn lispParserString(context: LispParserContext): Cons {
+    if (context.current.type != LTT_STRING) return nil;
+    crash(300); # store strings as atom or something
+}
+
+fn lispParserAtom(context: LispParserContext): Cons {
+    if (context.current.type != LTT_ATOM) return nil;
+    val name: [byte] = context.current.data;
+    lispParserNextToken(context);
+    return makeAtom(context.mem, name);
+}
+
+fn lispParserDotPairOrList(context: LispParserContext): Cons {
+    if (context.current.type != LTT_CBO) return nil;
+    lispParserNextToken(context);
+    if (context.current.type == LTT_CBC) return context.consNil; # ok, we treat () as nil
+
+    val head = lispParserSexpr(context);
+
+    if (context.current.type == LTT_DOT) {
+        lispParserNextToken(context);
+        val tail = lispParserSexpr(context);
+        if (context.current.type != LTT_CBC) crash(301);
+        lispParserNextToken(context);
+        return makeCons(context.mem, head, tail, CT_LIST);
+    }
+
+    return makeCons(context.mem, head, listParserConsumeList, CT_LIST);
+}
+
+fn listParserConsumeList(context: LispParserContext): Cons {
+    if (context.current.type == LTT_CBC) return context.consNil;
+    return makeCons(context.mem, lispParserSexpr(context), listParserConsumeList(context), CT_LIST);
 }

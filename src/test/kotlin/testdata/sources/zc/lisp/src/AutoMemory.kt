@@ -24,7 +24,6 @@ fun includeAutoMemory() = """
     const CT_LIST: byte = 1;
     const CT_INT: byte = 2;
     const CT_ATOM: byte = 3;
-    const CT_DICT: byte = 4;
     const CT_USER_BIT0_MASK: byte = 16;
     const CT_USER_BIT0_UNMASK: byte = 239;
     const CT_USER_BIT1_MASK: byte = 32;
