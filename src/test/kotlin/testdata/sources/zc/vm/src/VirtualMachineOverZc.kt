@@ -8,7 +8,7 @@ internal val vmOverZc = """
     @include<container/arraystack.zc>
 
     @include<zvm/context.zc>
-    ${includeBytecodeParser()}
+    @include<zvm/bytecode_parser.zc>
 
     struct StackFrame {
         var framePointer: [void];

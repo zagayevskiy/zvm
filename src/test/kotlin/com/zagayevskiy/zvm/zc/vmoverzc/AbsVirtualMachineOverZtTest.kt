@@ -67,7 +67,7 @@ internal abstract class AbsVirtualMachineOverZtTest {
 //        val rawParsingBytecode = compile("""
 //
 //            @include<std/mem.zc>
-//            ${includeBytecodeParser()}
+//            @include<zvm/bytecode_parser.zc>
 //
 //            fn main(rawBytecode: [byte], rawBytecodeSize: int): ProgramInfo {
 //                return parseBytecode(rawBytecode, rawBytecodeSize);
