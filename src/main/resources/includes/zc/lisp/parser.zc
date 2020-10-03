@@ -1,5 +1,5 @@
 
-@include<LispLexer.zc>
+@include<lisp/lexer.zc>
 
 struct LispParserContext {
     var mem: AutoMemory;

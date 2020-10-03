@@ -1,0 +1,250 @@
+@include<std/io.zc>
+@include<std/assert.zc>
+
+struct Cons {
+    var left: [void];
+    var right: [void];
+    var flags: byte;
+}
+
+const CT_NIL: byte = 0;
+const CT_LIST: byte = 1;
+const CT_INT: byte = 2;
+const CT_ATOM: byte = 3;
+const CT_USER_BIT0_MASK: byte = 16;
+const CT_USER_BIT0_UNMASK: byte = 239;
+const CT_USER_BIT1_MASK: byte = 32;
+const CT_USER_BIT2_MASK: byte = 64;
+
+fn userBit0(cons: Cons): bool {
+    return (cons.flags & CT_USER_BIT0_MASK) == CT_USER_BIT0_MASK;
+}
+
+fn setUserBit0(cons: Cons, flag: bool) {
+    if (flag) {
+        cons.flags = cons.flags | CT_USER_BIT0_MASK;
+    } else {
+        cons.flags = cons.flags & (~CT_USER_BIT0_MASK);
+    }
+}
+
+fn car(cons: Cons): Cons {
+    if (cons == nil) return nil;
+    assertType(cons, CT_LIST, "car list expected");
+    return cast<Cons>(cons.left);
+}
+
+fn cdr(cons: Cons): Cons {
+    if (cons == nil) return nil;
+    assertType(cons, CT_LIST, "cdr list expected");
+    return cons.right;
+}
+
+fn caar(cons: Cons): Cons {
+    if (cons == nil) return nil;
+    assertType(cons, CT_LIST, "caar list expected");
+    val a: Cons = cons.left;
+    if (a == nil) return nil;
+    assertType(a, CT_LIST, "caar list in head expected");
+    return a.left;
+}
+
+fn cadr(cons: Cons): Cons {
+    if (cons == nil) return nil;
+    assertType(cons, CT_LIST, "cadr list expected");
+    val a: Cons = cons.left;
+    if (a == nil) return nil;
+    assertType(a, CT_LIST, "cadr list in head expected");
+    return a.right;
+}
+
+fn cdar(cons: Cons): Cons {
+    if (cons == nil) return nil;
+    assertType(cons, CT_LIST, "cdar list expected");
+    val d: Cons = cons.right;
+    if (d == nil) return nil;
+    assertType(d, CT_LIST, "cdar list in tail expected");
+    return d.left;
+}
+
+fn cddr(cons: Cons): Cons {
+    if (cons == nil) return nil;
+    assertType(cons, CT_LIST, "cddr list expected");
+    val d: Cons = cons.right;
+    if (d == nil) return nil;
+    assertType(d, CT_LIST, "cddr list in tail expected");
+    return d.right;
+}
+
+fn caaar(cons: Cons): Cons {
+    if (cons == nil) return nil;
+    assertType(cons, CT_LIST, "caaar list in 1st car expected");
+    val a: Cons = cons.left;
+    if (a == nil) return nil;
+    assertType(a, CT_LIST, "caaar list in 2nd car expected");
+    val aa: Cons = a.left;
+    if (aa == nil) return nil;
+    assertType(aa, CT_LIST, "caaar list in 3rd car expected");
+    return aa.left;
+}
+
+fn caadr(cons: Cons): Cons {
+    if (cons == nil) return nil;
+    assertType(cons, CT_LIST, "caadr list in 1st car expected");
+    val a: Cons = cons.left;
+    if (a == nil) return nil;
+    assertType(a, CT_LIST, "caadr list in 2nd car expected");
+    val aa: Cons = a.left;
+    if (aa == nil) return nil;
+    assertType(aa, CT_LIST, "caadr list in cdr expected");
+    return aa.right;
+}
+
+fn cadar(cons: Cons): Cons {
+    if (cons == nil) return nil;
+    assertType(cons, CT_LIST, "cadar list in 1st car expected");
+    val a: Cons = cons.left;
+    if (a == nil) return nil;
+    assertType(a, CT_LIST, "cadar list in cdr expected");
+    val ad: Cons = a.right;
+    if (ad == nil) return nil;
+    assertType(ad, CT_LIST, "cadar list in 2nd car expected");
+    return ad.left;
+}
+
+fn caddr(cons: Cons): Cons {
+    if (cons == nil) return nil;
+    assertType(cons, CT_LIST, "caddr list in car expected");
+    val a: Cons = cons.left;
+    if (a == nil) return nil;
+    assertType(a, CT_LIST, "caddr list in 1st cdr expected");
+    val ad: Cons = a.right;
+    if (ad == nil) return nil;
+    assertType(ad, CT_LIST, "caddr list in 2nd cdr expected");
+    return ad.right;
+}
+
+fn cdaar(cons: Cons): Cons {
+    if (cons == nil) return nil;
+    assertType(cons, CT_LIST, "cdaar list in cdr expected");
+    val d: Cons = cons.right;
+    if (d == nil) return nil;
+    assertType(d, CT_LIST, "cdaar list in 1st car expected");
+    val da: Cons = d.left;
+    if (da == nil) return nil;
+    assertType(da, CT_LIST, "cdaar list in 2nd car expected");
+    return da.left;
+}
+
+fn cdadr(cons: Cons): Cons {
+    if (cons == nil) return nil;
+    assertType(cons, CT_LIST, "cdadr list in 1s cdr expected");
+    val d: Cons = cons.right;
+    if (d == nil) return nil;
+    assertType(d, CT_LIST, "cdadr list in car expected");
+    val da: Cons = d.left;
+    if (da == nil) return nil;
+    assertType(da, CT_LIST, "cdadr list in 2nd cdr expected");
+    return da.right;
+}
+
+fn cddar(cons: Cons): Cons {
+    if (cons == nil) return nil;
+    assertType(cons, CT_LIST, "cddar list in 1st cdr expected");
+    val d: Cons = cons.right;
+    if (d == nil) return nil;
+    assertType(d, CT_LIST, "cddar list in 2nd cdr expected");
+    val dd: Cons = d.right;
+    if (dd == nil) return nil;
+    assertType(dd, CT_LIST, "cddar list in car expected");
+    return dd.left;
+}
+
+fn cdddr(cons: Cons): Cons {
+    if (cons == nil) return nil;
+    assertType(cons, CT_LIST, "cdddr list in 1st cdr expected");
+    val d: Cons = cons.right;
+    if (d == nil) return nil;
+    assertType(d, CT_LIST, "cdddr list in 2nd cdr expected");
+    val dd: Cons = d.right;
+    if (dd == nil) return nil;
+    assertType(dd, CT_LIST, "cdddr list in 3rd cdr expected");
+    return dd.right;
+}
+
+fn getAtomName(atom: Cons): [byte] {
+    return cast<[byte]>(atom.left);
+}
+
+fn getInt(cons: Cons): int {
+    assertType(cons, CT_INT, "int expected");
+    return cast<int>(cons.left);
+}
+
+fn getType(cons: Cons): byte {
+    if (cons == nil) return CT_NIL;
+    return cons.flags & CT_TYPE_MASK;
+}
+
+fn assertType(cons: Cons, type: byte, message: [byte]) {
+    if (getType(cons) != type) {
+        val buffer: [byte] = alloc(16);
+        print(message);
+        print(" type: ");
+        itos(cast<int>(getType(cons)), buffer);
+        print(buffer);
+        free(buffer);
+        crash(2989);
+    }
+}
+
+fn compare(left: Cons, right: Cons): byte {
+    val leftType = getType(left);
+    val rightType = getType(right);
+    if (leftType < rightType) return -1;
+    if (leftType > rightType) return 1;
+    when(leftType) {
+        CT_NIL -> return 0;
+        CT_INT -> return compareInts(getInt(left), getInt(right));
+        CT_ATOM -> return orderStrings(getAtomName(left), getAtomName(right));
+        CT_LIST -> {
+            val cmpCar = compare(car(left), car(right));
+            if (cmpCar != 0) return cmpCar;
+            return compare(cdr(left), cdr(right));
+        }
+        else -> crash(12345);
+    }
+}
+
+fn compareInts(left: int, right: int): byte {
+    if (left == right) {
+        return cast<byte>(0);
+    } else if (left < right) {
+        return cast<byte>(-1);
+    } else {
+        return cast<byte>(1);
+    }
+}
+
+fn printCons(cons: Cons) {
+    when(getType(cons)) {
+        CT_NIL -> print('nil');
+        CT_INT -> {
+            val b: [byte] = alloc(16);
+            itos(getInt(cons), b);
+            print(b);
+            free(b);
+        }
+        CT_ATOM -> {
+            print('atom:');
+            print(getAtomName(cons));
+        }
+        CT_LIST -> {
+            print('(');
+            printCons(car(cons));
+            print(" . ");
+            printCons(cdr(cons));
+            print(')');
+        }
+    }
+}

@@ -1,7 +1,6 @@
 package testdata.sources.zc.lisp.testsrc
 
 import testdata.cases.TestSource
-import testdata.sources.zc.lisp.src.includeAutoMemory
 
 object AutoMemoryTestSource {
     val Test = TestSource("Auto memory test", """
@@ -9,7 +8,7 @@ object AutoMemoryTestSource {
         @include<std/mem.zc>
         @include<std/io.zc>
         @include<std/assert.zc>
-        ${includeAutoMemory()}
+        @include<lisp/automem.zc>
 
         const MAX_CONS = 150;
 

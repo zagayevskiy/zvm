@@ -1,8 +1,6 @@
 package testdata.sources.zc.lisp.testsrc
 
 import testdata.cases.TestSource
-import testdata.sources.zc.lisp.src.includeAutoMemory
-import testdata.sources.zc.lisp.src.includeRedBlackTree
 
 object RbTreeTestSource {
 
@@ -40,8 +38,8 @@ object RbTreeTestSource {
 
         @include<std/io.zc>
         @include<std/mem.zc>
-        ${includeAutoMemory()}
-        ${includeRedBlackTree()}
+        @include<lisp/automem.zc>
+        @include<lisp/rbtree.zc>
         @include<std/assert.zc>
 
     """.trimIndent())
@@ -49,8 +47,8 @@ object RbTreeTestSource {
     val AllPuttedKeysExistsAndValuesCorrect = TestSource("putted exists", """
         @include<std/io.zc>
         @include<std/mem.zc>
-        ${includeAutoMemory()}
-        ${includeRedBlackTree()}
+        @include<lisp/automem.zc>
+        @include<lisp/rbtree.zc>
         @include<std/assert.zc>
 
         ${isBinarySearchTree()}
@@ -97,8 +95,8 @@ object RbTreeTestSource {
 
         @include<std/io.zc>
         @include<std/mem.zc>
-        ${includeAutoMemory()}
-        ${includeRedBlackTree()}
+        @include<lisp/automem.zc>
+        @include<lisp/rbtree.zc>
         @include<std/assert.zc>
 
         fn main(): int {
@@ -138,8 +136,8 @@ object RbTreeTestSource {
     val RedBlackRequirements = TestSource("check requirements", """
         @include<std/io.zc>
         @include<std/mem.zc>
-        ${includeAutoMemory()}
-        ${includeRedBlackTree()}
+        @include<lisp/automem.zc>
+        @include<lisp/rbtree.zc>
         @include<std/assert.zc>
 
         ${makeCongruentTree()}
@@ -160,8 +158,8 @@ object RbTreeTestSource {
 
         @include<std/io.zc>
         @include<std/mem.zc>
-        ${includeAutoMemory()}
-        ${includeRedBlackTree()}
+        @include<lisp/automem.zc>
+        @include<lisp/rbtree.zc>
         @include<std/assert.zc>
 
 
@@ -213,8 +211,8 @@ object RbTreeTestSource {
 
         @include<std/io.zc>
         @include<std/mem.zc>
-        ${includeAutoMemory()}
-        ${includeRedBlackTree()}
+        @include<lisp/automem.zc>
+        @include<lisp/rbtree.zc>
         @include<std/assert.zc>
         ${isBinarySearchTree()}
         fn main(): int {
@@ -246,8 +244,8 @@ object RbTreeTestSource {
 
         @include<std/io.zc>
         @include<std/mem.zc>
-        ${includeAutoMemory()}
-        ${includeRedBlackTree()}
+        @include<lisp/automem.zc>
+        @include<lisp/rbtree.zc>
         @include<std/assert.zc>
 
         ${makeCongruentTree()}

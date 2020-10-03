@@ -1,0 +1,138 @@
+@include<lisp/cons.zc>
+
+const CT_TYPE_MASK: byte = 7;
+const CT_MARK_MASK: byte = 128;
+const CT_UNMARK_MASK: byte = 127;
+
+struct AutoMemory {
+    var mem: [void];
+    var size: int;
+    var unlayouted: int;
+    var recycled: Cons;
+    var available: int;
+    var allocated: int;
+}
+
+fn makeAutoMemory(maxMemorySize: int): AutoMemory {
+    val result = cast<AutoMemory>(alloc(sizeof<AutoMemory>));
+    result.mem = alloc(maxMemorySize);
+    result.size = maxMemorySize;
+    result.unlayouted = 0;
+    result.recycled = nil;
+    result.available = maxMemorySize / sizeof<Cons>;
+    result.allocated = 0;
+
+    return result;
+}
+
+fn freeAutoMemory(autoMemory: AutoMemory) {
+    free(autoMemory.mem);
+    free(autoMemory);
+}
+
+fn cons(autoMemory: AutoMemory, left: Cons, right: Cons): Cons {
+    return makeCons(autoMemory, left, right, CT_LIST);
+}
+
+fn makeNumber(autoMemory: AutoMemory, value: int): Cons {
+    return makeCons(autoMemory, cast<[void]>(value), nil, CT_INT);
+}
+
+fn makeAtom(mem: AutoMemory, name: [byte]): Cons {
+    return makeCons(mem, name, nil, CT_ATOM);
+}
+
+fn makeCons(autoMemory: AutoMemory, left: [void], right: [void], type: byte): Cons {
+    val result = allocCons(autoMemory);
+    result.left = left;
+    result.right = right;
+    result.flags = type;
+    return result;
+}
+
+fn allocCons(autoMemory: AutoMemory): Cons {
+    if(autoMemory.available <= 0) {
+        printAutoMemoryInfo(autoMemory);
+        crashWithMessage(autoMemory.available, "OOM");
+    }
+    autoMemory.available = autoMemory.available - 1;
+    autoMemory.allocated = autoMemory.allocated + 1;
+    val recycled = autoMemory.recycled;
+    if(recycled == nil) {
+        return layoutNext(autoMemory);
+    }
+
+    autoMemory.recycled = recycled.right;
+
+    return recycled;
+}
+
+fn layoutNext(autoMemory: AutoMemory): Cons {
+    val layouted = autoMemory.unlayouted;
+    val nextUnlayouted = layouted + sizeof<Cons>;
+    if (nextUnlayouted > autoMemory.size) {
+        crash(123000);
+    }
+
+    autoMemory.unlayouted = nextUnlayouted;
+    return cast<Cons>(autoMemory.mem + layouted);
+}
+
+fn recycle(autoMemory: AutoMemory, cons: Cons) {
+    cons.left = nil;
+    cons.right = autoMemory.recycled;
+    cons.flags = CT_LIST;
+    autoMemory.recycled = cons;
+    autoMemory.available = autoMemory.available + 1;
+    autoMemory.allocated = autoMemory.allocated - 1;
+}
+
+fn mark(cons: Cons) {
+    if (cons != nil && (cons.flags & CT_MARK_MASK) == 0) {
+        cons.flags = cons.flags | CT_MARK_MASK;
+        if (getType(cons) == CT_LIST) {
+            mark(cons.left);
+            mark(cons.right);
+        }
+    }
+}
+
+fn sweep(autoMemory: AutoMemory) {
+    val mem = autoMemory.mem;
+    val unlayoutedAbsolete = cast<int>(mem + autoMemory.unlayouted);
+    for(var cursor = cast<int>(mem); cursor < unlayoutedAbsolete; cursor = cursor + sizeof<Cons>) {
+        val current = cast<Cons>(cursor);
+        if ((current.flags & CT_MARK_MASK) != 0) {
+            current.flags = current.flags & CT_UNMARK_MASK;
+        } else {
+            recycle(autoMemory, current);
+        }
+    }
+}
+
+fn gc(autoMemory: AutoMemory, root: Cons) {
+    mark(root);
+    sweep(autoMemory);
+}
+
+fn crashWithMessage(code: int, message: [byte]) {
+    print(message);
+    crash(code);
+}
+
+fn printAutoMemoryInfo(autoMemory: AutoMemory) {
+    val buffer: [byte] = alloc(16);
+    print("Memory info:");
+    printStringAndInt("\nsize: ", autoMemory.size, buffer);
+    printStringAndInt("\nunlayouted index: ", autoMemory.unlayouted, buffer);
+    printStringAndInt("\navailable: ", autoMemory.available, buffer);
+    printStringAndInt("\nallocated: ", autoMemory.allocated, buffer);
+    print("\n");
+    free(buffer);
+}
+
+fn printStringAndInt(s: [byte], i: int, buffer: [byte]) {
+    print(s);
+    itos(i, buffer);
+    print(buffer);
+}
