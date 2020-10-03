@@ -7,7 +7,6 @@ import com.zagayevskiy.zvm.vm.*
 import com.zagayevskiy.zvm.zc.ZcCompiler
 import org.junit.Before
 import org.junit.Test
-import testdata.sources.zc.vm.src.vmOverZc
 import kotlin.test.assertEquals
 
 internal fun compile(text: String): ByteArray {
@@ -37,7 +36,7 @@ internal abstract class AbsVirtualMachineOverZtTest {
         testProgramStartAddress = heap.allocate(testProgramRawBytecode.size)
         heap.copyIn(testProgramRawBytecode, destination = testProgramStartAddress)
 
-        val rawVirtualMachineBytecode = compile(vmOverZc)
+        val rawVirtualMachineBytecode = compile("vmOverZc")
 
         val loader = BytecodeLoader(rawVirtualMachineBytecode)
         val info = (loader.load() as LoadingResult.Success).info

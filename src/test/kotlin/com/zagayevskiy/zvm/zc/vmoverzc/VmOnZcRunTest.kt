@@ -1,5 +1,6 @@
 package com.zagayevskiy.zvm.zc.vmoverzc
 
+import com.zagayevskiy.zvm.common.preprocessing.JavaAssetsIncludesResolver
 import com.zagayevskiy.zvm.entries
 import com.zagayevskiy.zvm.memory.BitTableMemory
 import com.zagayevskiy.zvm.memory.Memory
@@ -16,8 +17,6 @@ import org.junit.runners.Parameterized
 import testdata.cases.AsmTestCases
 import testdata.cases.VmTestCase
 import testdata.cases.ZcTestCases
-import testdata.sources.zc.vm.src.vmOverZc
-import kotlin.test.assertEquals
 
 @RunWith(Parameterized::class)
 internal class VmOnZcRunTest(private val testCase: VmTestCase) {
@@ -25,9 +24,9 @@ internal class VmOnZcRunTest(private val testCase: VmTestCase) {
     companion object {
         @JvmStatic
         @Parameterized.Parameters(name = "{index}: {0}")
-        fun data() =   ZcTestCases + AsmTestCases
+        fun data() = ZcTestCases + AsmTestCases
 
-        private const val HEAP_SIZE = 1024*65536
+        private const val HEAP_SIZE = 1024 * 65536
     }
 
     private lateinit var compiler: ZcCompiler
@@ -54,7 +53,7 @@ internal class VmOnZcRunTest(private val testCase: VmTestCase) {
 
     @Test
     fun runTestCasesInNestedVm() {
-        val compiledVm = compiler.compile(vmOverZc)
+        val compiledVm = compiler.compile(JavaAssetsIncludesResolver("/includes/zc").resolve("zvm/vm_core.zc")!!)
         val vmLoader = BytecodeLoader(compiledVm)
         val loadedVm = vmLoader.load() as LoadingResult.Success
 
