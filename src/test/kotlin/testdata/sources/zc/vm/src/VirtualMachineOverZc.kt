@@ -4,10 +4,11 @@ package testdata.sources.zc.vm.src
 internal val vmOverZc = """
     @include<std/assert.zc>
     @include<std/mem.zc>
-    @include<container/arraystack.zc>
-    ${includeBytecodeParser()}
-    ${includeContext()}
     @include<std/io.zc>
+    @include<container/arraystack.zc>
+
+    @include<zvm/context.zc>
+    ${includeBytecodeParser()}
 
     struct StackFrame {
         var framePointer: [void];

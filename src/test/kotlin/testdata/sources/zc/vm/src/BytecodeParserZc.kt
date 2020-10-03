@@ -2,6 +2,7 @@ package testdata.sources.zc.vm.src
 
 
 internal fun includeBytecodeParser() = """
+    @include<zvm/context.zc>
 
     struct ServiceInfo {
         var mainIndex: int;
@@ -15,21 +16,6 @@ internal fun includeBytecodeParser() = """
         var argsCount: int;
         var ld0: int;
         var ld1: int;
-    }
-
-    struct RuntimeFunction {
-        var address: int;
-        var argsMemorySize: int;
-    }
-
-    struct ProgramInfo {
-        var mainIndex: int;
-        var functionsTable: [RuntimeFunction];
-        var functionsTableSize: int;
-        var constantPool: [byte];
-        var constantPoolSize: int;
-        var bytecode: [byte];
-        var bytecodeSize: int;
     }
 
     fn parseBytecode(rawBytecode: [byte], rawBytecodeSize: int): ProgramInfo {
