@@ -29,7 +29,7 @@ const LTT_DOT: byte = 46; # symbol .
 const LTT_STRING: byte = 34; # "any string"
 const LTT_ID: byte = 1; # identifier
 const LTT_EOT: byte = 3; # end of text
-const LTT_INT: byte = 2;
+const LTT_INT: byte = 30;
 
 fn lispLexerCreate(text: [byte]): LispLexerContext {
     val context: LispLexerContext = alloc(sizeof<LispLexerContext>);
@@ -74,15 +74,20 @@ fn lispLexerNextToken(context: LispLexerContext): LispToken {
     }
 
     var result: LispToken;
-    when (context.current) {
+    val current = context.current;
+    when (current) {
         LTT_CBO -> result = context.tokenCurlyBraceOpen;
         LTT_CBC -> result = context.tokenCurlyBraceClose;
         LTT_DOT -> result = context.tokenDot;
         LTT_STRING -> result = lispLexerConsumeString(context);
-        else -> result = lispLexerTryConsumeId(context);
+        else -> if (lispLexerIsDigit(current)) {
+            result = lispLexerConsumeInt(current);
+        } else {
+            result = lispLexerTryConsumeId(context);
+        }
     }
     if (result == nil) {
-        print("unknown character code")
+        print("unknown character code");
         crash(cast<int>(context.current));
     }
     context.currentToken = result;
@@ -90,10 +95,26 @@ fn lispLexerNextToken(context: LispLexerContext): LispToken {
     return result;
 }
 
+fn lispLexerIsDigit(char: byte): boolean {
+    return char >= LTT_INT && char <= LTT_INT + 9;
+}
+
 fn listLexerNext(context: LispLexerContext) {
     val nextCursor = context.cursor + 1;
     context.cursor = nextCursor;
     context.current = charAt(context.text, nextCursor);
+}
+
+fn lispLexerConsumeInt(context: LispLexerContext): LispToken {
+    var result: int = context.current;
+    lispLexerNext(context);
+    while(lispLexerIsDigit(context.current)) {
+        result = result * 10;
+        result = result + context.current;
+        lispLexerNext(context);
+    }
+
+    return makeNumber(context.mem, result);
 }
 
 fn lispLexerConsumeString(context: LispLexerContext): LispToken {

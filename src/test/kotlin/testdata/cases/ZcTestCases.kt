@@ -1,7 +1,8 @@
 package testdata.cases
 
 import com.zagayevskiy.zvm.entries
-import com.zagayevskiy.zvm.vm.*
+import com.zagayevskiy.zvm.vm.StackEntry
+import com.zagayevskiy.zvm.vm.toStackEntry
 import com.zagayevskiy.zvm.zc.ZcCompiler
 import testdata.sources.zc.*
 import testdata.sources.zc.lisp.testsrc.AutoMemoryTestSource
@@ -195,14 +196,9 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
 }
 
 
-private class ZcRunBuilder(val source: TestSource) {
-    private val precompiledProgram: ByteArray
+private class ZcRunBuilder(private val source: TestSource) {
+    private val bytecodeProvider = CachingBytecodeProvider{ ZcCompiler().compile(source.text) }
     var heapSize: Int = VmTestCase.DefaultHeapSize
-
-    init {
-        val compiler = ZcCompiler()
-        precompiledProgram = compiler.compile(source.text)
-    }
 
     fun run(arg: Int, ret: Int) = run(args = entries(arg), ret = ret.toStackEntry())
 
@@ -211,7 +207,7 @@ private class ZcRunBuilder(val source: TestSource) {
     fun run(args: List<StackEntry>, ret: StackEntry) {
         ZcTestCases.add(SimpleVmTestCase(
                 """Zc ${source.name} ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "")} -> $ret"""",
-                precompiledProgram,
+                bytecodeProvider,
                 runArgs = args,
                 expectedResult = ret,
                 heapSize = heapSize
@@ -225,7 +221,7 @@ private class ZcRunBuilder(val source: TestSource) {
     fun run(args: List<StackEntry>, prints: List<String>, crashCode: Int? = null) {
         ZcTestCases.add(PrintVmTestCase(
                 """Zc print ${source.name} ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "")}"""",
-                precompiledProgram,
+                bytecodeProvider,
                 runArgs = args,
                 expectPrinted = prints,
                 expectCrashCode = crashCode

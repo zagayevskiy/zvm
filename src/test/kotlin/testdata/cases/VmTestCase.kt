@@ -30,12 +30,31 @@ interface VmTestCase {
 
 internal abstract class AbsVmTestCase : VmTestCase {
     abstract val name: String
+    abstract val bytecodeProvider: () -> ByteArray
+
+    final override val bytecode: ByteArray
+        get() = bytecodeProvider()
 
     override fun toString() = name
 }
 
+internal class CachingBytecodeProvider(private val impl: () -> ByteArray): () -> ByteArray {
+    private var cached: ByteArray? = null
+    private var cachedException: Exception? = null
+    override operator fun invoke(): ByteArray {
+        cached?.let { return it }
+        cachedException?.let { throw it }
+        try {
+            return impl().also { cached = it }
+        } catch (e: Exception) {
+            cachedException = e
+            throw e
+        }
+    }
+}
+
 internal class SimpleVmTestCase(override val name: String,
-                                override val bytecode: ByteArray,
+                                override val bytecodeProvider: () -> ByteArray,
                                 override val runArgs: List<StackEntry>,
                                 private val expectedResult: StackEntry,
                                 override val heapSize: Int = VmTestCase.DefaultHeapSize) : AbsVmTestCase() {
@@ -44,7 +63,7 @@ internal class SimpleVmTestCase(override val name: String,
 }
 
 internal class PrintVmTestCase(override val name: String,
-                               override val bytecode: ByteArray,
+                               override val bytecodeProvider: () -> ByteArray,
                                override val runArgs: List<StackEntry>,
                                private val expectPrinted: List<String>,
                                private val expectCrashCode: Int? = null) : AbsVmTestCase() {

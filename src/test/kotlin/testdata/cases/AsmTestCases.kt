@@ -5,8 +5,12 @@ import com.zagayevskiy.zvm.entries
 import com.zagayevskiy.zvm.util.extensions.and
 import com.zagayevskiy.zvm.util.extensions.or
 import com.zagayevskiy.zvm.util.extensions.xor
-import com.zagayevskiy.zvm.vm.*
-import testdata.sources.asm.*
+import com.zagayevskiy.zvm.vm.StackEntry
+import com.zagayevskiy.zvm.vm.toStackEntry
+import testdata.sources.asm.AsmFactorial
+import testdata.sources.asm.AsmFibonacci
+import testdata.sources.asm.AsmPrint
+import testdata.sources.asm.AsmReverse
 import testdata.sources.asm.AsmSimple.JustRet0
 import testdata.sources.asm.AsmSimple.JustRetArg
 
@@ -103,16 +107,15 @@ object AsmTestCases : MutableList<VmTestCase> by mutableListOf() {
 private object No : List<StackEntry> by emptyList()
 
 private class AsmRunBuilder(val source: TestSource) {
-    private val precompiledProgram: ByteArray
-
-    init {
+    private val bytecodeProvider = CachingBytecodeProvider {
         val parser = AsmParser(AsmSequenceLexer(source.text.asSequence()), OpcodesMapping.opcodes)
         val parsed = parser.program()
         val result = parsed as? ParseResult.Success ?: throw IllegalArgumentException("Failed to parse $parsed")
         val assembler = BytecodeAssembler(result.commands, OpcodesMapping.mapping)
-        val generator = BytecodeGenerator()
-        precompiledProgram = generator.generate(assembler.generate())
+        val info = assembler.generate()
+        BytecodeGenerator().generate(info)
     }
+
 
     fun run(arg: Int, ret: Int) = run(args = entries(arg), ret = ret.toStackEntry())
 
@@ -121,7 +124,7 @@ private class AsmRunBuilder(val source: TestSource) {
     fun run(args: List<StackEntry>, ret: StackEntry) {
         AsmTestCases.add(SimpleVmTestCase(
                 """Asm ${source.name} ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "")} -> $ret"""",
-                precompiledProgram,
+                bytecodeProvider,
                 runArgs = args,
                 expectedResult = ret
         ))
@@ -130,7 +133,7 @@ private class AsmRunBuilder(val source: TestSource) {
     fun run(args: List<StackEntry>, prints: List<String>) {
         AsmTestCases.add(PrintVmTestCase(
                 """Asm print ${source.name} ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "")} prints $prints""",
-                precompiledProgram,
+                bytecodeProvider,
                 runArgs = args,
                 expectPrinted = prints
         ))
