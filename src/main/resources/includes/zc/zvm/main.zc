@@ -1,0 +1,12 @@
+@include<zvm/context.zc>
+@include<zvm/bytecode_parser.zc>
+@include<zvm/runloop.zc>
+
+fn main(rawBytecode: [byte], rawBytecodeSize: int, mainArgs: [void], mainArgsBytesSize: int): int {
+    val programInfo = parseBytecode(rawBytecode, rawBytecodeSize);
+    val context = createContext(programInfo);
+    pushAll(context.operandsStack, mainArgs, mainArgsBytesSize);
+    call(context, programInfo.mainIndex);
+
+    return vmRunLoop(context);
+}

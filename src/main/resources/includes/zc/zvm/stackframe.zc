@@ -1,0 +1,31 @@
+@include<std/mem.zc>
+
+struct StackFrame {
+    var framePointer: [void];
+    var previousStackPointer: [void];
+    var returnAddress: int;
+}
+
+fn createStackFrame(framePointer: [void], previousStackPointer: [void], returnAddress: int): StackFrame {
+    val frame: StackFrame = alloc(sizeof<StackFrame>);
+    frame.framePointer = framePointer;
+    frame.previousStackPointer = previousStackPointer;
+    frame.returnAddress = returnAddress;
+    return frame;
+}
+
+fn freeStackFrame(frame: StackFrame) {
+    free(frame);
+}
+
+fn pushStackFrame(stack: Stack, frame: StackFrame) {
+    pushInt(stack, cast<int>(frame));
+}
+
+fn popStackFrame(stack: Stack): StackFrame {
+    return cast<StackFrame>(popInt(stack));
+}
+
+fn peekStackFrame(stack: Stack): StackFrame {
+    return cast<StackFrame>(peekInt(stack));
+}

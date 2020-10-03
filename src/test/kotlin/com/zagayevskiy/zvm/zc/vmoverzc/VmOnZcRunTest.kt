@@ -53,7 +53,7 @@ internal class VmOnZcRunTest(private val testCase: VmTestCase) {
 
     @Test
     fun runTestCasesInNestedVm() {
-        val compiledVm = compiler.compile(JavaAssetsIncludesResolver("/includes/zc").resolve("zvm/vm_core.zc")!!)
+        val compiledVm = compiler.compile(JavaAssetsIncludesResolver("/includes/zc").resolve("zvm/main.zc")!!)
         val vmLoader = BytecodeLoader(compiledVm)
         val loadedVm = vmLoader.load() as LoadingResult.Success
 

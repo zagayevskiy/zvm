@@ -6,23 +6,9 @@
 
 @include<zvm/context.zc>
 @include<zvm/bytecode_parser.zc>
+@include<zvm/stackframe.zc>
 
-struct StackFrame {
-    var framePointer: [void];
-    var previousStackPointer: [void];
-    var returnAddress: int;
-}
-
-fn main(rawBytecode: [byte], rawBytecodeSize: int, mainArgs: [void], mainArgsBytesSize: int): int {
-    val programInfo = parseBytecode(rawBytecode, rawBytecodeSize);
-    val context = createContext(programInfo);
-    pushAll(context.operandsStack, mainArgs, mainArgsBytesSize);
-    call(context, programInfo.mainIndex);
-
-    return loop(context);
-}
-
-fn loop(context: Context): int {
+fn vmRunLoop(context: Context): int {
     val bytecodeSize = context.bytecodeSize;
     while(context.ip < bytecodeSize) {
         val code = nextByte(context);
@@ -460,13 +446,7 @@ fn nextByte(context: Context): byte {
     return value;
 }
 
-fn createStackFrame(framePointer: [void], previousStackPointer: [void], returnAddress: int): StackFrame {
-    val frame: StackFrame = alloc(sizeof<StackFrame>);
-    frame.framePointer = framePointer;
-    frame.previousStackPointer = previousStackPointer;
-    frame.returnAddress = returnAddress;
-    return frame;
-}
+
 
 fn out(address: int) {
     asm{"
@@ -475,21 +455,7 @@ fn out(address: int) {
     "}
 }
 
-fn freeStackFrame(frame: StackFrame) {
-    free(frame);
-}
 
-fn pushStackFrame(stack: Stack, frame: StackFrame) {
-    pushInt(stack, cast<int>(frame));
-}
-
-fn popStackFrame(stack: Stack): StackFrame {
-    return cast<StackFrame>(popInt(stack));
-}
-
-fn peekStackFrame(stack: Stack): StackFrame {
-    return cast<StackFrame>(peekInt(stack));
-}
 
 fn compareBytes(left: byte, right: byte): byte {
     if (left == right) {
