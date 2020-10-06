@@ -4,6 +4,13 @@
 
 struct RbTree {
     var root: Cons;
+
+    # bytes just to make struct size same as Cons size
+    var unused0: byte;
+    var unused1: byte;
+    var unused2: byte;
+    var unused3: byte;
+    var unused4: byte;
 }
 
 #  Node structure

@@ -11,20 +11,31 @@ const CT_NIL: byte = 0;
 const CT_LIST: byte = 1;
 const CT_INT: byte = 2;
 const CT_ATOM: byte = 3;
-const CT_USER_BIT0_MASK: byte = 16;
-const CT_USER_BIT0_UNMASK: byte = 239;
-const CT_USER_BIT1_MASK: byte = 32;
-const CT_USER_BIT2_MASK: byte = 64;
+const CT_USER_BIT0_MASK: byte = 16; # 0b00010000
+const CT_USER_BIT1_MASK: byte = 32; # 0b00100000
+const CT_USER_BIT2_MASK: byte = 64; # 0b01000000
 
 fn userBit0(cons: Cons): bool {
     return (cons.flags & CT_USER_BIT0_MASK) == CT_USER_BIT0_MASK;
 }
 
+fn userBit1(cons: Cons): bool {
+    return (cons.flags & CT_USER_BIT1_MASK) == CT_USER_BIT1_MASK;
+}
+
 fn setUserBit0(cons: Cons, flag: bool) {
+    setUserBitInternal(cons, flag, CT_USER_BIT0_MASK);
+}
+
+fn setUserBit1(cons: Cons, flag: bool) {
+     setUserBitInternal(cons, flag, CT_USER_BIT1_MASK);
+}
+
+fn setUserBitInternal(cons: Cons, flag: bool, mask: byte) {
     if (flag) {
-        cons.flags = cons.flags | CT_USER_BIT0_MASK;
+        cons.flags = cons.flags | mask;
     } else {
-        cons.flags = cons.flags & (~CT_USER_BIT0_MASK);
+        cons.flags = cons.flags & (~mask);
     }
 }
 

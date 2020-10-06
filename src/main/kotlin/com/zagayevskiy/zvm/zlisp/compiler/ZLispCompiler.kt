@@ -16,14 +16,14 @@ class ZLispCompiler() {
         val program = listOf<Sexpr>()
 
         val lispDecls = program.map { expr ->
-            AstExpressionStatement(expr.toStatement())
+            AstExpressionStatement(expr.toExpr())
         }
 
         AstFunctionDeclaration(
-                name = "main",
+                name = "evalProgram",
                 returnType = null,
                 body = AstBlock(statements = atomVals.values + numberVals.values + strVals.values + lispDecls),
-                args = emptyList())
+                args = listOf(FunctionArgumentDeclaration("context", UnresolvedType.Simple("LispRuntimeContext"))))
     }
 
     private val memory = AstIdentifier("memory")
@@ -32,10 +32,10 @@ class ZLispCompiler() {
     private val createNumber = AstIdentifier("createNumber")
     private val createString = AstIdentifier("createString")
 
-    private fun Sexpr.toStatement(): AstExpr {
+    private fun Sexpr.toExpr(): AstExpr {
         //TODO includes
         return when (this) {
-            is Sexpr.DotPair -> AstFunctionCall(cons, listOf(memory, head.toStatement(), tail.toStatement()))
+            is Sexpr.DotPair -> AstFunctionCall(cons, listOf(memory, head.toExpr(), tail.toExpr()))
             is Sexpr.Atom -> obtainAtom(name)
             is Sexpr.Number -> obtainNumber(value)
             is Sexpr.Str -> obtainString(value)

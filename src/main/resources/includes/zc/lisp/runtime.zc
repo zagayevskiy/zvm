@@ -1,3 +1,134 @@
-# LispEnv struct
-# (Dict . OuterListEnv)
+@include<lisp/automem.zc>
+@include<lisp/rbtree.zc>
 
+
+struct LispRuntimeContext {
+    var mem: AutoMemory;
+
+    # LispEnv struct
+    # (Dict . OuterLispEnv)
+    var globalEnv: Cons;
+}
+
+fn createRuntimeContext(mem: AutoMemory): Cons {
+    val context: LispRuntimeContext = alloc(sizeof<LispRuntimeContext>);
+
+    context.mem = mem;
+    context.globalEnv = createEnv(mem, nil);
+
+    return context;
+}
+
+fn freeRuntimeContext(context: LispRuntimeContext) {
+    free(context);
+}
+
+fn createEnv(mem: AutoMemory, outerEnv: Cons): Cons {
+    val dict: Cons = cast<[void]>(makeRbTree(mem));
+    return cons(mem, dict, outerEnv);
+}
+
+fn envDict(env: Cons): RbTree {
+    return car(env);
+}
+
+fn envOuterEnv(env: Cons): Cons {
+    return cdr(env);
+}
+
+fn envLookup(env: Cons, key: Cons): Cons {
+    var found: Cons = nil;
+    var currentEnv = env;
+    while (found == nil && currentEnv != nil) {
+        found = findTree(envDict(currentEnv), key, ::compare);
+        currentEnv = envOuterEnv(currentEnv);
+    }
+
+    return found;
+}
+
+fn fillGlobalWithStandardFunctions(context: LispRuntimeContext) {
+    val dict = envDict(context.globalEnv);
+    val mem = context.mem;
+
+    putNamedLambda(mem, dict, "+", ::lispPlus);
+}
+
+fn eval(mem, env, sexpr): sexpr #TODO
+
+fn putNamedLambda(mem: AutoMemory, dict: RbTree, name: [byte], nativeFunction: (AutoMemory, Cons, Cons) -> Cons) {
+    putDict(mem, dict, makeAtom(name), makeRegularLambda(mem, nativeFunction));
+}
+
+
+const REGULAR_LAMBDA_CHECK_MASK = 1431655765; # 0b01010101010101010101010101010101
+
+fn isRegularLambda(mayBeLambda: Cons): bool {
+    return getType(mayBeLambda) == CT_INT &&
+        (cast<int>(mayBeLambda.right) ^ REGULAR_LAMBDA_CHECK_MASK == cast<int>(mayBeLambda.left));
+}
+
+fn makeRegularLambda(mem: AutoMemory, nativeFunction: (AutoMemory, Cons, Cons) -> Cons, evalArgs: bool): Cons {
+    val nativeFunctionAddress = cast<int>(nativeFunction);
+    val nativeFunctionAddressCheck = nativeFunctionAddress ^ REGULAR_LAMBDA_CHECK_MASK;
+    val lambda = makeCons(mem, nativeFunctionAddress, nativeFunctionAddressCheck, CT_INT);
+    setEvalArgs(lambda, evalArgs);
+    return lambda;
+}
+
+fn callRegularLambda(mem: AutoMemory, lambda: Cons, env: Cons, args: Cons): Cons {
+    val nativeFunction = cast<(AutoMemory, Cons, Cons) -> Cons>(lambda.left);
+    val argsType = getType(args);
+    if (argsType != CT_LIST && argsType != CT_NIL) {
+        print("list or nil expected as args");
+        crash(5);
+    }
+
+    var actualArgs: Cons;
+    if (isEvalArgs(lambda) && getType(args != CT_NIL)) {
+        actualArgs = cons(eval(mem, env, car(args)), nil);
+        var cursor = cdr(args);
+        var resultCursor = actualArgs;
+        while(getType(cursor) == CT_LIST) {
+            resultCursor.right = cons(eval(mem, env, car(cursor)), nil);
+            resultCursor = resultCursor.right;
+            cursor = cdr(cursor);
+        }
+        assertType(cursor, CT_NIL, "nil expected at the end of args list");
+    } else {
+        actualArgs = args;
+    }
+    return nativeFunction(mem, env, actualArgs);
+}
+
+fn lispPlus(mem: AutoMemory, unusedEnv: Cons, args: Cons): Cons {
+    assertType(args, CT_LIST, "list expected as argument of +");
+    var current = car(args);
+    assertType(current, CT_INT, "int expected as 1st arg of +");
+    var result= getInt(current);
+    for (var tail = cdr(args); getType(tail) != CT_NIL; tail = cdr(tail)) {
+        current = car(tail);
+        assertType(current, CT_INT, "ints expected as args of +");
+        result = result + getInt(current);
+    }
+
+    return makeNumber(result);
+}
+
+fn plus(l: int, r: int): int {
+    return l + r;
+}
+
+fn putFunction(mem: AutoMemory, env: Cons, name: [byte], function: ...->...)
+
+fn dictPut(mem: AutoMemory, dict: RbTree, key: Cons, value: Cons) {
+    putRbTree(mem, dict, key, value, ::compare);
+}
+
+fn setEvalArgs(lambda: Cons, evalArgs: bool) {
+    setUserBit1(lambda, evalArgs);
+}
+
+fn isEvalArgs(lambda: Cons): bool {
+    return userBit1(lambda);
+}

@@ -1,8 +1,8 @@
 @include<lisp/cons.zc>
 
-const CT_TYPE_MASK: byte = 7;
-const CT_MARK_MASK: byte = 128;
-const CT_UNMARK_MASK: byte = 127;
+const CT_TYPE_MASK: byte = 7; # 0b111
+const CT_MARK_MASK: byte = 128; # 0b10000000
+const CT_UNMARK_MASK: byte = 127; # 0b01111111
 
 struct AutoMemory {
     var mem: [void];
@@ -14,7 +14,7 @@ struct AutoMemory {
 }
 
 fn makeAutoMemory(maxMemorySize: int): AutoMemory {
-    val result = cast<AutoMemory>(alloc(sizeof<AutoMemory>));
+    val result: AutoMemory= alloc(sizeof<AutoMemory>);
     result.mem = alloc(maxMemorySize);
     result.size = maxMemorySize;
     result.unlayouted = 0;
