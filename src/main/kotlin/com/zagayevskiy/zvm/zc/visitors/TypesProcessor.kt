@@ -141,7 +141,7 @@ class TypesProcessor(private val program: AstProgram) {
             }
             is AstStructFieldDereference -> ast.apply {
                 val structType = (structInstance.type as? ZcType.Struct) ?: error("Not struct ${ast.structInstance} can't be dereferenced.")
-                val resolvedField = structType.findField(name) ?: error("Struct $structType has no field named $name. Processed $ast.")
+                val resolvedField = structType.findField(name) ?: error("Struct ${structType.structName} has no field named $name. Processed $ast.")
                 type = resolvedField.type
             }
 

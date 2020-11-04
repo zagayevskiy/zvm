@@ -1,0 +1,27 @@
+fn lispPlus(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    assertType(args, CT_LIST, "list expected as argument of +");
+    var current = car(args);
+    assertType(current, CT_INT, "int expected as 1st arg of +");
+    var result= getInt(current);
+    for (var tail = cdr(args); getType(tail) != CT_NIL; tail = cdr(tail)) {
+        current = car(tail);
+        assertType(current, CT_INT, "ints expected as args of +");
+        result = result + getInt(current);
+    }
+
+    return makeNumber(context.mem, result);
+}
+
+fn lispMul(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    assertType(args, CT_LIST, "list expected as argument of *");
+    var current = car(args);
+    assertType(current, CT_INT, "int expected as 1st arg of *");
+    var result= getInt(current);
+    for (var tail = cdr(args); getType(tail) != CT_NIL; tail = cdr(tail)) {
+        current = car(tail);
+        assertType(current, CT_INT, "ints expected as args of *");
+        result = result * getInt(current);
+    }
+
+    return makeNumber(context.mem, result);
+}

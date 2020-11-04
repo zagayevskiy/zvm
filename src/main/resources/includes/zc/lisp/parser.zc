@@ -9,7 +9,7 @@ struct LispParserContext {
 }
 
 fn lispParserNextToken(context: LispParserContext) {
-    context.current = lispLexerNextToken(context.lexer);
+    context.current = lispLexerNext(context.lexer);
 }
 
 fn lispParserCreate(mem: AutoMemory, lexer: LispLexerContext): LispParserContext {
@@ -89,10 +89,10 @@ fn lispParserDotPairOrList(context: LispParserContext): Cons {
         return makeCons(context.mem, head, tail, CT_LIST);
     }
 
-    return makeCons(context.mem, head, listParserConsumeList, CT_LIST);
+    return makeCons(context.mem, head, lispParserConsumeList(context), CT_LIST);
 }
 
-fn listParserConsumeList(context: LispParserContext): Cons {
+fn lispParserConsumeList(context: LispParserContext): Cons {
     if (context.current.type == LTT_CBC) return context.consNil;
-    return makeCons(context.mem, lispParserSexpr(context), listParserConsumeList(context), CT_LIST);
+    return makeCons(context.mem, lispParserSexpr(context), lispParserConsumeList(context), CT_LIST);
 }

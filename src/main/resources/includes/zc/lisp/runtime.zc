@@ -1,20 +1,22 @@
 @include<lisp/automem.zc>
 @include<lisp/rbtree.zc>
 
-
+# LispEnv struct
+# (Dict . OuterLispEnv)
 struct LispRuntimeContext {
     var mem: AutoMemory;
-
-    # LispEnv struct
-    # (Dict . OuterLispEnv)
     var globalEnv: Cons;
 }
 
-fn createRuntimeContext(mem: AutoMemory): Cons {
+@include<lisp/std_fns.zc>
+
+fn createRuntimeContext(mem: AutoMemory): LispRuntimeContext {
     val context: LispRuntimeContext = alloc(sizeof<LispRuntimeContext>);
 
     context.mem = mem;
     context.globalEnv = createEnv(mem, nil);
+
+    fillGlobalWithStandardFunctions(context);
 
     return context;
 }
@@ -29,7 +31,7 @@ fn createEnv(mem: AutoMemory, outerEnv: Cons): Cons {
 }
 
 fn envDict(env: Cons): RbTree {
-    return car(env);
+    return cast<[void]>(car(env));
 }
 
 fn envOuterEnv(env: Cons): Cons {
@@ -40,7 +42,7 @@ fn envLookup(env: Cons, key: Cons): Cons {
     var found: Cons = nil;
     var currentEnv = env;
     while (found == nil && currentEnv != nil) {
-        found = findTree(envDict(currentEnv), key, ::compare);
+        found = findTree(envDict(currentEnv).root, key, ::compare);
         currentEnv = envOuterEnv(currentEnv);
     }
 
@@ -51,13 +53,16 @@ fn fillGlobalWithStandardFunctions(context: LispRuntimeContext) {
     val dict = envDict(context.globalEnv);
     val mem = context.mem;
 
-    putNamedLambda(mem, dict, "+", ::lispPlus);
+    putNamedLambda(mem, dict, "+", ::lispPlus, true);
+    putNamedLambda(mem, dict, "*", ::lispMul, true);
 }
 
-fn eval(mem, env, sexpr): sexpr #TODO
+fn eval(context: LispRuntimeContext, currentEnv: Cons, sexpr: Cons): Cons {
 
-fn putNamedLambda(mem: AutoMemory, dict: RbTree, name: [byte], nativeFunction: (AutoMemory, Cons, Cons) -> Cons) {
-    putDict(mem, dict, makeAtom(name), makeRegularLambda(mem, nativeFunction));
+}
+
+fn putNamedLambda(mem: AutoMemory, dict: RbTree, name: [byte], nativeFunction: (LispRuntimeContext, Cons, Cons) -> Cons, evalArgs: bool) {
+    dictPut(mem, dict, makeAtom(mem, name), makeRegularLambda(mem, nativeFunction, evalArgs));
 }
 
 
@@ -65,19 +70,19 @@ const REGULAR_LAMBDA_CHECK_MASK = 1431655765; # 0b010101010101010101010101010101
 
 fn isRegularLambda(mayBeLambda: Cons): bool {
     return getType(mayBeLambda) == CT_INT &&
-        (cast<int>(mayBeLambda.right) ^ REGULAR_LAMBDA_CHECK_MASK == cast<int>(mayBeLambda.left));
+        ((cast<int>(mayBeLambda.right) ^ REGULAR_LAMBDA_CHECK_MASK) == cast<int>(mayBeLambda.left));
 }
 
-fn makeRegularLambda(mem: AutoMemory, nativeFunction: (AutoMemory, Cons, Cons) -> Cons, evalArgs: bool): Cons {
+fn makeRegularLambda(mem: AutoMemory, nativeFunction: (LispRuntimeContext, Cons, Cons) -> Cons, evalArgs: bool): Cons {
     val nativeFunctionAddress = cast<int>(nativeFunction);
     val nativeFunctionAddressCheck = nativeFunctionAddress ^ REGULAR_LAMBDA_CHECK_MASK;
-    val lambda = makeCons(mem, nativeFunctionAddress, nativeFunctionAddressCheck, CT_INT);
+    val lambda = makeCons(mem, cast<[void]>(nativeFunctionAddress), cast<[void]>(nativeFunctionAddressCheck), CT_INT);
     setEvalArgs(lambda, evalArgs);
     return lambda;
 }
 
-fn callRegularLambda(mem: AutoMemory, lambda: Cons, env: Cons, args: Cons): Cons {
-    val nativeFunction = cast<(AutoMemory, Cons, Cons) -> Cons>(lambda.left);
+fn callRegularLambda(context: LispRuntimeContext, lambda: Cons, env: Cons, args: Cons): Cons {
+    val nativeFunction = cast<(LispRuntimeContext, Cons, Cons) -> Cons>(lambda.left);
     val argsType = getType(args);
     if (argsType != CT_LIST && argsType != CT_NIL) {
         print("list or nil expected as args");
@@ -85,12 +90,13 @@ fn callRegularLambda(mem: AutoMemory, lambda: Cons, env: Cons, args: Cons): Cons
     }
 
     var actualArgs: Cons;
-    if (isEvalArgs(lambda) && getType(args != CT_NIL)) {
-        actualArgs = cons(eval(mem, env, car(args)), nil);
+    if (isEvalArgs(lambda) && getType(args) != CT_NIL) {
+        val mem = context.mem;
+        actualArgs = cons(mem, eval(context, env, car(args)), nil);
         var cursor = cdr(args);
         var resultCursor = actualArgs;
         while(getType(cursor) == CT_LIST) {
-            resultCursor.right = cons(eval(mem, env, car(cursor)), nil);
+            resultCursor.right = cons(mem, eval(context, env, car(cursor)), nil);
             resultCursor = resultCursor.right;
             cursor = cdr(cursor);
         }
@@ -98,28 +104,16 @@ fn callRegularLambda(mem: AutoMemory, lambda: Cons, env: Cons, args: Cons): Cons
     } else {
         actualArgs = args;
     }
-    return nativeFunction(mem, env, actualArgs);
+    return nativeFunction(context, env, actualArgs);
 }
 
-fn lispPlus(mem: AutoMemory, unusedEnv: Cons, args: Cons): Cons {
-    assertType(args, CT_LIST, "list expected as argument of +");
-    var current = car(args);
-    assertType(current, CT_INT, "int expected as 1st arg of +");
-    var result= getInt(current);
-    for (var tail = cdr(args); getType(tail) != CT_NIL; tail = cdr(tail)) {
-        current = car(tail);
-        assertType(current, CT_INT, "ints expected as args of +");
-        result = result + getInt(current);
-    }
 
-    return makeNumber(result);
-}
 
 fn plus(l: int, r: int): int {
     return l + r;
 }
 
-fn putFunction(mem: AutoMemory, env: Cons, name: [byte], function: ...->...)
+#fn putFunction(mem: AutoMemory, env: Cons, name: [byte], function: ...->...)
 
 fn dictPut(mem: AutoMemory, dict: RbTree, key: Cons, value: Cons) {
     putRbTree(mem, dict, key, value, ::compare);
