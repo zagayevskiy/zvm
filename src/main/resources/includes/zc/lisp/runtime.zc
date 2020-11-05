@@ -55,14 +55,12 @@ fn fillGlobalWithStandardFunctions(context: LispRuntimeContext) {
 
     putNamedLambda(mem, dict, "+", ::lispPlus, true);
     putNamedLambda(mem, dict, "*", ::lispMul, true);
-    printCons(dict.root);
-    endline();
 }
 
 fn eval(context: LispRuntimeContext, currentEnv: Cons, sexpr: Cons): Cons {
     print("eval:");
     printCons(sexpr);
-    endline();
+    print("\n");
     val sexprType = getType(sexpr);
     if (sexprType == CT_INT) return sexpr;
     if (sexprType == CT_ATOM) return envLookup(currentEnv, sexpr);
@@ -82,10 +80,11 @@ fn eval(context: LispRuntimeContext, currentEnv: Cons, sexpr: Cons): Cons {
 }
 
 fn mapEval(context: LispRuntimeContext, currentEnv: Cons, list: Cons): Cons {
+
     var result: Cons = nil;
     var resultCursor = result;
     val mem = context.mem;
-    for (var cursor = cdr(list); getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
+    for (var cursor = list; getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
         val current = car(cursor);
         val nextCons = cons(mem, eval(context, currentEnv, current), nil);
         if (result == nil) {

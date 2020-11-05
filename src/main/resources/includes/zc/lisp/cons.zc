@@ -42,7 +42,7 @@ fn setUserBitInternal(cons: Cons, flag: bool, mask: byte) {
 fn car(cons: Cons): Cons {
     if (cons == nil) return nil;
     assertType(cons, CT_LIST, "car list expected");
-    return cast<Cons>(cons.left);
+    return cons.left;
 }
 
 fn cdr(cons: Cons): Cons {
@@ -229,11 +229,11 @@ fn compare(left: Cons, right: Cons): byte {
 
 fn compareInts(left: int, right: int): byte {
     if (left == right) {
-        return cast<byte>(0);
+        return 0;
     } else if (left < right) {
-        return cast<byte>(-1);
+        return -1;
     } else {
-        return cast<byte>(1);
+        return 1;
     }
 }
 
@@ -241,10 +241,7 @@ fn printCons(cons: Cons) {
     when(getType(cons)) {
         CT_NIL -> print("nil");
         CT_INT -> {
-            val b: [byte] = alloc(16);
-            itos(getInt(cons), b);
-            print(b);
-            free(b);
+            printi(getInt(cons));
         }
         CT_ATOM -> {
             print("atom:");

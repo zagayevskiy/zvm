@@ -5,6 +5,13 @@ fn print(string: [byte]) {
     "}
 }
 
+fn printi(i: int) {
+    val b: [byte] = alloc(10);
+    itos(i, b);
+    print(b);
+    free(b);
+}
+
 fn println(string: [byte]) {
     print(string);
     endline();

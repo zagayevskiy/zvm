@@ -12,7 +12,7 @@ class ZLispCompilerTest {
     @Test
     fun test() {
         val program = """
-            (+ 1 2 3 4)
+            (* (+ 1 2 3 (* 2 3 (+ 2 2))) 4 5)
             
         """.trimIndent()
         //(defun test (x) (+ x 1))
