@@ -239,7 +239,7 @@ fn compareInts(left: int, right: int): byte {
 
 fn printCons(cons: Cons) {
     when(getType(cons)) {
-        CT_NIL -> print('nil');
+        CT_NIL -> print("nil");
         CT_INT -> {
             val b: [byte] = alloc(16);
             itos(getInt(cons), b);
@@ -247,15 +247,15 @@ fn printCons(cons: Cons) {
             free(b);
         }
         CT_ATOM -> {
-            print('atom:');
+            print("atom:");
             print(getAtomName(cons));
         }
         CT_LIST -> {
-            print('(');
+            print("(");
             printCons(car(cons));
             print(" . ");
             printCons(cdr(cons));
-            print(')');
+            print(")");
         }
     }
 }

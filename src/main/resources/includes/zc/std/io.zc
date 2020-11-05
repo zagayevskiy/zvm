@@ -4,3 +4,12 @@ fn print(string: [byte]) {
         out
     "}
 }
+
+fn println(string: [byte]) {
+    print(string);
+    endline();
+}
+
+fn endline() {
+    print("\n");
+}

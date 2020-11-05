@@ -20,14 +20,14 @@ fun ZcType.canBeAutoPromotedTo(other: ZcType) = other == this || when (this) {
     is ZcType.Array -> {
         when (other) {
             is ZcType.Array -> (other.itemType is ZcType.Void || itemType is ZcType.Void)
-            is ZcType.Struct -> itemType is ZcType.Void
+            is ZcType.Struct, is ZcType.Function -> itemType is ZcType.Void
             else -> false
         }
     }
-    is ZcType.Struct -> {
+    is ZcType.Struct, is ZcType.Function -> {
         ((other is ZcType.Array) && other.itemType is ZcType.Void)
     }
-    is ZcType.Function,
+
     ZcType.Void,
     ZcType.Unknown -> false
 }

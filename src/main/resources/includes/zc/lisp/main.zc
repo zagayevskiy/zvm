@@ -1,7 +1,7 @@
 @include<lisp/runtime.zc>
 @include<lisp/parser.zc>
 
-fn main() {
+fn main(): int {
      val mem = makeAutoMemory(10000*sizeof<Cons>);
      val context = createRuntimeContext(mem);
 
@@ -11,4 +11,5 @@ fn main() {
 
      freeRuntimeContext(context);
      freeAutoMemory(mem);
+     return 0;
 }

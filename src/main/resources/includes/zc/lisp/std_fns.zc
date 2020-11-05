@@ -25,3 +25,4 @@ fn lispMul(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
 
     return makeNumber(context.mem, result);
 }
+

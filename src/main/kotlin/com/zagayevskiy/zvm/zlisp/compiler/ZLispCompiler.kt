@@ -56,28 +56,40 @@ class ZLispCompiler() {
         val parser = ZLispParser(lexer)
         val lispProgram = (parser.parse() as LispParseResult.Success).program
 
-        val lispDecls = lispProgram.map { expr ->
-            AstExpressionStatement(expr.toExpr())
-        }
+        val evalStatements = lispProgram.asSequence().map { expr ->
+            expr.toExpr()
+        }.map { sexpr ->
+            eval.call(context, globalEnv, sexpr)
+        }.map {
+            printCons.call(it)
+        }.map(::AstExpressionStatement).toList()
 
-        val memoryVal = listOf(AstValDecl(memoryValName, null, AstStructFieldDereference(AstIdentifier(contextArgName), "mem")))
+        val customVals = listOf(
+                memory assign { context.field("mem") },
+                globalEnv assign { context.field("globalEnv") }
+        )
 
         return AstFunctionDeclaration(
                 name = "evalProgram",
                 returnType = null,
+                args = listOf(FunctionArgumentDeclaration(context.name, UnresolvedType.Simple("LispRuntimeContext"))),
                 body = AstBlock(
-                        statements = memoryVal +
+                        statements = customVals +
                                 atomVals.values +
                                 numberVals.values +
                                 strVals.values +
-                                lispDecls),
-                args = listOf(FunctionArgumentDeclaration(contextArgName, UnresolvedType.Simple("LispRuntimeContext"))))
+                                evalStatements +
+                                listOf(AstFunctionReturn(null))
+                )
+        )
     }
 
-    private val contextArgName = "context"
-    private val memoryValName = "memory"
-    private val memory = AstIdentifier(memoryValName)
+    private val memory = AstIdentifier("memory")
     private val cons = AstIdentifier("cons")
+    private val eval = AstIdentifier("eval")
+    private val printCons = AstIdentifier("printCons")
+    private val globalEnv = AstIdentifier("globalEnv")
+    private val context = AstIdentifier("context")
     private val makeAtom = AstIdentifier("makeAtom")
     private val makeNumber = AstIdentifier("makeNumber")
     private val makeString = AstIdentifier("makeString")
@@ -112,9 +124,19 @@ class ZLispCompiler() {
             return AstIdentifier(valDecl.valName)
         }
 
-        val valName = "${valNamePrefix}_$nextId"
-        val valDecl = AstValDecl(valName, null, AstFunctionCall(function, listOf(memory, valExpr)))
+        val valName = AstIdentifier("${valNamePrefix}_$nextId")
+        val valDecl = valName assign { function.call(memory, valExpr) }
         cache[value] = valDecl
-        return AstIdentifier(valName)
+        return valName
     }
+
+    private infix fun AstIdentifier.assign(initializer: () -> AstExpr): AstValDecl {
+        return AstValDecl(name, null, initializer())
+    }
+
+    private fun AstIdentifier.call(vararg args: AstExpr): AstFunctionCall {
+        return AstFunctionCall(this, args.toList())
+    }
+
+    private fun AstIdentifier.field(name: String) = AstStructFieldDereference(this, name)
 }
