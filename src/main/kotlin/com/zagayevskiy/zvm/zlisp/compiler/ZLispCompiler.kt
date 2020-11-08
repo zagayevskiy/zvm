@@ -58,10 +58,14 @@ class ZLispCompiler() {
 
         val evalStatements = lispProgram.asSequence().map { expr ->
             expr.toExpr()
-        }.map { sexpr ->
-            eval.call(context, globalEnv, sexpr)
-        }.map {
-            printCons.call(it)
+        }.flatMap {sexpr ->
+            val evaluated = eval.call(context, globalEnv, sexpr)
+            sequenceOf(
+                    printCons.call(sexpr),
+                    endline.call(),
+                    printCons.call(evaluated),
+                    endline.call()
+            )
         }.map(::AstExpressionStatement).toList()
 
         val customVals = listOf(
@@ -84,6 +88,7 @@ class ZLispCompiler() {
         )
     }
 
+    private val endline = AstIdentifier("endline")
     private val memory = AstIdentifier("memory")
     private val cons = AstIdentifier("cons")
     private val eval = AstIdentifier("eval")

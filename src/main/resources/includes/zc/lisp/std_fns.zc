@@ -1,5 +1,4 @@
 fn lispPlus(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    assertType(args, CT_LIST, "list expected as argument of +");
     var current = car(args);
     assertType(current, CT_INT, "int expected as 1st arg of +");
     var result= getInt(current);
@@ -13,7 +12,6 @@ fn lispPlus(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
 }
 
 fn lispMul(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    assertType(args, CT_LIST, "list expected as argument of *");
     var current = car(args);
     assertType(current, CT_INT, "int expected as 1st arg of *");
     var result= getInt(current);
@@ -26,3 +24,86 @@ fn lispMul(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
     return makeNumber(context.mem, result);
 }
 
+fn lispIsNil(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    if (getType(car(args)) == CT_NIL && getType(cdr(args)) == CT_NIL) {
+        return context.atomT;
+    }
+
+    return nil;
+}
+
+fn lispIsNumber(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    if (getType(car(args)) == CT_INT && getType(cdr(args)) == CT_NIL) {
+        return context.atomT;
+    }
+
+    return nil;
+}
+
+fn lispQuote(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return car(args);
+}
+
+fn lispList(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return args;
+}
+
+fn lispCons(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return cons(context.mem, car(args), cdar(args));
+}
+
+fn lispCar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return car(car(args));
+}
+
+fn lispCdr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return cdr(car(args));
+}
+
+fn lispCaar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return caar(car(args));
+}
+
+fn lispCadr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return cadr(car(args));
+}
+
+fn lispCdar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return cdar(car(args));
+}
+
+fn lispCddr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return cddr(car(args));
+}
+
+fn lispCaaar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return caaar(car(args));
+}
+
+fn lispCaadr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return caadr(car(args));
+}
+
+fn lispCadar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return cadar(car(args));
+}
+
+fn lispCdaar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return cdaar(car(args));
+}
+
+fn lispCaddr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return caddr(car(args));
+}
+
+fn lispCddar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return cddar(car(args));
+}
+
+fn lispCdadr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return cdadr(car(args));
+}
+
+fn lispCdddr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    return cdddr(car(args));
+}

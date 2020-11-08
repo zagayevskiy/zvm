@@ -6,6 +6,7 @@
 struct LispRuntimeContext {
     var mem: AutoMemory;
     var globalEnv: Cons;
+    var atomT: Cons;
 }
 
 @include<lisp/std_fns.zc>
@@ -15,6 +16,7 @@ fn createRuntimeContext(mem: AutoMemory): LispRuntimeContext {
 
     context.mem = mem;
     context.globalEnv = createEnv(mem, nil);
+    context.atomT = makeAtom(mem, "T");
 
     fillGlobalWithStandardFunctions(context);
 
@@ -52,17 +54,44 @@ fn envLookup(env: Cons, key: Cons): Cons {
 fn fillGlobalWithStandardFunctions(context: LispRuntimeContext) {
     val dict = envDict(context.globalEnv);
     val mem = context.mem;
+    val atomT = context.atomT;
+
+    dictPut(mem, dict, atomT, atomT);
 
     putNamedLambda(mem, dict, "+", ::lispPlus, true);
     putNamedLambda(mem, dict, "*", ::lispMul, true);
+
+    putNamedLambda(mem, dict, "nil?", ::lispIsNil, true);
+    putNamedLambda(mem, dict, "number?", ::lispIsNumber, true);
+
+    putNamedLambda(mem, dict, "quote", ::lispQuote, false);
+
+    putNamedLambda(mem, dict, "list", ::lispList, true);
+    putNamedLambda(mem, dict, "cons", ::lispCons, true);
+
+    putNamedLambda(mem, dict, "car", ::lispCar, true);
+    putNamedLambda(mem, dict, "cdr", ::lispCdr, true);
+    putNamedLambda(mem, dict, "caar", ::lispCaar, true);
+    putNamedLambda(mem, dict, "cadr", ::lispCadr, true);
+    putNamedLambda(mem, dict, "cdar", ::lispCdar, true);
+    putNamedLambda(mem, dict, "cddr", ::lispCddr, true);
+    putNamedLambda(mem, dict, "caaar", ::lispCaaar, true);
+    putNamedLambda(mem, dict, "caadr", ::lispCaadr, true);
+    putNamedLambda(mem, dict, "cadar", ::lispCadar, true);
+    putNamedLambda(mem, dict, "cdaar", ::lispCdaar, true);
+    putNamedLambda(mem, dict, "caddr", ::lispCaddr, true);
+    putNamedLambda(mem, dict, "cddar", ::lispCddar, true);
+    putNamedLambda(mem, dict, "cdadr", ::lispCdadr, true);
+    putNamedLambda(mem, dict, "cdddr", ::lispCdddr, true);
 }
 
 fn eval(context: LispRuntimeContext, currentEnv: Cons, sexpr: Cons): Cons {
-    print("eval:");
-    printCons(sexpr);
-    print("\n");
+#    print("env:");
+#    printCons(sexpr);
+#    print("\n");
+#    printAutoMemoryInfo(context.mem);
     val sexprType = getType(sexpr);
-    if (sexprType == CT_INT) return sexpr;
+    if (sexprType == CT_NIL || sexprType == CT_INT) return sexpr;
     if (sexprType == CT_ATOM) return envLookup(currentEnv, sexpr);
 
     if (sexprType == CT_LIST) {
@@ -72,6 +101,7 @@ fn eval(context: LispRuntimeContext, currentEnv: Cons, sexpr: Cons): Cons {
         if (regularFnRef != nil) {
             return callRegularLambda(context, regularFnRef, isEvalArgs(f), currentEnv, args);
         } else {
+            printCons(sexpr);
             crashm(404, "Unknown function");
         }
     }
@@ -137,6 +167,16 @@ fn callRegularLambda(context: LispRuntimeContext, nativeFunction: (LispRuntimeCo
     } else {
         actualArgs = args;
     }
+#    print("invoke:");
+#    print("context:");
+#    printi(cast<int>(context));
+#    print("; env:");
+#    printi(cast<int>(env));
+#    print("; actualArgs:");
+#    printi(cast<int>(actualArgs));
+#    print("; dict:");
+#    printi(cast<int>(envDict(env)));
+#    println(" ");
     return nativeFunction(context, env, actualArgs);
 }
 

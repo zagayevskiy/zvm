@@ -107,7 +107,6 @@ class LispEvaluator(private val includesResolver: IncludesResolver) {
         }
         putFunction("cons", true) {_, args ->
             val (head, tail) = args.requireList(2)
-            Int.MAX_VALUE
             (head dot tail)
         }
 
