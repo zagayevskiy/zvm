@@ -26,6 +26,8 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
         oneLiner("(list 10 20 30 40 50)", "(10 . (20 . (30 . (40 . (50 . nil)))))")
 
         oneLiner("(car ())", "nil")
+        oneLiner("(car (list 100000))", "100000")
+        oneLiner("(car (list nil))", "nil")
         oneLiner("(car (list 1 2 3))", "1")
         oneLiner("(cdar (list 1 2 3))", "2")
         oneLiner("(cddar (list 1 2 3))", "3")
@@ -34,6 +36,7 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
         oneLiner("(cadar (list (list (list 10 11) 20 21) 30 31))","20")
 
         oneLiner("(cdr ())", "nil")
+        oneLiner("(cdr (list 1))", "nil")
         oneLiner("(cdr (list 1 2 3))", "(2 . (3 . nil))")
         oneLiner("(cddr (list 1 2 3))", "(3 . nil)")
         oneLiner("(cdddr (list 1 2 3 4))", "(4 . nil)")
@@ -76,26 +79,8 @@ private class ZLispRunBuilder(private val source: TestSource) {
     }
     var heapSize: Int = VmTestCase.DefaultHeapSize
 
-//    fun run(arg: Int, ret: Int) = run(args = entries(arg), ret = ret.toStackEntry())
-//
-//    fun run(args: List<StackEntry>, ret: Int) = run(args, ret.toStackEntry())
-//
-//    fun run(args: List<StackEntry>, ret: StackEntry) {
-//        ZcTestCases.add(SimpleVmTestCase(
-//                """Zc ${source.name} ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "")} -> $ret"""",
-//                bytecodeProvider,
-//                runArgs = args,
-//                expectedResult = ret,
-//                heapSize = heapSize
-//        ))
-//    }
-//
-//    fun run(arg: Int, prints: String) {
-//        run(args = listOf(arg.toStackEntry()), prints = listOf(prints))
-//    }
-
     fun run(args: List<StackEntry>, prints: List<String>, crashCode: Int? = null) {
-        ZcTestCases.add(PrintVmTestCase(
+        ZLispTestCases.add(PrintVmTestCase(
                 """${source.name} ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "")}"""",
                 bytecodeProvider,
                 runArgs = args,
