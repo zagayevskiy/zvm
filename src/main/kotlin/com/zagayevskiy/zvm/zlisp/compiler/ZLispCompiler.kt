@@ -16,7 +16,7 @@ import com.zagayevskiy.zvm.zlisp.Sexpr
 import com.zagayevskiy.zvm.zlisp.ZLispLexer
 import com.zagayevskiy.zvm.zlisp.ZLispParser
 
-class ZLispCompiler() {
+class ZLispCompiler {
 
     private val atomVals = mutableMapOf<String, AstValDecl>()
     private val numberVals = mutableMapOf<Int, AstValDecl>()
@@ -61,10 +61,9 @@ class ZLispCompiler() {
         }.flatMap {sexpr ->
             val evaluated = eval.call(context, globalEnv, sexpr)
             sequenceOf(
-                    printCons.call(sexpr),
-                    endline.call(),
-                    printCons.call(evaluated),
-                    endline.call()
+//                    printCons.call(sexpr),
+//                    endline.call()
+                    lispPrint.call(evaluated)
             )
         }.map(::AstExpressionStatement).toList()
 
@@ -92,7 +91,7 @@ class ZLispCompiler() {
     private val memory = AstIdentifier("memory")
     private val cons = AstIdentifier("cons")
     private val eval = AstIdentifier("eval")
-    private val printCons = AstIdentifier("printCons")
+    private val lispPrint = AstIdentifier("lispPrint")
     private val globalEnv = AstIdentifier("globalEnv")
     private val context = AstIdentifier("context")
     private val makeAtom = AstIdentifier("makeAtom")

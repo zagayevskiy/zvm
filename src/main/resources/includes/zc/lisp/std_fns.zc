@@ -1,3 +1,14 @@
+fn lispDef(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+    val key = car(args);
+    val evaluatedValue = eval(context, env, cdar(args));
+    dictPut(context.mem, envDict(env), key, evaluatedValue);
+    return evaluatedValue;
+}
+
+fn lispLambda(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+    return makeUserDefinedLambda(context, env, args);
+}
+
 fn lispPlus(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
     var current = car(args);
     assertType(current, CT_INT, "int expected as 1st arg of +");

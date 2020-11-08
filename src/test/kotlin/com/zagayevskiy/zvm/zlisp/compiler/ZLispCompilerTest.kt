@@ -15,29 +15,35 @@ class ZLispCompilerTest {
 
 
 
+ something
 
-
-
-            (quote (1 2 (3 3) 4 5))
-            (car (list 1 2 4 4))
-            (cdr (list 1 2 4 4))
 
          */
         val program = """
-            something
-            (* (+ 1 2 3 (* 2 3 (+ 10 20))) 4 5)
+               (* (+ 1 2 3 (* 2 3 (+ 10 20))) 4 5)
              T
             nil
             (nil? T)
             (nil? nil)
-            
+
             (number? T)
             (number? nil)
             (number? ())
             (number? 100500)
             (number? ())
-            
+
             (quote (something 123))
+            something
+            (def! something (+ 111 222))
+            (* something 3)
+
+
+            (quote (1 2 (3 3) 4 5))
+            (car (list 1 2 4 4))
+            (cdr (list 1 2 4 4))
+           (def! plus (fn* (x y) (+ x y)))
+           (def! mul (fn* (x y) (* x y)))
+           (plus 123 (mul 1 2))
         """.trimIndent()
         //(defun test (x) (+ x 1))
 

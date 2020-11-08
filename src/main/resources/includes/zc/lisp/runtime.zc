@@ -9,8 +9,6 @@ struct LispRuntimeContext {
     var atomT: Cons;
 }
 
-@include<lisp/std_fns.zc>
-
 fn createRuntimeContext(mem: AutoMemory): LispRuntimeContext {
     val context: LispRuntimeContext = alloc(sizeof<LispRuntimeContext>);
 
@@ -65,6 +63,8 @@ fn fillGlobalWithStandardFunctions(context: LispRuntimeContext) {
     putNamedLambda(mem, dict, "number?", ::lispIsNumber, true);
 
     putNamedLambda(mem, dict, "quote", ::lispQuote, false);
+    putNamedLambda(mem, dict, "def!", ::lispDef, false);
+    putNamedLambda(mem, dict, "fn*", ::lispLambda, false);
 
     putNamedLambda(mem, dict, "list", ::lispList, true);
     putNamedLambda(mem, dict, "cons", ::lispCons, true);
@@ -85,24 +85,33 @@ fn fillGlobalWithStandardFunctions(context: LispRuntimeContext) {
     putNamedLambda(mem, dict, "cdddr", ::lispCdddr, true);
 }
 
-fn eval(context: LispRuntimeContext, currentEnv: Cons, sexpr: Cons): Cons {
-#    print("env:");
-#    printCons(sexpr);
-#    print("\n");
-#    printAutoMemoryInfo(context.mem);
-    val sexprType = getType(sexpr);
-    if (sexprType == CT_NIL || sexprType == CT_INT) return sexpr;
-    if (sexprType == CT_ATOM) return envLookup(currentEnv, sexpr);
+fn eval(context: LispRuntimeContext, env: Cons, enterSexpr: Cons): Cons {
 
-    if (sexprType == CT_LIST) {
-        val f = eval(context, currentEnv, car(sexpr));
-        val args = cdr(sexpr);
-        val regularFnRef = tryGetRegularFnRef(f);
-        if (regularFnRef != nil) {
-            return callRegularLambda(context, regularFnRef, isEvalArgs(f), currentEnv, args);
-        } else {
-            printCons(sexpr);
-            crashm(404, "Unknown function");
+#    printAutoMemoryInfo(context.mem);
+    var currentEnv = env;
+    var sexpr = enterSexpr;
+    while(true) {
+#        print("eval step:");
+#        printCons(sexpr);
+#        print("\n");
+        val sexprType = getType(sexpr);
+        if (sexprType == CT_NIL || sexprType == CT_INT) return sexpr;
+        if (sexprType == CT_ATOM) return envLookup(currentEnv, sexpr);
+
+        if (sexprType == CT_LIST) {
+            val f = eval(context, currentEnv, car(sexpr));
+            val args = cdr(sexpr);
+            val regularFnRef = tryGetRegularFnRef(f);
+            if (regularFnRef != nil) {
+                return callRegularLambda(context, regularFnRef, isEvalArgs(f), currentEnv, args);
+            } if (isUserDefinedLambda(f)) {
+                val bodyAndEnv = evalUserDefinedLambda(context, currentEnv, f, args);
+                sexpr = car(bodyAndEnv);
+                currentEnv = cdr(bodyAndEnv);
+            }else {
+                printCons(sexpr);
+                crashm(404, "Unknown function");
+            }
         }
     }
 
@@ -133,7 +142,6 @@ fn putNamedLambda(mem: AutoMemory, dict: RbTree, name: [byte], nativeFunction: (
     dictPut(mem, dict, makeAtom(mem, name), makeRegularLambda(mem, nativeFunction, evalArgs));
 }
 
-
 const REGULAR_LAMBDA_CHECK_MASK = 1431655765; # 0b01010101010101010101010101010101
 
 # returns regular function reference
@@ -154,6 +162,63 @@ fn makeRegularLambda(mem: AutoMemory, nativeFunction: (LispRuntimeContext, Cons,
     return lambda;
 }
 
+const USER_DEFINED_LAMBDA_CHECK_MASK = 858993459; # 0b00110011001100110011001100110011
+fn makeUserDefinedLambda(context: LispRuntimeContext, outerEnv: Cons, definition: Cons): Cons {
+    val binds = car(definition);
+    val body = cdar(definition);
+    if (getType(cddr(definition)) != CT_NIL) {
+        println("must be exact two params - binds and body");
+        return nil;
+    }
+    for (var cursor = binds; getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
+        val bind = car(cursor);
+        if (getType(bind) != CT_ATOM) {
+            printCons(bind);
+            println(" can not be used as bind param");
+            return nil;
+        }
+    }
+    val mem = context.mem;
+    val check = makeNumber(mem, cast<int>(outerEnv) ^ USER_DEFINED_LAMBDA_CHECK_MASK);
+
+    return cons(mem, definition, cons(mem, outerEnv, check));
+}
+
+fn isUserDefinedLambda(mayBeLambda: Cons): bool {
+    if (getType(mayBeLambda) != CT_LIST) return false;
+    val mayBeOuterEnvAndCheck = cdr(mayBeLambda);
+    if (getType(mayBeOuterEnvAndCheck) != CT_LIST) return false;
+    val mayBeOuterEnv = car(mayBeOuterEnvAndCheck);
+    val mayBeOuterEnvCheck = cdr(mayBeOuterEnvAndCheck);
+    if (getType(mayBeOuterEnvCheck) != CT_INT) return false;
+    return cast<int>(mayBeOuterEnv) == (getInt(mayBeOuterEnvCheck) ^ USER_DEFINED_LAMBDA_CHECK_MASK);
+}
+
+fn evalUserDefinedLambda(context: LispRuntimeContext, env: Cons, lambda: Cons, args: Cons): Cons {
+    val outerEnv = cdar(lambda);
+    val definition = car(lambda);
+    val binds = car(definition);
+    val body = cdar(definition);
+    val mem = context.mem;
+    val lambdaEnv = createEnv(mem, outerEnv);
+    val dict = envDict(lambdaEnv);
+
+    var argsCursor = args;
+    for (var cursor = binds; getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
+        val bind = car(cursor);
+        var arg: Cons;
+        if (getType(argsCursor) == CT_LIST) {
+            arg = eval(context, env, car(argsCursor));
+            argsCursor = cdr(argsCursor);
+        } else {
+            arg = nil;
+        }
+        dictPut(mem, dict, bind, arg);
+    }
+
+    return cons(mem, body, lambdaEnv);
+}
+
 fn callRegularLambda(context: LispRuntimeContext, nativeFunction: (LispRuntimeContext, Cons, Cons) -> Cons, evalArgs: bool, env: Cons, args: Cons): Cons {
     val argsType = getType(args);
     if (argsType != CT_LIST && argsType != CT_NIL) {
@@ -167,16 +232,6 @@ fn callRegularLambda(context: LispRuntimeContext, nativeFunction: (LispRuntimeCo
     } else {
         actualArgs = args;
     }
-#    print("invoke:");
-#    print("context:");
-#    printi(cast<int>(context));
-#    print("; env:");
-#    printi(cast<int>(env));
-#    print("; actualArgs:");
-#    printi(cast<int>(actualArgs));
-#    print("; dict:");
-#    printi(cast<int>(envDict(env)));
-#    println(" ");
     return nativeFunction(context, env, actualArgs);
 }
 
@@ -191,3 +246,14 @@ fn setEvalArgs(lambda: Cons, evalArgs: bool) {
 fn isEvalArgs(lambda: Cons): bool {
     return userBit1(lambda);
 }
+
+fn lispPrint(cons: Cons) {
+    if (isUserDefinedLambda(cons)) {
+        println("lambda");
+    } else {
+        printCons(cons);
+        println(" ");
+    }
+}
+
+@include<lisp/std_fns.zc>

@@ -23,12 +23,20 @@ fn userBit1(cons: Cons): bool {
     return (cons.flags & CT_USER_BIT1_MASK) == CT_USER_BIT1_MASK;
 }
 
+fn userBit2(cons: Cons): bool {
+    return (cons.flags & CT_USER_BIT2_MASK) == CT_USER_BIT2_MASK;
+}
+
 fn setUserBit0(cons: Cons, flag: bool) {
     setUserBitInternal(cons, flag, CT_USER_BIT0_MASK);
 }
 
 fn setUserBit1(cons: Cons, flag: bool) {
-     setUserBitInternal(cons, flag, CT_USER_BIT1_MASK);
+    setUserBitInternal(cons, flag, CT_USER_BIT1_MASK);
+}
+
+fn setUserBit2(cons: Cons, flag: bool) {
+    setUserBitInternal(cons, flag, CT_USER_BIT2_MASK);
 }
 
 fn setUserBitInternal(cons: Cons, flag: bool, mask: byte) {
@@ -203,8 +211,9 @@ fn assertType(cons: Cons, type: byte, message: [byte]) {
         print(message);
         print(" type: ");
         itos(cast<int>(getType(cons)), buffer);
-        print(buffer);
+        println(buffer);
         free(buffer);
+        printCons(cons);
         crash(2989);
     }
 }
