@@ -17,6 +17,7 @@ import org.junit.runners.Parameterized
 import testdata.cases.AsmTestCases
 import testdata.cases.VmTestCase
 import testdata.cases.ZcTestCases
+import testdata.cases.ZLispTestCases
 
 @RunWith(Parameterized::class)
 internal class VmOnZcRunTest(private val testCase: VmTestCase) {
@@ -24,7 +25,7 @@ internal class VmOnZcRunTest(private val testCase: VmTestCase) {
     companion object {
         @JvmStatic
         @Parameterized.Parameters(name = "{index}: {0}")
-        fun data() = ZcTestCases + AsmTestCases
+        fun data() = ZLispTestCases + ZcTestCases + AsmTestCases
 
         private const val HEAP_SIZE = 1024 * 65536
     }

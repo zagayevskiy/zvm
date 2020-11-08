@@ -253,7 +253,6 @@ fn printCons(cons: Cons) {
             printi(getInt(cons));
         }
         CT_ATOM -> {
-            print("atom:");
             print(getAtomName(cons));
         }
         CT_LIST -> {

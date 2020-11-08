@@ -20,6 +20,7 @@ class ZLispCompilerTest {
 
          */
         val program = """
+            number?
                (* (+ 1 2 3 (* 2 3 (+ 10 20))) 4 5)
              T
             nil
@@ -41,9 +42,7 @@ class ZLispCompilerTest {
             (quote (1 2 (3 3) 4 5))
             (car (list 1 2 4 4))
             (cdr (list 1 2 4 4))
-           (def! plus (fn* (x y) (+ x y)))
-           (def! mul (fn* (x y) (* x y)))
-           (plus 123 (mul 1 2))
+           
         """.trimIndent()
         //(defun test (x) (+ x 1))
 

@@ -7,6 +7,7 @@ interface VmTestCase {
     companion object {
         const val DefaultHeapSize = 100000
     }
+
     val bytecode: ByteArray
 
     val stackSize: Int
@@ -38,7 +39,7 @@ internal abstract class AbsVmTestCase : VmTestCase {
     override fun toString() = name
 }
 
-internal class CachingBytecodeProvider(private val impl: () -> ByteArray): () -> ByteArray {
+internal class CachingBytecodeProvider(private val impl: () -> ByteArray) : () -> ByteArray {
     private var cached: ByteArray? = null
     private var cachedException: Exception? = null
     override operator fun invoke(): ByteArray {
@@ -66,7 +67,10 @@ internal class PrintVmTestCase(override val name: String,
                                override val bytecodeProvider: () -> ByteArray,
                                override val runArgs: List<StackEntry>,
                                private val expectPrinted: List<String>,
-                               private val expectCrashCode: Int? = null) : AbsVmTestCase() {
+                               private val expectCrashCode: Int? = null,
+                               private val joinOutput: Boolean = false,
+                               private val dropLastEmptyLines: Boolean = false
+) : AbsVmTestCase() {
 
     private lateinit var testIo: TestVmIo
 
@@ -80,7 +84,18 @@ internal class PrintVmTestCase(override val name: String,
     override val crashHandler: CrashHandler
         get() = expectCrashCode?.let { TestCrashHandler(it) } ?: SimpleCrashHandler
 
-    override fun checkResult(actualResult: StackEntry) = assertEquals(expectPrinted, testIo.printed)
+    override fun checkResult(actualResult: StackEntry) {
+        val withoutEmptyLines = if (dropLastEmptyLines) {
+            testIo.printed.dropLastWhile { it.isBlank() }
+        } else {
+            testIo.printed
+        }
+        assertEquals(expectPrinted, if (joinOutput) {
+            listOf(withoutEmptyLines.joinToString(separator = ""))
+        } else {
+            withoutEmptyLines
+        })
+    }
 }
 
 internal class TestCrashHandler(private val expectedCrashCode: Int) : CrashHandler {

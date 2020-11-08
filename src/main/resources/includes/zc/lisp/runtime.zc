@@ -108,7 +108,7 @@ fn eval(context: LispRuntimeContext, env: Cons, enterSexpr: Cons): Cons {
                 val bodyAndEnv = evalUserDefinedLambda(context, currentEnv, f, args);
                 sexpr = car(bodyAndEnv);
                 currentEnv = cdr(bodyAndEnv);
-            }else {
+            } else {
                 printCons(sexpr);
                 crashm(404, "Unknown function");
             }
@@ -163,6 +163,7 @@ fn makeRegularLambda(mem: AutoMemory, nativeFunction: (LispRuntimeContext, Cons,
 }
 
 const USER_DEFINED_LAMBDA_CHECK_MASK = 858993459; # 0b00110011001100110011001100110011
+# ( (binds body) . (outerEnv . outerEnv^USER_DEFINED_LAMBDA_CHECK_MASK) )
 fn makeUserDefinedLambda(context: LispRuntimeContext, outerEnv: Cons, definition: Cons): Cons {
     val binds = car(definition);
     val body = cdar(definition);
@@ -248,11 +249,17 @@ fn isEvalArgs(lambda: Cons): bool {
 }
 
 fn lispPrint(cons: Cons) {
-    if (isUserDefinedLambda(cons)) {
+    val regularFnRef = tryGetRegularFnRef(cons);
+    if (regularFnRef != nil) {
+        print("built-in function ::");
+        # TODO may be traverse global scope to recognize it name
+        printi(cast<int>(regularFnRef));
+        endline();
+    } else if (isUserDefinedLambda(cons)) {
         println("lambda");
     } else {
         printCons(cons);
-        println(" ");
+        endline();
     }
 }
 

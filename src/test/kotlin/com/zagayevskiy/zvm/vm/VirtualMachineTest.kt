@@ -8,6 +8,7 @@ import org.junit.runners.Parameterized
 import testdata.cases.AsmTestCases
 import testdata.cases.VmTestCase
 import testdata.cases.ZcTestCases
+import testdata.cases.ZLispTestCases
 
 @RunWith(Parameterized::class)
 internal class VirtualMachineProgramsTest(private val testCase: VmTestCase) {
@@ -16,7 +17,7 @@ internal class VirtualMachineProgramsTest(private val testCase: VmTestCase) {
 
         @JvmStatic
         @Parameterized.Parameters(name = "{index}: {0}")
-        fun data() = (ZcTestCases + AsmTestCases)
+        fun data() = (ZLispTestCases + ZcTestCases + AsmTestCases)
     }
 
     private lateinit var vm: VirtualMachine

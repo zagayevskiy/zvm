@@ -10,8 +10,6 @@ import testdata.sources.zc.lisp.testsrc.LispObjectTestSource
 import testdata.sources.zc.lisp.testsrc.RbTreeTestSource
 
 internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
-    val Sources = mutableListOf<TestSource>()
-
 
     init {
 
@@ -55,11 +53,6 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
         }
 
         source(RbTreeTestSource.RedBlackRequirements) {
-            run(emptyList(), 0)
-        }
-
-        source(RbTreeTestSource.HeterogeneousData) {
-            heapSize = 1024 * 1024
             run(emptyList(), 0)
         }
 
@@ -192,6 +185,11 @@ internal object ZcTestCases : MutableList<VmTestCase> by mutableListOf() {
             run(arg = 0b01010101_11110000_11100110_11001100, ret = 0b00110011_01100111_00001111_10101010)
             run(arg = 0b00110011_01100111_00001111_10101010, ret = 0b01010101_11110000_11100110_11001100)
         }
+
+        source(RbTreeTestSource.HeterogeneousData) {
+            heapSize = 1024 * 1024
+            run(emptyList(), 0)
+        }
     }
 }
 
@@ -230,6 +228,5 @@ private class ZcRunBuilder(private val source: TestSource) {
 }
 
 private fun source(source: TestSource, block: ZcRunBuilder.() -> Unit) {
-    ZcTestCases.Sources.add(source)
     ZcRunBuilder(source).block()
 }
