@@ -23,6 +23,13 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
         oneLiner("(number? T)", "nil")
         oneLiner("(number? 100)", "T")
 
+        oneLiner("(cond (T 300))", "300")
+        oneLiner("(cond (T . 300) (T 400))", "300")
+        oneLiner("(cond (nil 300) (T 1000))", "1000")
+        oneLiner("(cond (nil . 300) (T 1000))", "1000")
+        oneLiner("(cond ((number? T) 1) ((nil? T) 2) (3 4) (5 6) (T 7))", "4")
+        oneLiner("(cond (T 10) ((panic!) cond-must-be-lazy))", "10")
+
         oneLiner("(list 10 20 30 40 50)", "(10 . (20 . (30 . (40 . (50 . nil)))))")
 
         oneLiner("(car ())", "nil")
@@ -45,6 +52,11 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
         oneLiner("(cdadr (list 1 (list 2 3) 4 5))","(3 . nil)")
 
         oneLiner("(quote (+ 1 2 3))", "(+ . (1 . (2 . (3 . nil))))")
+        oneLiner("(quote (T . T))", "(T . T)")
+        oneLiner("(quote (nil . T))", "(nil . T)")
+        oneLiner("(quote (T . nil))", "(T . nil)")
+        oneLiner("(quote (T))", "(T . nil)")
+
         oneLiner("(def! x 10000)", "10000")
         oneLiner("(def! x (quote y))", "y")
         oneLiner("(def! f (fn* (x) x))", "lambda")
