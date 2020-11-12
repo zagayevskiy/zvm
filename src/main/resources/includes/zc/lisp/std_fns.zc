@@ -85,6 +85,26 @@ fn lispPlus(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
     return makeNumber(context.mem, result);
 }
 
+# this fn result calculation based on count of args
+# (- x y1 y2 ... yN) equals to x - y1 - y2 - ... - yN
+# (- x) is -x
+fn lispMinus(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    var current = car(args);
+    assertType(current, CT_INT, "int expected as 1st arg of -");
+    var result = getInt(current);
+    var tail = cdr(args);
+    if (getType(tail) == CT_NIL) {
+        result = 0 - result;
+    }
+    for ( ; getType(tail) != CT_NIL; tail = cdr(tail)) {
+        current = car(tail);
+        assertType(current, CT_INT, "ints expected as args of -");
+        result = result - getInt(current);
+    }
+
+    return makeNumber(context.mem, result);
+}
+
 fn lispMul(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
     var current = car(args);
     assertType(current, CT_INT, "int expected as 1st arg of *");
@@ -96,6 +116,87 @@ fn lispMul(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
     }
 
     return makeNumber(context.mem, result);
+}
+
+fn lispEq(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+    val first = eval(context, env, car(args));
+    for (var next = cdr(args); getType(next) != CT_NIL; next = cdr(next)) {
+        if (compare(first, eval(context, env, car(next))) != 0) return nil;
+    }
+
+    return context.atomT;
+}
+
+# (< x1 x2 ... xN) means that x1 < x2 < ... < xN
+fn lispStrictlyAscOrder(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+    var prev = eval(context, env, car(args));
+    for (var cursor = cdr(args); getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
+          val current = eval(context, env, car(cursor));
+          if (compare(prev, current) >= 0) return nil;
+          prev = current;
+    }
+
+    return context.atomT;
+}
+
+# (<= x1 x2 ... xN) means that x1 <= x2 <= ... <= xN
+fn lispAscOrder(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+    var prev = eval(context, env, car(args));
+    for (var cursor = cdr(args); getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
+          val current = eval(context, env, car(cursor));
+          if (compare(prev, current) > 0) return nil;
+          prev = current;
+    }
+
+    return context.atomT;
+}
+
+# (> x1 x2 ... xN) means that x1 > x2 > ... > xN
+fn lispStrictlyDescOrder(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+    var prev = eval(context, env, car(args));
+    for (var cursor = cdr(args); getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
+          val current = eval(context, env, car(cursor));
+          if (compare(prev, current) <= 0) return nil;
+          prev = current;
+    }
+
+    return context.atomT;
+}
+
+# (>= x1 x2 ... xN) means that x1 >= x2 >= ... >= xN
+fn lispDescOrder(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+    var prev = eval(context, env, car(args));
+    for (var cursor = cdr(args); getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
+          val current = eval(context, env, car(cursor));
+          if (compare(prev, current) < 0) return nil;
+          prev = current;
+    }
+
+    return context.atomT;
+}
+
+# returns first non-nil operand or nil if hasn't
+fn lispOr(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+    for (var cursor = args; getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
+        val operand = eval(context, env, car(cursor));
+        if (getType(operand) != CT_NIL) {
+            return operand;
+        }
+    }
+
+    return nil;
+}
+
+# returns T if all operands non-nil or nil otherwise
+fn lispAnd(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+    for (var cursor = args; getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
+        val operand = eval(context, env, car(cursor));
+        if (getType(operand) == CT_NIL) {
+            return nil;
+        }
+    }
+
+    return context.atomT;
 }
 
 fn lispIsNil(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {

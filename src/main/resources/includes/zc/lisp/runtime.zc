@@ -57,7 +57,20 @@ fn fillGlobalWithStandardFunctions(context: LispRuntimeContext) {
     dictPut(mem, dict, atomT, atomT);
 
     putNamedLambda(mem, dict, "+", ::lispPlus, true);
+    putNamedLambda(mem, dict, "-", ::lispMinus, true);
     putNamedLambda(mem, dict, "*", ::lispMul, true);
+
+    # we want compare functions to be lazy so them need to eval args themselves
+    putNamedLambda(mem, dict, "=", ::lispEq, false);
+    putNamedLambda(mem, dict, "<", ::lispStrictlyAscOrder, false);
+    putNamedLambda(mem, dict, ">", ::lispStrictlyDescOrder, false);
+    putNamedLambda(mem, dict, "<=", ::lispAscOrder, false);
+    putNamedLambda(mem, dict, ">=", ::lispDescOrder, false);
+
+
+    # we also want logical 'or' and 'and' to be lazy
+    putNamedLambda(mem, dict, "||", ::lispOr, false);
+    putNamedLambda(mem, dict, "&&", ::lispAnd, false);
 
     putNamedLambda(mem, dict, "nil?", ::lispIsNil, true);
     putNamedLambda(mem, dict, "number?", ::lispIsNumber, true);
