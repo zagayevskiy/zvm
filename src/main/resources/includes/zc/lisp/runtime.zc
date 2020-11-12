@@ -65,6 +65,7 @@ fn fillGlobalWithStandardFunctions(context: LispRuntimeContext) {
     putNamedLambda(mem, dict, "quote", ::lispQuote, false);
     putNamedLambda(mem, dict, "def!", ::lispDef, false);
     putNamedLambda(mem, dict, "fn*", ::lispLambda, false);
+    putNamedTcoLambda(mem, dict, "let*", ::lispLet, false);
 
     putNamedLambda(mem, dict, "list", ::lispList, true);
     putNamedLambda(mem, dict, "cons", ::lispCons, true);
@@ -103,8 +104,17 @@ fn eval(context: LispRuntimeContext, env: Cons, enterSexpr: Cons): Cons {
             val args = cdr(sexpr);
             val regularFnRef = tryGetRegularFnRef(f);
             if (regularFnRef != nil) {
-                return callRegularLambda(context, regularFnRef, isEvalArgs(f), currentEnv, args);
-            } if (isUserDefinedLambda(f)) {
+                val result = callRegularLambda(context, regularFnRef, isEvalArgs(f), currentEnv, args);
+                if (isTcoLambda(f)) {
+                    sexpr = car(result);
+#                    print("tco call expr:");
+#                    printCons(sexpr);
+#                    endline();
+                    currentEnv = cdr(result);
+                } else {
+                    return result;
+                }
+            } else if (isUserDefinedLambda(f)) {
                 val bodyAndEnv = evalUserDefinedLambda(context, currentEnv, f, args);
                 sexpr = car(bodyAndEnv);
                 currentEnv = cdr(bodyAndEnv);
@@ -139,8 +149,12 @@ fn mapEval(context: LispRuntimeContext, currentEnv: Cons, list: Cons): Cons {
 }
 
 fn putNamedLambda(mem: AutoMemory, dict: RbTree, name: [byte], nativeFunction: (LispRuntimeContext, Cons, Cons) -> Cons, evalArgs: bool) {
-    dictPut(mem, dict, makeAtom(mem, name), makeRegularLambda(mem, nativeFunction, evalArgs));
+    dictPut(mem, dict, makeAtom(mem, name), makeRegularLambda(mem, nativeFunction, evalArgs, false));
 }
+
+fn putNamedTcoLambda(mem: AutoMemory, dict: RbTree, name: [byte], nativeFunction: (LispRuntimeContext, Cons, Cons) -> Cons, evalArgs: bool) {
+     dictPut(mem, dict, makeAtom(mem, name), makeRegularLambda(mem, nativeFunction, evalArgs, true));
+ }
 
 const REGULAR_LAMBDA_CHECK_MASK = 1431655765; # 0b01010101010101010101010101010101
 
@@ -154,11 +168,12 @@ fn tryGetRegularFnRef(mayBeLambda: Cons): (LispRuntimeContext, Cons, Cons) -> Co
     return cast<(LispRuntimeContext, Cons, Cons) -> Cons>(mayBeFnRef);
 }
 
-fn makeRegularLambda(mem: AutoMemory, nativeFunction: (LispRuntimeContext, Cons, Cons) -> Cons, evalArgs: bool): Cons {
+fn makeRegularLambda(mem: AutoMemory, nativeFunction: (LispRuntimeContext, Cons, Cons) -> Cons, evalArgs: bool, tco: bool): Cons {
     val nativeFunctionAddress = cast<int>(nativeFunction);
     val nativeFunctionAddressCheck = nativeFunctionAddress ^ REGULAR_LAMBDA_CHECK_MASK;
     val lambda = makeCons(mem, cast<[void]>(nativeFunctionAddress), cast<[void]>(nativeFunctionAddressCheck), CT_INT);
     setEvalArgs(lambda, evalArgs);
+    setTcoLambda(lambda, tco);
     return lambda;
 }
 
@@ -246,6 +261,14 @@ fn setEvalArgs(lambda: Cons, evalArgs: bool) {
 
 fn isEvalArgs(lambda: Cons): bool {
     return userBit1(lambda);
+}
+
+fn setTcoLambda(lambda: Cons, tco: bool) {
+    setUserBit2(lambda, tco);
+}
+
+fn isTcoLambda(lambda: Cons): bool {
+    return userBit2(lambda);
 }
 
 fn lispPrint(cons: Cons) {

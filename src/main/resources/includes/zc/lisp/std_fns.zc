@@ -9,6 +9,37 @@ fn lispLambda(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
     return makeUserDefinedLambda(context, env, args);
 }
 
+
+# this is TCO fn so it returns (resultBody . newEnv)
+fn lispLet(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+    var bindings = car(args);
+    if (getType(bindings) == CT_NIL) {
+        print("let* with empty bindings list does not make sens.");
+    }
+
+    val resultBody = cdar(args);
+    if (resultBody == nil) {
+        print("let* without body does not make sens. Nil returned.");
+        return cons(context.mem, nil, env);
+    }
+
+    val mem = context.mem;
+    val letEnv = createEnv(mem, env);
+    val letEnvDict = envDict(letEnv);
+
+    while(getType(bindings) != CT_NIL) {
+        val tail = cdr(bindings);
+#        print("let* key:");
+#        printCons(key);
+#        print("\nlet* value:");
+#        printCons(value);
+        dictPut(mem, letEnvDict, car(bindings), eval(context, letEnv, car(tail)));
+        bindings = cdr(tail);
+    }
+
+    return cons(mem, resultBody, letEnv);
+}
+
 fn lispPlus(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
     var current = car(args);
     assertType(current, CT_INT, "int expected as 1st arg of +");

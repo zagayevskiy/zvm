@@ -49,6 +49,11 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
         oneLiner("(def! x (quote y))", "y")
         oneLiner("(def! f (fn* (x) x))", "lambda")
 
+        oneLiner("(let* (x 1010) x)", "1010")
+        oneLiner("(let* (a 1 b 2 c (+ a b 3)) c)", "6")
+        oneLiner("(let* (x (let* (x let*-must-not-modify-outer-env) 123)) x)", "123")
+        oneLiner("(let* (x 3 y 2) (let* (a x b y) (* a b)))", "6")
+
         oneLiner("""
             (def! plus (fn* (x y) (+ x y)))
             (def! mul (fn* (x y) (* x y)))
