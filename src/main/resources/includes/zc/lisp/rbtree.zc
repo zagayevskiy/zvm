@@ -25,11 +25,12 @@ fn makeRbTree(mem: AutoMemory): RbTree {
     return cast<[void]>(makeCons(mem, nil, nil, CT_LIST));
 }
 
-fn putRbTree(mem: AutoMemory, tree: RbTree, key: Cons, value: Cons, compare: (Cons, Cons) -> byte) {
+fn putRbTree(mem: AutoMemory, tree: RbTree, key: Cons, value: Cons, compare: (Cons, Cons) -> byte): Cons {
     var cursor = tree.root;
     if (cursor == nil) {
         tree.root = makeRbNode(mem, key, value, nil);
         setNodeBlack(tree.root);
+        return nodeKeyValue(tree.root);
     } else {
         var parent: Cons = nil;
         while (true) {
@@ -37,7 +38,7 @@ fn putRbTree(mem: AutoMemory, tree: RbTree, key: Cons, value: Cons, compare: (Co
             val compared = compare(key, curKey);
             if (compared == 0) {
                 setNodeValue(cursor, value);
-                return;
+                return nodeKeyValue(cursor);
             }
             parent = cursor;
             if (compared < 0) {
@@ -46,7 +47,7 @@ fn putRbTree(mem: AutoMemory, tree: RbTree, key: Cons, value: Cons, compare: (Co
                     val insertedNode = makeRbNode(mem, key, value, parent);
                     setNodeLeft(parent, insertedNode);
                     fixAfterInsert(tree, insertedNode);
-                    return;
+                    return nodeKeyValue(insertedNode);
                 }
             } else {
                 cursor = rightChild(cursor);
@@ -54,7 +55,7 @@ fn putRbTree(mem: AutoMemory, tree: RbTree, key: Cons, value: Cons, compare: (Co
                     val insertedNode = makeRbNode(mem, key, value, parent);
                     setNodeRight(parent, insertedNode);
                     fixAfterInsert(tree, insertedNode);
-                    return;
+                    return nodeKeyValue(insertedNode);
                 }
             }
         }
@@ -210,6 +211,14 @@ fn leftChild(node: Cons): Cons {
 fn rightChild(node: Cons): Cons {
     if (node == nil) return nil;
     return cdddr(node);
+}
+
+fn entryValue(entry: Cons): Cons {
+    return cdr(entry);
+}
+
+fn setEntryValue(entry: Cons, value: Cons) {
+    entry.right = value;
 }
 
 fn rotateLeft(tree: RbTree, p: Cons) {

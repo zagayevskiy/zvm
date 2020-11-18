@@ -3,10 +3,12 @@
 
 # LispEnv struct
 # (Dict . OuterLispEnv)
+# retainedEnvRefsStackEntry is a key-value pair with linked-list based stack value contains all child envs
 struct LispRuntimeContext {
     var mem: AutoMemory;
     var globalEnv: Cons;
     var atomT: Cons;
+    var retainedEnvRefsStackEntry: Cons;
 }
 
 fn createRuntimeContext(mem: AutoMemory): LispRuntimeContext {
@@ -15,6 +17,9 @@ fn createRuntimeContext(mem: AutoMemory): LispRuntimeContext {
     context.mem = mem;
     context.globalEnv = createEnv(mem, nil);
     context.atomT = makeAtom(mem, "T");
+
+    val globalDict = envDict(context.globalEnv);
+    context.retainedEnvRefsStackEntry = putRbTree(mem, globalDict, makeAtom(mem, "retained env refs stack"), nil, ::compare);
 
     fillGlobalWithStandardFunctions(context);
 
@@ -106,15 +111,23 @@ fn eval(context: LispRuntimeContext, env: Cons, enterSexpr: Cons): Cons {
 #    printAutoMemoryInfo(context.mem);
     var currentEnv = env;
     var sexpr = enterSexpr;
+    retainEnvRef(context, currentEnv);
+    
     while(true) {
 #        print("eval step:");
 #        printCons(sexpr);
 #        print("\n");
         val sexprType = getType(sexpr);
-        if (sexprType == CT_NIL || sexprType == CT_INT) return sexpr;
-        if (sexprType == CT_ATOM) return envLookup(currentEnv, sexpr);
+        if (sexprType == CT_NIL || sexprType == CT_INT) {
+            releaseEnvRef(context, currentEnv);
+            return sexpr;
+        }
+        if (sexprType == CT_ATOM) {
+            releaseEnvRef(context, currentEnv);
+            return envLookup(currentEnv, sexpr);
+        }
 
-        if (sexprType == CT_LIST) {
+        if (sexprType == CT_LIST) {           
             val f = eval(context, currentEnv, car(sexpr));
             val args = cdr(sexpr);
             val regularFnRef = tryGetRegularFnRef(f);
@@ -125,14 +138,25 @@ fn eval(context: LispRuntimeContext, env: Cons, enterSexpr: Cons): Cons {
 #                    print("tco call expr:");
 #                    printCons(sexpr);
 #                    endline();
-                    currentEnv = cdr(result);
+                    val newEnv = cdr(result);
+                    if (newEnv != currentEnv) {                         
+                        releaseEnvRef(context, currentEnv);
+                        retainEnvRef(context, newEnv);
+                        currentEnv = newEnv;    
+                    }           
                 } else {
+                    releaseEnvRef(context, currentEnv);
                     return result;
                 }
             } else if (isUserDefinedLambda(f)) {
                 val bodyAndEnv = evalUserDefinedLambda(context, currentEnv, f, args);
                 sexpr = car(bodyAndEnv);
-                currentEnv = cdr(bodyAndEnv);
+                val newEnv = cdr(bodyAndEnv);
+                if (newEnv != currentEnv) {                   
+                    releaseEnvRef(context, currentEnv);
+                    retainEnvRef(context, newEnv);
+                    currentEnv = newEnv;
+                }
             } else {
                 printCons(sexpr);
                 crashm(404, "Unknown function");
@@ -266,8 +290,8 @@ fn callRegularLambda(context: LispRuntimeContext, nativeFunction: (LispRuntimeCo
     return nativeFunction(context, env, actualArgs);
 }
 
-fn dictPut(mem: AutoMemory, dict: RbTree, key: Cons, value: Cons) {
-    putRbTree(mem, dict, key, value, ::compare);
+fn dictPut(mem: AutoMemory, dict: RbTree, key: Cons, value: Cons): Cons {
+    return putRbTree(mem, dict, key, value, ::compare);
 }
 
 fn setEvalArgs(lambda: Cons, evalArgs: bool) {
@@ -284,6 +308,22 @@ fn setTcoLambda(lambda: Cons, tco: bool) {
 
 fn isTcoLambda(lambda: Cons): bool {
     return userBit2(lambda);
+}
+
+fn retainEnvRef(context: LispRuntimeContext, env: Cons) {
+    if (env == context.globalEnv) return;
+    val stackEntry = context.retainedEnvRefsStackEntry;
+    setEntryValue(stackEntry, cons(context.mem, env, entryValue(stackEntry)));
+}
+
+fn releaseEnvRef(context: LispRuntimeContext, env: Cons) {
+    if (env == context.globalEnv) return;
+    val stackEntry = context.retainedEnvRefsStackEntry;
+    setEntryValue(stackEntry, cdr(entryValue(stackEntry)));
+}
+
+fn peekEnv(context: LispRuntimeContext): Cons {
+    return car(entryValue(context.retainedEnvRefsStackEntry));
 }
 
 fn lispPrint(cons: Cons) {
