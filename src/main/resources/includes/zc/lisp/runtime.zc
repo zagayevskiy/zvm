@@ -3,12 +3,12 @@
 
 # LispEnv struct
 # (Dict . OuterLispEnv)
-# retainedEnvRefsStackEntry is a key-value pair with linked-list based stack value contains all child envs
+# retainedSubGraphsStackEntry is a key-value pair with linked-list based stack value contains all child envs
 struct LispRuntimeContext {
     var mem: AutoMemory;
     var globalEnv: Cons;
     var atomT: Cons;
-    var retainedEnvRefsStackEntry: Cons;
+    var retainedSubGraphsStackEntry: Cons;
 }
 
 fn createRuntimeContext(mem: AutoMemory): LispRuntimeContext {
@@ -19,7 +19,7 @@ fn createRuntimeContext(mem: AutoMemory): LispRuntimeContext {
     context.atomT = makeAtom(mem, "T");
 
     val globalDict = envDict(context.globalEnv);
-    context.retainedEnvRefsStackEntry = putRbTree(mem, globalDict, makeAtom(mem, "retained env refs stack"), nil, ::compare);
+    context.retainedSubGraphsStackEntry = putRbTree(mem, globalDict, makeAtom(mem, "retained env refs stack"), nil, ::compare);
 
     fillGlobalWithStandardFunctions(context);
 
@@ -111,23 +111,35 @@ fn eval(context: LispRuntimeContext, env: Cons, enterSexpr: Cons): Cons {
 #    printAutoMemoryInfo(context.mem);
     var currentEnv = env;
     var sexpr = enterSexpr;
-    retainEnvRef(context, currentEnv);
-    
+
+    retainSubGraph(context, currentEnv);
+#    print("eval:");
+#    printCons(enterSexpr);
+#    endline();
+#    println("runtime:");
+#    printCons(envLookup(context.globalEnv, makeAtom(context.mem, "plus")));
+#    endline();
+#    gc(context.mem, context.globalEnv);
+
     while(true) {
+#        println("before gc:");
+#        printAutoMemoryInfo(context.mem);
+#        println("after gc:");
+#        printAutoMemoryInfo(context.mem);
 #        print("eval step:");
 #        printCons(sexpr);
 #        print("\n");
         val sexprType = getType(sexpr);
         if (sexprType == CT_NIL || sexprType == CT_INT) {
-            releaseEnvRef(context, currentEnv);
+            releaseSubGraph(context, currentEnv);
             return sexpr;
         }
         if (sexprType == CT_ATOM) {
-            releaseEnvRef(context, currentEnv);
+            releaseSubGraph(context, currentEnv);
             return envLookup(currentEnv, sexpr);
         }
 
-        if (sexprType == CT_LIST) {           
+        if (sexprType == CT_LIST) {
             val f = eval(context, currentEnv, car(sexpr));
             val args = cdr(sexpr);
             val regularFnRef = tryGetRegularFnRef(f);
@@ -139,22 +151,22 @@ fn eval(context: LispRuntimeContext, env: Cons, enterSexpr: Cons): Cons {
 #                    printCons(sexpr);
 #                    endline();
                     val newEnv = cdr(result);
-                    if (newEnv != currentEnv) {                         
-                        releaseEnvRef(context, currentEnv);
-                        retainEnvRef(context, newEnv);
-                        currentEnv = newEnv;    
-                    }           
+                    if (newEnv != currentEnv) {
+                        releaseSubGraph(context, currentEnv);
+                        retainSubGraph(context, newEnv);
+                        currentEnv = newEnv;
+                    }
                 } else {
-                    releaseEnvRef(context, currentEnv);
+                    releaseSubGraph(context, currentEnv);
                     return result;
                 }
             } else if (isUserDefinedLambda(f)) {
                 val bodyAndEnv = evalUserDefinedLambda(context, currentEnv, f, args);
                 sexpr = car(bodyAndEnv);
                 val newEnv = cdr(bodyAndEnv);
-                if (newEnv != currentEnv) {                   
-                    releaseEnvRef(context, currentEnv);
-                    retainEnvRef(context, newEnv);
+                if (newEnv != currentEnv) {
+                    releaseSubGraph(context, currentEnv);
+                    retainSubGraph(context, newEnv);
                     currentEnv = newEnv;
                 }
             } else {
@@ -164,11 +176,10 @@ fn eval(context: LispRuntimeContext, env: Cons, enterSexpr: Cons): Cons {
         }
     }
 
-    return nil;
+    crashm(123, "unknown argument");
 }
 
 fn mapEval(context: LispRuntimeContext, currentEnv: Cons, list: Cons): Cons {
-
     var result: Cons = nil;
     var resultCursor = result;
     val mem = context.mem;
@@ -178,10 +189,14 @@ fn mapEval(context: LispRuntimeContext, currentEnv: Cons, list: Cons): Cons {
         if (result == nil) {
             result = nextCons;
             resultCursor = result;
+            retainSubGraph(context, result);
         } else {
             resultCursor.right = nextCons;
             resultCursor = resultCursor.right;
         }
+    }
+    if (result != nil) {
+        releaseSubGraph(context, result);
     }
 
     return result;
@@ -256,6 +271,7 @@ fn evalUserDefinedLambda(context: LispRuntimeContext, env: Cons, lambda: Cons, a
     val body = cdar(definition);
     val mem = context.mem;
     val lambdaEnv = createEnv(mem, outerEnv);
+    retainSubGraph(context, lambdaEnv);
     val dict = envDict(lambdaEnv);
 
     var argsCursor = args;
@@ -270,6 +286,7 @@ fn evalUserDefinedLambda(context: LispRuntimeContext, env: Cons, lambda: Cons, a
         }
         dictPut(mem, dict, bind, arg);
     }
+    releaseSubGraph(context, lambdaEnv);
 
     return cons(mem, body, lambdaEnv);
 }
@@ -310,20 +327,20 @@ fn isTcoLambda(lambda: Cons): bool {
     return userBit2(lambda);
 }
 
-fn retainEnvRef(context: LispRuntimeContext, env: Cons) {
-    if (env == context.globalEnv) return;
-    val stackEntry = context.retainedEnvRefsStackEntry;
-    setEntryValue(stackEntry, cons(context.mem, env, entryValue(stackEntry)));
+fn retainSubGraph(context: LispRuntimeContext, subGraph: Cons) {
+    if (subGraph == context.globalEnv) return;
+    val stackEntry = context.retainedSubGraphsStackEntry;
+    setEntryValue(stackEntry, cons(context.mem, subGraph, entryValue(stackEntry)));
 }
 
-fn releaseEnvRef(context: LispRuntimeContext, env: Cons) {
-    if (env == context.globalEnv) return;
-    val stackEntry = context.retainedEnvRefsStackEntry;
+fn releaseSubGraph(context: LispRuntimeContext, subGraph: Cons) {
+    if (subGraph == context.globalEnv) return;
+    val stackEntry = context.retainedSubGraphsStackEntry;
     setEntryValue(stackEntry, cdr(entryValue(stackEntry)));
 }
 
 fn peekEnv(context: LispRuntimeContext): Cons {
-    return car(entryValue(context.retainedEnvRefsStackEntry));
+    return car(entryValue(context.retainedSubGraphsStackEntry));
 }
 
 fn lispPrint(cons: Cons) {

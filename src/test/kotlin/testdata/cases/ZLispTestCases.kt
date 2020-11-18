@@ -11,7 +11,7 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
         oneLiner("T", "T")
         oneLiner("()", "nil")
 
-        oneLiner("(+ 1 2 3 4 5)", "15")
+        oneLiner("(+ 11 22 33 44 55)", "${11 + 22 + 33 + 44 + 55}")
         oneLiner("(- 1 2 3 4 5)", "${1 - 2 - 3 - 4 - 5}")
         oneLiner("(- 100)", "-100")
         oneLiner("(* 1 2 3 4 5)", "120")
@@ -20,6 +20,7 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
         oneLiner("(|| nil nil 1 2 3)", "1")
         oneLiner("(|| nil nil 1 (panic! ||must-be-lazy))", "1")
         oneLiner("(|| nil (nil? 1) (number? nil) ())", "nil")
+        oneLiner("(|| (> 1 2 3) (< 1 2 3))", "T")
 
         oneLiner("(&& T T)", "T")
         oneLiner("(&& nil T)", "nil")
@@ -27,6 +28,7 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
         oneLiner("(&& 1 2 3)", "T")
         oneLiner("(&& 1 nil (panic! &&must-be-lazy))", "nil")
         oneLiner("(&& T 1000 (nil? nil) (number? 10) (< 1 10 100))", "T")
+        oneLiner("(&& (> 1 2 3) (< 1 2 3))", "nil")
 
         oneLiner("(= T T)", "T")
         oneLiner("(= nil nil)", "T")

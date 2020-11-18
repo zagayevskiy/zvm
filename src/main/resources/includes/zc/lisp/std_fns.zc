@@ -118,61 +118,61 @@ fn lispMul(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
     return makeNumber(context.mem, result);
 }
 
-fn lispEq(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
-    val first = eval(context, env, car(args));
-    for (var next = cdr(args); getType(next) != CT_NIL; next = cdr(next)) {
-        if (compare(first, eval(context, env, car(next))) != 0) return nil;
+fn lispOrdering(context: LispRuntimeContext, env: Cons, args: Cons, comparator: (Cons, Cons) -> bool): Cons {
+    var prev = eval(context, env, car(args));
+    val retainedSubGraph = cons(context.mem, prev, nil);
+    retainSubGraph(context, retainedSubGraph);
+    for (var argsCursor = cdr(args); getType(argsCursor) != CT_NIL; argsCursor = cdr(argsCursor)) {
+        val evaluated = eval(context, env, car(argsCursor));
+        if (!comparator(prev, evaluated)) {
+            releaseSubGraph(context, retainedSubGraph);
+            return nil;
+        }
+        prev = evaluated;
+        retainedSubGraph.left = prev;
     }
 
+    releaseSubGraph(context, retainedSubGraph);
     return context.atomT;
+}
+
+fn lispEq(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+    return lispOrdering(context, env, args, ::lispEqComparator);
+}
+fn lispEqComparator(prev: Cons, next: Cons): bool {
+    return compare(prev, next) == 0;
 }
 
 # (< x1 x2 ... xN) means that x1 < x2 < ... < xN
 fn lispStrictlyAscOrder(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
-    var prev = eval(context, env, car(args));
-    for (var cursor = cdr(args); getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
-          val current = eval(context, env, car(cursor));
-          if (compare(prev, current) >= 0) return nil;
-          prev = current;
-    }
-
-    return context.atomT;
+    return lispOrdering(context, env, args, ::lispStrictlyAscComparator);
+}
+fn lispStrictlyAscComparator(prev: Cons, next: Cons): bool {
+    return compare(prev, next) < 0;
 }
 
 # (<= x1 x2 ... xN) means that x1 <= x2 <= ... <= xN
 fn lispAscOrder(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
-    var prev = eval(context, env, car(args));
-    for (var cursor = cdr(args); getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
-          val current = eval(context, env, car(cursor));
-          if (compare(prev, current) > 0) return nil;
-          prev = current;
-    }
-
-    return context.atomT;
+    return lispOrdering(context, env, args, ::lispAscComparator);
+}
+fn lispAscComparator(prev: Cons, next: Cons): bool {
+    return compare(prev, next) <= 0;
 }
 
 # (> x1 x2 ... xN) means that x1 > x2 > ... > xN
 fn lispStrictlyDescOrder(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
-    var prev = eval(context, env, car(args));
-    for (var cursor = cdr(args); getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
-          val current = eval(context, env, car(cursor));
-          if (compare(prev, current) <= 0) return nil;
-          prev = current;
-    }
-
-    return context.atomT;
+    return lispOrdering(context, env, args, ::lispStrictlyDescComparator);
+}
+fn lispStrictlyDescComparator(prev: Cons, next: Cons): bool {
+    return compare(prev, next) > 0;
 }
 
 # (>= x1 x2 ... xN) means that x1 >= x2 >= ... >= xN
 fn lispDescOrder(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
-    var prev = eval(context, env, car(args));
-    for (var cursor = cdr(args); getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
-          val current = eval(context, env, car(cursor));
-          if (compare(prev, current) < 0) return nil;
-          prev = current;
-    }
-
-    return context.atomT;
+    return lispOrdering(context, env, args, ::lispDescComparator);
+}
+fn lispDescComparator(prev: Cons, next: Cons): bool {
+    return compare(prev, next) >= 0;
 }
 
 # returns first non-nil operand or nil if hasn't
