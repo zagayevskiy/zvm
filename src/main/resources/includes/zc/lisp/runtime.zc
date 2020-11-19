@@ -119,7 +119,7 @@ fn eval(context: LispRuntimeContext, env: Cons, enterSexpr: Cons): Cons {
 #    println("runtime:");
 #    printCons(envLookup(context.globalEnv, makeAtom(context.mem, "plus")));
 #    endline();
-#    gc(context.mem, context.globalEnv);
+    gc(context.mem, context.globalEnv);
 
     while(true) {
 #        println("before gc:");

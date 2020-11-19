@@ -112,7 +112,8 @@ object AutoMemoryTestSource {
             var cursor = mem.recycled;
             var recycledCount = 0;
             while(cursor != nil) {
-                cursor = cdr(cursor);
+                assertType(cursor, CT_RECYCLED, "recycled cons must be CT_RECYCLED");
+                cursor = cursor.right;
                 recycledCount = recycledCount + 1;
             }
             assertIntEq(expect, recycledCount, message);

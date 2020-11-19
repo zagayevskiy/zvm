@@ -1,8 +1,5 @@
 @include<lisp/cons.zc>
 
-const CT_TYPE_MASK: byte = 7; # 0b111
-const CT_MARK_MASK: byte = 128; # 0b10000000
-const CT_UNMARK_MASK: byte = 127; # 0b01111111
 
 struct AutoMemory {
     var mem: [void];
@@ -63,6 +60,7 @@ fn allocCons(autoMemory: AutoMemory): Cons {
     }
 
     autoMemory.recycled = recycled.right;
+    recycled.right = nil; # do not give chance to currupt other recycled conses
 
     return recycled;
 }
@@ -81,7 +79,7 @@ fn layoutNext(autoMemory: AutoMemory): Cons {
 fn recycle(autoMemory: AutoMemory, cons: Cons) {
     cons.left = nil;
     cons.right = autoMemory.recycled;
-    cons.flags = CT_LIST;
+    cons.flags = CT_RECYCLED;
     autoMemory.recycled = cons;
     autoMemory.available = autoMemory.available + 1;
     autoMemory.allocated = autoMemory.allocated - 1;
@@ -104,7 +102,7 @@ fn sweep(autoMemory: AutoMemory) {
         val current = cast<Cons>(cursor);
         if ((current.flags & CT_MARK_MASK) != 0) {
             current.flags = current.flags & CT_UNMARK_MASK;
-        } else {
+        } else if (getType(current) != CT_RECYCLED) {
             recycle(autoMemory, current);
         }
     }

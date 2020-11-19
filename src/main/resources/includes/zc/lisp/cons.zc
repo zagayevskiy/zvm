@@ -7,10 +7,15 @@ struct Cons {
     var flags: byte;
 }
 
+const CT_TYPE_MASK: byte = 7; # 0b111
+const CT_MARK_MASK: byte = 128; # 0b10000000
+const CT_UNMARK_MASK: byte = 127; # 0b01111111
+
 const CT_NIL: byte = 0;
 const CT_LIST: byte = 1;
 const CT_INT: byte = 2;
 const CT_ATOM: byte = 3;
+const CT_RECYCLED: byte = 7; # 0b111 - mark already recycled cons to avoid double recycling in case of cycle collection
 const CT_USER_BIT0_MASK: byte = 16; # 0b00010000
 const CT_USER_BIT1_MASK: byte = 32; # 0b00100000
 const CT_USER_BIT2_MASK: byte = 64; # 0b01000000

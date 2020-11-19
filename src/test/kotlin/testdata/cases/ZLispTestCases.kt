@@ -6,6 +6,13 @@ import com.zagayevskiy.zvm.zlisp.compiler.ZLispCompiler
 internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
 
     init {
+        oneLiner("""
+            (def! f (fn* (x) x))
+            (f 3)
+        """.trimIndent(), """
+            lambda
+            3
+        """.trimIndent())
         oneLiner("nil", "nil")
         oneLiner("something", "nil")
         oneLiner("T", "T")
