@@ -294,3 +294,16 @@ fn lispCdadr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
 fn lispCdddr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
     return cdddr(car(args));
 }
+
+fn lispMutReverseInPlace(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    var list = car(args);
+    var prev: Cons = nil;
+    while (getType(list) == CT_LIST) {
+        val next = list.right;
+        list.right = prev;
+        prev = list;
+        list = next;
+    }
+
+    return prev;
+}

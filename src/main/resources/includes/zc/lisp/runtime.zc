@@ -89,6 +89,7 @@ fn fillGlobalWithStandardFunctions(context: LispRuntimeContext) {
     putNamedLambda(mem, dict, "fn*", ::lispLambda, false);
     putNamedTcoLambda(mem, dict, "let*", ::lispTcoLet, false);
 
+    putNamedLambda(mem, dict, "reverse-inplace!", ::lispMutReverseInPlace, true);
     putNamedLambda(mem, dict, "list", ::lispList, true);
     putNamedLambda(mem, dict, "cons", ::lispCons, true);
 

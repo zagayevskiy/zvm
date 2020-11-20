@@ -127,6 +127,8 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
         oneLiner("(let* (x (let* (x let*-must-not-modify-outer-env) 123)) x)", "123")
         oneLiner("(let* (x 3 y 2) (let* (a x b y) (* a b)))", "6")
 
+        oneLiner("(reverse-inplace! (list 1 2 3))", "(3 . (2 . (1 . nil)))")
+
         file("simple-fns.lisp", output = "110")
         file("simple-tail-call-fn.lisp", output = "1000")
         file("lists.lisp", output = "(3 . (2 . (1 . nil)))")
