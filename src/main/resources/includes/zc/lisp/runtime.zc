@@ -64,6 +64,8 @@ fn fillGlobalWithStandardFunctions(context: LispRuntimeContext) {
     putNamedLambda(mem, dict, "+", ::lispPlus, true);
     putNamedLambda(mem, dict, "-", ::lispMinus, true);
     putNamedLambda(mem, dict, "*", ::lispMul, true);
+    putNamedLambda(mem, dict, "%", ::lispMod, true);
+    putNamedLambda(mem, dict, "/", ::lispDiv, true);
 
     # we want compare functions to be lazy so them need to eval args themselves
     putNamedLambda(mem, dict, "=", ::lispEq, false);

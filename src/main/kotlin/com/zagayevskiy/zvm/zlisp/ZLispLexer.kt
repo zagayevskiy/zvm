@@ -1,6 +1,7 @@
 package com.zagayevskiy.zvm.zlisp
 
 import com.zagayevskiy.zvm.common.Lexer
+import com.zagayevskiy.zvm.common.LineComment
 import com.zagayevskiy.zvm.common.SequenceLexer
 import com.zagayevskiy.zvm.common.Token
 
@@ -11,12 +12,13 @@ object ZLispToken {
 }
 
 private val symbolsMap = mapOf(
+        ";" to LineComment,
         "(" to ZLispToken.ParenthesisOpen,
         ")" to ZLispToken.ParenthesisClose,
         "." to ZLispToken.Dot
 )
 
-private val idSymbols: Set<Char> = setOf('-', '+', '*', '/', '%', '!', '?', '=', '<', '>', '&', '|')
+private val idSymbols: Set<Char> = setOf('-', '+', '*', '/', '%', '!', '?', '=', '<', '>', '&', '|', '@')
 
 class ZLispLexer(sequence: Sequence<Char>) : Lexer by SequenceLexer(sequence, symbolsMap, emptyMap(),
         idStart = { isJavaIdentifierStart() || this in idSymbols },

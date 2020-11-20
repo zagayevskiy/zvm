@@ -129,6 +129,7 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
 
         file("simple-fns.lisp", output = "110")
         file("simple-tail-call-fn.lisp", output = "1000")
+        file("lists.lisp", output = "(3 . (2 . (1 . nil)))")
     }
 
 

@@ -92,8 +92,9 @@ internal class PrintVmTestCase(override val name: String,
             testIo.printed
         }
 
+
         assertEquals(expectPrinted, when {
-            takeOnlyLastLine -> listOf(withoutEmptyLines.last())
+            takeOnlyLastLine -> listOf(withoutEmptyLines.joinToString(separator = "").split('\n').last())
             joinOutput -> listOf(withoutEmptyLines.joinToString(separator = ""))
             else -> withoutEmptyLines
         })
@@ -115,7 +116,7 @@ internal class TestVmIo : VmIo {
 
     override fun print(value: String) {
         printedField.add(value)
-        //kotlin.io.print(value)
+        kotlin.io.print(value)
     }
 
 }

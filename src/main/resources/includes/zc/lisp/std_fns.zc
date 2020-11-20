@@ -118,6 +118,18 @@ fn lispMul(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
     return makeNumber(context.mem, result);
 }
 
+fn lispMod(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    var n = car(args);
+    var d = cdar(args);
+    return makeNumber(context.mem, getInt(n) % getInt(d));
+}
+
+fn lispDiv(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+    var n = car(args);
+    var d = cdar(args);
+    return makeNumber(context.mem, getInt(n) / getInt(d));
+}
+
 fn lispOrdering(context: LispRuntimeContext, env: Cons, args: Cons, comparator: (Cons, Cons) -> bool): Cons {
     var prev = eval(context, env, car(args));
     val retainedSubGraph = cons(context.mem, prev, nil);

@@ -212,13 +212,12 @@ fn getType(cons: Cons): byte {
 
 fn assertType(cons: Cons, type: byte, message: [byte]) {
     if (getType(cons) != type) {
-        val buffer: [byte] = alloc(16);
         print(message);
         print(" type: ");
-        itos(cast<int>(getType(cons)), buffer);
-        println(buffer);
-        free(buffer);
+        printi(getType(cons));
+        print(" value:");
         printCons(cons);
+        endline();
         crash(2989);
     }
 }
