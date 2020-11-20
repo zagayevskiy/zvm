@@ -69,7 +69,8 @@ internal class PrintVmTestCase(override val name: String,
                                private val expectPrinted: List<String>,
                                private val expectCrashCode: Int? = null,
                                private val joinOutput: Boolean = false,
-                               private val dropLastEmptyLines: Boolean = false
+                               private val dropLastEmptyLines: Boolean = false,
+                               private val takeOnlyLastLine: Boolean = false
 ) : AbsVmTestCase() {
 
     private lateinit var testIo: TestVmIo
@@ -90,10 +91,11 @@ internal class PrintVmTestCase(override val name: String,
         } else {
             testIo.printed
         }
-        assertEquals(expectPrinted, if (joinOutput) {
-            listOf(withoutEmptyLines.joinToString(separator = ""))
-        } else {
-            withoutEmptyLines
+
+        assertEquals(expectPrinted, when {
+            takeOnlyLastLine -> listOf(withoutEmptyLines.last())
+            joinOutput -> listOf(withoutEmptyLines.joinToString(separator = ""))
+            else -> withoutEmptyLines
         })
     }
 }
@@ -113,7 +115,7 @@ internal class TestVmIo : VmIo {
 
     override fun print(value: String) {
         printedField.add(value)
-        kotlin.io.print(value)
+        //kotlin.io.print(value)
     }
 
 }

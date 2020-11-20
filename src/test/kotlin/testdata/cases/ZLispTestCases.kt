@@ -1,5 +1,6 @@
 package testdata.cases
 
+import com.zagayevskiy.zvm.common.preprocessing.JavaAssetsIncludesResolver
 import com.zagayevskiy.zvm.vm.StackEntry
 import com.zagayevskiy.zvm.zlisp.compiler.ZLispCompiler
 
@@ -98,9 +99,9 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
         oneLiner("(car (list 1 2 3))", "1")
         oneLiner("(cdar (list 1 2 3))", "2")
         oneLiner("(cddar (list 1 2 3))", "3")
-        oneLiner("(caar (list (list 100) 200))","100")
-        oneLiner("(caaar (list (list (list 10 11) 20 21) 30 31))","10")
-        oneLiner("(cadar (list (list (list 10 11) 20 21) 30 31))","20")
+        oneLiner("(caar (list (list 100) 200))", "100")
+        oneLiner("(caaar (list (list (list 10 11) 20 21) 30 31))", "10")
+        oneLiner("(cadar (list (list (list 10 11) 20 21) 30 31))", "20")
 
         oneLiner("(cdr ())", "nil")
         oneLiner("(cdr (list 1))", "nil")
@@ -108,8 +109,8 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
         oneLiner("(cddr (list 1 2 3))", "(3 . nil)")
         oneLiner("(cdddr (list 1 2 3 4))", "(4 . nil)")
 
-        oneLiner("(caddr (list (list (list 10 11) 20 30) 40 41))","(30 . nil)")
-        oneLiner("(cdadr (list 1 (list 2 3) 4 5))","(3 . nil)")
+        oneLiner("(caddr (list (list (list 10 11) 20 30) 40 41))", "(30 . nil)")
+        oneLiner("(cdadr (list 1 (list 2 3) 4 5))", "(3 . nil)")
 
         oneLiner("(quote (+ 1 2 3))", "(+ . (1 . (2 . (3 . nil))))")
         oneLiner("(quote (T . T))", "(T . T)")
@@ -126,15 +127,8 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
         oneLiner("(let* (x (let* (x let*-must-not-modify-outer-env) 123)) x)", "123")
         oneLiner("(let* (x 3 y 2) (let* (a x b y) (* a b)))", "6")
 
-        oneLiner("""
-            (def! plus (fn* (x y) (+ x y)))
-            (def! mul (fn* (x y) (* x y)))
-            (plus 123 (mul 1 2))
-        """.trimIndent(), """
-            lambda
-            lambda
-            125
-        """.trimIndent())
+        file("simple-fns.lisp", output = "110")
+        file("simple-tail-call-fn.lisp", output = "1000")
     }
 
 
@@ -147,8 +141,34 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
             run(args = emptyList(), prints = listOf(output))
         }
     }
+
+
+    private fun file(path: String, output: String) {
+        ZLispFileRunBuilder(path).run(args = emptyList(), prints = output)
+    }
 }
 
+private class ZLispFileRunBuilder(private val path: String) {
+        private val bytecodeProvider = CachingBytecodeProvider {
+                val basePath = "/test/lisp"
+                val text = JavaAssetsIncludesResolver(basePath).resolve(path) ?: throw IllegalArgumentException("file $path not found at resource:$basePath")
+                ZLispCompiler().compile(text)
+        }
+        var heapSize: Int = VmTestCase.DefaultHeapSize
+
+        fun run(args: List<StackEntry>, prints: String, crashCode: Int? = null) {
+                ZLispTestCases.add(PrintVmTestCase(
+                    """file: $path ${(args.map { it.toString() }.takeIf { it.isNotEmpty() } ?: "")}"""",
+                    bytecodeProvider,
+                    runArgs = args,
+                    expectPrinted = listOf(prints),
+                    expectCrashCode = crashCode,
+                    joinOutput = false,
+                    dropLastEmptyLines = true,
+                    takeOnlyLastLine = true
+                ))
+        }
+}
 
 private class ZLispRunBuilder(private val source: TestSource) {
     private val bytecodeProvider = CachingBytecodeProvider {

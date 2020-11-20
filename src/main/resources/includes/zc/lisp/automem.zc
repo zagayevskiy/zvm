@@ -60,7 +60,7 @@ fn allocCons(autoMemory: AutoMemory): Cons {
     }
 
     autoMemory.recycled = recycled.right;
-    recycled.right = nil; # do not give chance to currupt other recycled conses
+    recycled.right = nil; # do not give chance to damage other recycled conses
 
     return recycled;
 }
@@ -97,8 +97,8 @@ fn mark(cons: Cons) {
 
 fn sweep(autoMemory: AutoMemory) {
     val mem = autoMemory.mem;
-    val unlayoutedAbsolete = cast<int>(mem + autoMemory.unlayouted);
-    for(var cursor = cast<int>(mem); cursor < unlayoutedAbsolete; cursor = cursor + sizeof<Cons>) {
+    val unlayoutedAbsolute = cast<int>(mem + autoMemory.unlayouted);
+    for(var cursor = cast<int>(mem); cursor < unlayoutedAbsolute; cursor = cursor + sizeof<Cons>) {
         val current = cast<Cons>(cursor);
         if ((current.flags & CT_MARK_MASK) != 0) {
             current.flags = current.flags & CT_UNMARK_MASK;
