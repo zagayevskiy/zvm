@@ -10,11 +10,12 @@
 
 fn vmRunLoop(context: Context): int {
     val bytecodeSize = context.bytecodeSize;
+
     while(context.ip < bytecodeSize) {
         val code = nextByte(context);
 
         when(code) {
-            1 -> call(context, nextInt(context));
+            1 -> doCall(context);
             2 -> {
                 if(context.callStack.top == 4) {
                     when(context.operandsStack.top) {
@@ -25,23 +26,23 @@ fn vmRunLoop(context: Context): int {
                 }
                 ret(context);
             }
-            3 -> jump(context, nextInt(context));
+            3 -> jmp(context);
             4 -> jz(context);
             5 -> jnz(context);
-            6 -> crash(popInt(context.operandsStack));
+            6 -> doCrash(context);
             7 -> invoke(context);
 
-            10 -> popByte(context.operandsStack);
-            11 -> pushByte(context.operandsStack, peekByte(context.operandsStack));
-            12 -> popInt(context.operandsStack);
-            13 -> pushInt(context.operandsStack, peekInt(context.operandsStack));
-            14 -> pushInt(context.operandsStack, cast<int>(peekStackFrame(context.callStack).framePointer));
-            15 -> addStackPointer(context, nextInt(context));
-            16 -> addStackPointer(context, 4);
-            17 -> addStackPointer(context, -4);
-            18 -> addStackPointer(context, 1);
-            19 -> addStackPointer(context, -1);
-            20 -> pushInt(context.operandsStack, cast<int>(context.constantPool));
+            10 -> popb(context);
+            11 -> dupb(context);
+            12 -> popi(context);
+            13 -> dupi(context);
+            14 -> pushfp(context);
+            15 -> addsp(context);
+            16 -> incspi(context);
+            17 -> decspi(context);
+            18 -> incspb(context);
+            19 -> decspb(context);
+            20 -> pushcp(context);
 
             21 -> itob(context);
             22 -> btoi(context);
@@ -53,7 +54,7 @@ fn vmRunLoop(context: Context): int {
             42 -> lloadi(context);
             43 -> mstori(context);
             44 -> mloadi(context);
-            45 -> pushInt(context.operandsStack, nextInt(context));
+            45 -> consti(context);
             46 -> addi(context);
             47 -> subi(context);
             48 -> inci(context);
@@ -83,7 +84,7 @@ fn vmRunLoop(context: Context): int {
             -42 -> lloadb(context);
             -43 -> mstorb(context);
             -44 -> mloadb(context);
-            -45 -> pushByte(context.operandsStack, nextByte(context));
+            -45 -> pushb(context);
             -46 -> addb(context);
             -47 -> subb(context);
             -48 -> mulb(context);
@@ -105,7 +106,7 @@ fn vmRunLoop(context: Context): int {
             -64 -> gloadb(context);
             -65 -> gstorb(context);
 
-            -10 -> out(popInt(context.operandsStack));
+            -10 -> doOut(context);
             -11 -> doAlloc(context);
             -12 -> doFree(context);
             -13 -> memcp(context);
@@ -143,6 +144,10 @@ fn ret(context: Context) {
     freeStackFrame(frame);
 }
 
+fn jmp(context: Context) {
+    jump(context, nextInt(context));
+}
+
 fn jump(context: Context, address: int) {
     context.ip = address;
 }
@@ -158,6 +163,12 @@ fn jnz(context: Context) {
     if (argument != 0) jump(context, address);
 }
 
+fn popb(context: Context) { popByte(context.operandsStack); }
+fn dupb(context: Context) { pushByte(context.operandsStack, peekByte(context.operandsStack)); }
+fn popi(context: Context) { popInt(context.operandsStack); }
+fn dupi(context: Context) { pushInt(context.operandsStack, peekInt(context.operandsStack)); }
+fn pushfp(context: Context) { pushInt(context.operandsStack, cast<int>(peekStackFrame(context.callStack).framePointer)); }
+
 fn addStackPointer(context: Context, value: int) {
     context.sp = context.sp + value;
 }
@@ -169,9 +180,17 @@ fn btoi(context: Context) {
     pushInt(context.operandsStack, cast<int>(popByte(context.operandsStack)));
 }
 
-fn itoj(context: Context): int { return 0; }
-fn btoj(context: Context): int { return 0; }
-fn stoj(context: Context): int { return 0; }
+fn addsp(context: Context) { addStackPointer(context, nextInt(context)); }
+fn incspi(context: Context) { addStackPointer(context, 4); }
+fn decspi(context: Context) { addStackPointer(context, -4); }
+fn incspb(context: Context) { addStackPointer(context, 1); }
+fn decspb(context: Context) { addStackPointer(context, -1); }
+
+fn pushcp(context: Context) { pushInt(context.operandsStack, cast<int>(context.constantPool)); }
+
+fn itoj(context: Context) { return; }
+fn btoj(context: Context) { return; }
+fn stoj(context: Context) { return; }
 
 fn lstori(context: Context) {
     cast<[int]>(peekStackFrame(context.callStack).framePointer + nextInt(context))[0] = popInt(context.operandsStack);
@@ -214,6 +233,10 @@ fn mloadb(context: Context) {
     val offset = popInt(stack);
     val address = popInt(stack);
     pushByte(stack, cast<[byte]>(address)[offset]);
+}
+
+fn consti(context: Context) {
+    pushInt(context.operandsStack, nextInt(context));
 }
 
 fn addi(context: Context) {
@@ -332,6 +355,10 @@ fn rndi(context: Context): int {
     "}
 }
 
+fn pushb(context: Context) {
+    pushByte(context.operandsStack, nextByte(context));
+}
+
 fn addb(context: Context) {
     val stack = context.operandsStack;
     pushByte(stack, popByte(stack) + popByte(stack));
@@ -415,6 +442,10 @@ fn lnotb(context: Context) {
 fn gloadb(context: Context): int { return 0; }
 fn gstorb(context: Context): int { return 0; }
 
+fn doOut(context: Context) {
+    out(popInt(context.operandsStack));
+}
+
 fn doAlloc(context: Context) {
     val stack = context.operandsStack;
     pushInt(stack, cast<int>(alloc(popInt(stack))));
@@ -422,6 +453,14 @@ fn doAlloc(context: Context) {
 
 fn doFree(context: Context) {
     free(cast<[void]>(popInt(context.operandsStack)));
+}
+
+fn doCrash(context: Context) {
+    crash(popInt(context.operandsStack));
+}
+
+fn doCall(context: Context) {
+    call(context, nextInt(context));
 }
 
 fn memcp(context: Context) {
