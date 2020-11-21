@@ -25,6 +25,7 @@ fn makeRbTree(mem: AutoMemory): RbTree {
     return cast<[void]>(makeCons(mem, nil, nil, CT_LIST));
 }
 
+# returns key-value entry (e.g. (key . value) pair inserted to the tree)
 fn putRbTree(mem: AutoMemory, tree: RbTree, key: Cons, value: Cons, compare: (Cons, Cons) -> byte): Cons {
     var cursor = tree.root;
     if (cursor == nil) {

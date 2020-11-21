@@ -1,14 +1,18 @@
-fn lispDef(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+fn lispDef(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     val key = car(args);
-    val evaluatedValue = eval(context, env, cdar(args));
-    dictPut(context.mem, envDict(env), key, evaluatedValue);
-    return evaluatedValue;
+    val evalResult = eval(context, env, cdar(args));
+    if (evalResult.err != nil) return err(context, appendStackTrace(context, key, "evaluating def* value", evalResult.err));
+    dictPut(context.mem, envDict(env), key, evalResult.ok);
+    return evalResult;
 }
 
-fn lispLambda(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+fn lispLambda(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     return makeUserDefinedLambda(context, env, args);
 }
 
+fn lispThrow(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
+    return err(context, appendStackTrace(context, makeAtom(context.mem, "seed"), "throw", nil));
+}
 #
 # (let*
 #       (key1 value1 key2 value2 ... keyN valueN)
@@ -16,7 +20,7 @@ fn lispLambda(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
 # )
 #
 # this is TCO fn so it returns (resultBody . newEnv)
-fn lispTcoLet(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+fn lispTcoLet(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     var bindings = car(args);
     if (getType(bindings) == CT_NIL) {
         print("let* with empty bindings list does not make sens.");
@@ -25,7 +29,7 @@ fn lispTcoLet(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
     val resultBody = cdar(args);
     if (resultBody == nil) {
         print("let* without body does not make sens. Nil returned.");
-        return cons(context.mem, nil, env);
+        return ok(context, cons(context.mem, nil, env));
     }
 
     val mem = context.mem;
@@ -34,11 +38,14 @@ fn lispTcoLet(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
 
     while(getType(bindings) != CT_NIL) {
         val tail = cdr(bindings);
-        dictPut(mem, letEnvDict, car(bindings), eval(context, letEnv, car(tail)));
+        val evalResult = eval(context, letEnv, car(tail));
+        val binding = car(bindings);
+        if (evalResult.err != nil) return err(context, appendStackTrace(context, binding, "evaluating let* value", evalResult.err));
+        dictPut(mem, letEnvDict, binding, evalResult.ok);
         bindings = cdr(tail);
     }
 
-    return cons(mem, resultBody, letEnv);
+    return ok(context, cons(mem, resultBody, letEnv));
 }
 
 # (cond
@@ -50,29 +57,32 @@ fn lispTcoLet(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
 # (conditionX resultX) is equivalent to (conditionX . resultX)
 #
 # this is TCO fn so it returns (resultBody . env)
-fn lispTcoCond(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+fn lispTcoCond(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     for (var cursor = args; getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
         val case = car(cursor);
         val condition = car(case);
-        if (getType(eval(context, env, condition)) != CT_NIL) {
+        val evalResult = eval(context, env, condition);
+        if (evalResult.err != nil) return evalResult;
+
+        if (getType(evalResult.ok) != CT_NIL) {
             var tmp = cdr(case);
             if (getType(tmp) == CT_LIST) {
                 tmp = car(tmp);
             }
-            return cons(context.mem, tmp, env);
+            return ok(context, cons(context.mem, tmp, env));
         }
     }
 
-    return nil;
+    return ok(context, nil);
 }
 
-fn lispPanic(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+fn lispPanic(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
     println("panic!");
     printCons(args);
     crash(0);
 }
 
-fn lispPlus(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+fn lispPlus(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
     var current = car(args);
     assertType(current, CT_INT, "int expected as 1st arg of +");
     var result= getInt(current);
@@ -82,13 +92,13 @@ fn lispPlus(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
         result = result + getInt(current);
     }
 
-    return makeNumber(context.mem, result);
+    return ok(context, makeNumber(context.mem, result));
 }
 
 # this fn result calculation based on count of args
 # (- x y1 y2 ... yN) equals to x - y1 - y2 - ... - yN
 # (- x) is -x
-fn lispMinus(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+fn lispMinus(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
     var current = car(args);
     assertType(current, CT_INT, "int expected as 1st arg of -");
     var result = getInt(current);
@@ -102,10 +112,10 @@ fn lispMinus(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
         result = result - getInt(current);
     }
 
-    return makeNumber(context.mem, result);
+    return ok(context, makeNumber(context.mem, result));
 }
 
-fn lispMul(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+fn lispMul(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
     var current = car(args);
     assertType(current, CT_INT, "int expected as 1st arg of *");
     var result= getInt(current);
@@ -115,40 +125,44 @@ fn lispMul(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
         result = result * getInt(current);
     }
 
-    return makeNumber(context.mem, result);
+    return ok(context, makeNumber(context.mem, result));
 }
 
-fn lispMod(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+fn lispMod(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
     var n = car(args);
     var d = cdar(args);
-    return makeNumber(context.mem, getInt(n) % getInt(d));
+    return ok(context, makeNumber(context.mem, getInt(n) % getInt(d)));
 }
 
-fn lispDiv(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+fn lispDiv(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
     var n = car(args);
     var d = cdar(args);
-    return makeNumber(context.mem, getInt(n) / getInt(d));
+    return ok(context, makeNumber(context.mem, getInt(n) / getInt(d)));
 }
 
-fn lispOrdering(context: LispRuntimeContext, env: Cons, args: Cons, comparator: (Cons, Cons) -> bool): Cons {
-    var prev = eval(context, env, car(args));
+fn lispOrdering(context: LispRuntimeContext, env: Cons, args: Cons, comparator: (Cons, Cons) -> bool): CallResult {
+    var evalResult = eval(context, env, car(args));
+    if (evalResult.err != nil) return evalResult;
+    var prev = evalResult.ok;
     val retainedSubGraph = cons(context.mem, prev, nil);
     retainSubGraph(context, retainedSubGraph);
     for (var argsCursor = cdr(args); getType(argsCursor) != CT_NIL; argsCursor = cdr(argsCursor)) {
-        val evaluated = eval(context, env, car(argsCursor));
+        evalResult = eval(context, env, car(argsCursor));
+        if (evalResult.err != nil) return evalResult;
+        val evaluated = evalResult.ok;
         if (!comparator(prev, evaluated)) {
             releaseSubGraph(context, retainedSubGraph);
-            return nil;
+            return ok(context, nil);
         }
         prev = evaluated;
         retainedSubGraph.left = prev;
     }
 
     releaseSubGraph(context, retainedSubGraph);
-    return context.atomT;
+    return ok(context, context.atomT);
 }
 
-fn lispEq(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+fn lispEq(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     return lispOrdering(context, env, args, ::lispEqComparator);
 }
 fn lispEqComparator(prev: Cons, next: Cons): bool {
@@ -156,7 +170,7 @@ fn lispEqComparator(prev: Cons, next: Cons): bool {
 }
 
 # (< x1 x2 ... xN) means that x1 < x2 < ... < xN
-fn lispStrictlyAscOrder(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+fn lispStrictlyAscOrder(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     return lispOrdering(context, env, args, ::lispStrictlyAscComparator);
 }
 fn lispStrictlyAscComparator(prev: Cons, next: Cons): bool {
@@ -164,7 +178,7 @@ fn lispStrictlyAscComparator(prev: Cons, next: Cons): bool {
 }
 
 # (<= x1 x2 ... xN) means that x1 <= x2 <= ... <= xN
-fn lispAscOrder(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+fn lispAscOrder(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     return lispOrdering(context, env, args, ::lispAscComparator);
 }
 fn lispAscComparator(prev: Cons, next: Cons): bool {
@@ -172,7 +186,7 @@ fn lispAscComparator(prev: Cons, next: Cons): bool {
 }
 
 # (> x1 x2 ... xN) means that x1 > x2 > ... > xN
-fn lispStrictlyDescOrder(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+fn lispStrictlyDescOrder(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     return lispOrdering(context, env, args, ::lispStrictlyDescComparator);
 }
 fn lispStrictlyDescComparator(prev: Cons, next: Cons): bool {
@@ -180,7 +194,7 @@ fn lispStrictlyDescComparator(prev: Cons, next: Cons): bool {
 }
 
 # (>= x1 x2 ... xN) means that x1 >= x2 >= ... >= xN
-fn lispDescOrder(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+fn lispDescOrder(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     return lispOrdering(context, env, args, ::lispDescComparator);
 }
 fn lispDescComparator(prev: Cons, next: Cons): bool {
@@ -188,114 +202,118 @@ fn lispDescComparator(prev: Cons, next: Cons): bool {
 }
 
 # returns first non-nil operand or nil if hasn't
-fn lispOr(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+fn lispOr(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     for (var cursor = args; getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
-        val operand = eval(context, env, car(cursor));
+        val evalResult = eval(context, env, car(cursor));
+        if (evalResult.err != nil) return evalResult;
+        val operand = evalResult.ok;
         if (getType(operand) != CT_NIL) {
-            return operand;
+            return evalResult;
         }
     }
 
-    return nil;
+    return ok(context, nil);
 }
 
 # returns T if all operands non-nil or nil otherwise
-fn lispAnd(context: LispRuntimeContext, env: Cons, args: Cons): Cons {
+fn lispAnd(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     for (var cursor = args; getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
-        val operand = eval(context, env, car(cursor));
+        val evalResult = eval(context, env, car(cursor));
+        if (evalResult.err != nil) return evalResult;
+        val operand = evalResult.ok;
         if (getType(operand) == CT_NIL) {
-            return nil;
+            return ok(context, nil);
         }
     }
 
-    return context.atomT;
+    return ok(context, context.atomT);
 }
 
-fn lispIsNil(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+fn lispIsNil(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
     if (getType(car(args)) == CT_NIL && getType(cdr(args)) == CT_NIL) {
-        return context.atomT;
+        return ok(context, context.atomT);
     }
 
-    return nil;
+    return ok(context, nil);
 }
 
-fn lispIsNumber(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+fn lispIsNumber(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
     if (getType(car(args)) == CT_INT && getType(cdr(args)) == CT_NIL) {
-        return context.atomT;
+        return ok(context, context.atomT);
     }
 
-    return nil;
+    return ok(context, nil);
 }
 
-fn lispQuote(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return car(args);
+fn lispQuote(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, car(args));
 }
 
-fn lispList(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return args;
+fn lispList(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, args);
 }
 
-fn lispCons(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return cons(context.mem, car(args), cdar(args));
+fn lispCons(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, cons(context.mem, car(args), cdar(args)));
 }
 
-fn lispCar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return car(car(args));
+fn lispCar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, car(car(args)));
 }
 
-fn lispCdr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return cdr(car(args));
+fn lispCdr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, cdr(car(args)));
 }
 
-fn lispCaar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return caar(car(args));
+fn lispCaar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, caar(car(args)));
 }
 
-fn lispCadr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return cadr(car(args));
+fn lispCadr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, cadr(car(args)));
 }
 
-fn lispCdar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return cdar(car(args));
+fn lispCdar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, cdar(car(args)));
 }
 
-fn lispCddr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return cddr(car(args));
+fn lispCddr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, cddr(car(args)));
 }
 
-fn lispCaaar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return caaar(car(args));
+fn lispCaaar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, caaar(car(args)));
 }
 
-fn lispCaadr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return caadr(car(args));
+fn lispCaadr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, caadr(car(args)));
 }
 
-fn lispCadar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return cadar(car(args));
+fn lispCadar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, cadar(car(args)));
 }
 
-fn lispCdaar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return cdaar(car(args));
+fn lispCdaar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, cdaar(car(args)));
 }
 
-fn lispCaddr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return caddr(car(args));
+fn lispCaddr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, caddr(car(args)));
 }
 
-fn lispCddar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return cddar(car(args));
+fn lispCddar(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, cddar(car(args)));
 }
 
-fn lispCdadr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return cdadr(car(args));
+fn lispCdadr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, cdadr(car(args)));
 }
 
-fn lispCdddr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
-    return cdddr(car(args));
+fn lispCdddr(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
+    return ok(context, cdddr(car(args)));
 }
 
-fn lispMutReverseInPlace(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): Cons {
+fn lispMutReverseInPlace(context: LispRuntimeContext, unusedEnv: Cons, args: Cons): CallResult {
     var list = car(args);
     var prev: Cons = nil;
     while (getType(list) == CT_LIST) {
@@ -305,5 +323,5 @@ fn lispMutReverseInPlace(context: LispRuntimeContext, unusedEnv: Cons, args: Con
         list = next;
     }
 
-    return prev;
+    return ok(context, prev);
 }

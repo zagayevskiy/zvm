@@ -18,3 +18,14 @@ fn main(): int {
      freeAutoMemory(mem);
      return 0;
 }
+
+fn globalExceptionsHandler(globalExpressionResult: CallResult) {
+    if (globalExpressionResult.err != nil) {
+        print("exception occured");
+        printCons(cast<[void]>(globalExpressionResult.err));
+        endline();
+        crash(100000);
+    }
+
+    lispPrint(globalExpressionResult.ok);
+}

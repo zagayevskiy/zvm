@@ -20,7 +20,6 @@ import com.zagayevskiy.zvm.zlisp.ZLispParser
 class ZLispCompiler {
 
 
-
     fun compile(lispProgramText: String): ByteArray {
         val includesResolver = JavaAssetsIncludesResolver("/includes/zc")
         val preprocessor = ZcPreprocessor(includesResolver.resolve("lisp/main.zc")!!, includesResolver)
@@ -63,15 +62,15 @@ class ZLispCompiler {
             add(currentSexprEntry assign { dictPut.call(memory, envDict.call(globalEnv), makeAtom.call(memory, currentSexprKey), nil) })
             addAll(evaluatingFunctions.map { declFn ->
                 val fn = AstIdentifier(declFn.name)
-                fn.call(context, currentSexprEntry).asStatement()
+                globalExceptionsHandler.call(fn.call(context, currentSexprEntry)).asStatement()
             })
         }
 
         return evaluatingFunctions + listOf(AstFunctionDeclaration(
-                name = "evalProgram",
-                returnType = null,
-                args = listOf(FunctionArgumentDeclaration(context.name, typeLispRuntimeContext)),
-                body = AstBlock(statements = statements)
+            name = "evalProgram",
+            returnType = null,
+            args = listOf(FunctionArgumentDeclaration(context.name, typeLispRuntimeContext)),
+            body = AstBlock(statements = statements)
         ))
     }
 
@@ -90,29 +89,28 @@ private class SingleFunctionGenerator(private val sexpr: Sexpr) {
     fun generate(name: String): AstFunctionDeclaration {
         val expr = sexpr.toExpr()
         val prepareStatements = listOf(
-                memory assign { context.field("mem") }
+            memory assign { context.field("mem") }
         )
         val evalStatements = listOf(
-                currentSexpr assign { expr },
-                // We need this to store reference to current Sexpr
-                setEntryValue.call(currentSexprEntry, currentSexpr).asStatement(),
-                AstExpressionStatement(lispPrint.call(eval.call(context, context.field("globalEnv"), currentSexpr)))
+            currentSexpr assign { expr },
+            // We need this to store reference to current Sexpr
+            setEntryValue.call(currentSexprEntry, currentSexpr).asStatement(),
+            ret { eval.call(context, context.field("globalEnv"), currentSexpr) }
         )
         return AstFunctionDeclaration(
-                name = name,
-                returnType = null,
-                args = listOf(
-                        FunctionArgumentDeclaration(context.name, typeLispRuntimeContext),
-                        FunctionArgumentDeclaration(currentSexprEntry.name, typeCons)
-                ),
-                body = AstBlock(
-                        statements = prepareStatements +
-                                atomVals.values +
-                                numberVals.values +
-                                strVals.values +
-                                evalStatements +
-                                listOf(AstFunctionReturn(null))
-                )
+            name = name,
+            returnType = typeCallResult,
+            args = listOf(
+                FunctionArgumentDeclaration(context.name, typeLispRuntimeContext),
+                FunctionArgumentDeclaration(currentSexprEntry.name, typeCons)
+            ),
+            body = AstBlock(
+                statements = prepareStatements +
+                    atomVals.values +
+                    numberVals.values +
+                    strVals.values +
+                    evalStatements
+            )
         )
     }
 
@@ -162,15 +160,15 @@ private fun AstIdentifier.call(vararg args: AstExpr): AstFunctionCall {
 
 private fun AstExpr.asStatement() = AstExpressionStatement(this)
 
-private fun AstIdentifier.field(name: String) = AstStructFieldDereference(this, name)
+private fun AstExpr.field(name: String) = AstStructFieldDereference(this, name)
+private fun ret(expression: () -> AstExpr) = AstFunctionReturn(expression())
 
 private val typeCons = UnresolvedType.Simple("Cons")
+private val typeCallResult = UnresolvedType.Simple("CallResult")
 private val typeLispRuntimeContext = UnresolvedType.Simple("LispRuntimeContext")
-private val endline = AstIdentifier("endline")
 private val memory = AstIdentifier("memory")
 private val cons = AstIdentifier("cons")
 private val eval = AstIdentifier("eval")
-private val lispPrint = AstIdentifier("lispPrint")
 private val globalEnv = AstIdentifier("globalEnv")
 private val context = AstIdentifier("context")
 private val makeAtom = AstIdentifier("makeAtom")
@@ -183,3 +181,4 @@ private val currentSexprEntry = AstIdentifier("currentSexprEntry")
 private val envDict = AstIdentifier("envDict")
 private val dictPut = AstIdentifier("dictPut")
 private val setEntryValue = AstIdentifier("setEntryValue")
+private val globalExceptionsHandler = AstIdentifier("globalExceptionsHandler")

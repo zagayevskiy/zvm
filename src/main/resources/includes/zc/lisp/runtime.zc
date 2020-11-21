@@ -1,6 +1,21 @@
 @include<lisp/automem.zc>
 @include<lisp/rbtree.zc>
 
+
+# struct alias for Cons for typesafe error handling
+struct StackTrace {
+    var i0: int;
+    var i1: int;
+    var b: byte;
+}
+
+# struct alias for Cons to return typesafe result
+struct CallResult {
+    var ok: Cons;
+    var err: StackTrace;
+    var flags: byte;
+}
+
 # LispEnv struct
 # (Dict . OuterLispEnv)
 # retainedSubGraphsStackEntry is a key-value pair with linked-list based stack value contains all child envs
@@ -9,7 +24,10 @@ struct LispRuntimeContext {
     var globalEnv: Cons;
     var atomT: Cons;
     var retainedSubGraphsStackEntry: Cons;
+    var reusableCallResult: CallResult;
 }
+
+
 
 fn createRuntimeContext(mem: AutoMemory): LispRuntimeContext {
     val context: LispRuntimeContext = alloc(sizeof<LispRuntimeContext>);
@@ -20,6 +38,7 @@ fn createRuntimeContext(mem: AutoMemory): LispRuntimeContext {
 
     val globalDict = envDict(context.globalEnv);
     context.retainedSubGraphsStackEntry = putRbTree(mem, globalDict, makeAtom(mem, "retained env refs stack"), nil, ::compare);
+    context.reusableCallResult = cast<[void]>(entryValue(putRbTree(mem, globalDict, makeAtom(mem, "reusable call result"), nil, ::compare)));
 
     fillGlobalWithStandardFunctions(context);
 
@@ -88,6 +107,7 @@ fn fillGlobalWithStandardFunctions(context: LispRuntimeContext) {
     putNamedLambda(mem, dict, "panic!", ::lispPanic, true);
     putNamedLambda(mem, dict, "fn*", ::lispLambda, false);
     putNamedTcoLambda(mem, dict, "let*", ::lispTcoLet, false);
+    putNamedTcoLambda(mem, dict, "throw!", ::lispThrow, false);
 
     putNamedLambda(mem, dict, "reverse-inplace!", ::lispMutReverseInPlace, true);
     putNamedLambda(mem, dict, "list", ::lispList, true);
@@ -119,51 +139,63 @@ fn heuristicGc(context: LispRuntimeContext) {
     }
 }
 
-fn eval(context: LispRuntimeContext, env: Cons, enterSexpr: Cons): Cons {
+fn ok(context: LispRuntimeContext, ok: Cons): CallResult {
+    val result = context.reusableCallResult;
+    result.ok = ok;
+    result.err = nil;
+    return result;
+}
 
-#    printAutoMemoryInfo(context.mem);
+fn err(context: LispRuntimeContext, trace: StackTrace): CallResult {
+    val result = context.reusableCallResult;
+    result.ok = nil;
+    result.err = trace;
+    return result;
+
+}
+# Stack Trace Entry is list node:
+# ( (fn . message) . parent)
+fn appendStackTrace(context: LispRuntimeContext, where: Cons, message: [byte], parent: StackTrace): StackTrace {
+    val mem = context.mem;
+    var msg: Cons = nil;
+    if (message != nil) {
+        msg = makeAtom(mem, message);
+    }
+    return cast<[void]>(cons(mem, cons(mem, where, msg), cast<[void]>(parent)));
+}
+
+fn eval(context: LispRuntimeContext, env: Cons, enterSexpr: Cons): CallResult {
     var currentEnv = env;
     var sexpr = enterSexpr;
 
     retainSubGraph(context, currentEnv);
-#    print("eval:");
-#    printCons(enterSexpr);
-#    endline();
-#    println("runtime:");
-#    printCons(envLookup(context.globalEnv, makeAtom(context.mem, "plus")));
-#    endline();
 
     while(true) {
-#        println("before gc:");
-#        printAutoMemoryInfo(context.mem);
-#        println("after gc:");
-#        printAutoMemoryInfo(context.mem);
-#        print("eval step:");
-#        printCons(sexpr);
-#        print("\n");
         val sexprType = getType(sexpr);
         if (sexprType == CT_NIL || sexprType == CT_INT) {
             releaseSubGraph(context, currentEnv);
-            return sexpr;
+            return ok(context, sexpr);
         }
         if (sexprType == CT_ATOM) {
             releaseSubGraph(context, currentEnv);
-            return envLookup(currentEnv, sexpr);
+            return ok(context, envLookup(currentEnv, sexpr));
         }
 
         heuristicGc(context);
 
         if (sexprType == CT_LIST) {
-            val f = eval(context, currentEnv, car(sexpr));
+            val unevaluatedF = car(sexpr);
+            val fEvalResult = eval(context, currentEnv, unevaluatedF);
+            if (fEvalResult.err != nil) return err(context, appendStackTrace(context, unevaluatedF, "evaluating lambda value", fEvalResult.err));
+            val f = fEvalResult.ok;
             val args = cdr(sexpr);
             val regularFnRef = tryGetRegularFnRef(f);
             if (regularFnRef != nil) {
-                val result = callRegularLambda(context, regularFnRef, isEvalArgs(f), currentEnv, args);
+                val callResult = callRegularLambda(context, regularFnRef, isEvalArgs(f), currentEnv, args);
+                if (callResult.err != nil) return err(context, appendStackTrace(context, unevaluatedF, nil, callResult.err));
                 if (isTcoLambda(f)) {
+                    val result = callResult.ok;
                     sexpr = car(result);
-#                    print("tco call expr:");
-#                    printCons(sexpr);
-#                    endline();
                     val newEnv = cdr(result);
                     if (newEnv != currentEnv) {
                         releaseSubGraph(context, currentEnv);
@@ -172,10 +204,12 @@ fn eval(context: LispRuntimeContext, env: Cons, enterSexpr: Cons): Cons {
                     }
                 } else {
                     releaseSubGraph(context, currentEnv);
-                    return result;
+                    return callResult;
                 }
             } else if (isUserDefinedLambda(f)) {
-                val bodyAndEnv = evalUserDefinedLambda(context, currentEnv, f, args);
+                 val callResult = evalUserDefinedLambda(context, currentEnv, f, args);
+                 if (callResult.err != nil) return err(context, appendStackTrace(context, unevaluatedF, nil, callResult.err));
+                 val bodyAndEnv = callResult.ok;
                 sexpr = car(bodyAndEnv);
                 val newEnv = cdr(bodyAndEnv);
                 if (newEnv != currentEnv) {
@@ -184,22 +218,27 @@ fn eval(context: LispRuntimeContext, env: Cons, enterSexpr: Cons): Cons {
                     currentEnv = newEnv;
                 }
             } else {
+
+                # TODO may be throw?..
                 printCons(sexpr);
                 crashm(404, "Unknown function");
             }
         }
     }
 
+    # TODO may be throw?..
     crashm(123, "unknown argument");
 }
 
-fn mapEval(context: LispRuntimeContext, currentEnv: Cons, list: Cons): Cons {
+fn mapEval(context: LispRuntimeContext, currentEnv: Cons, list: Cons): CallResult {
     var result: Cons = nil;
     var resultCursor = result;
     val mem = context.mem;
     for (var cursor = list; getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
         val current = car(cursor);
-        val nextCons = cons(mem, eval(context, currentEnv, current), nil);
+        val evalResult = eval(context, currentEnv, current);
+        if (evalResult.err != nil) return evalResult;
+        val nextCons = cons(mem, evalResult.ok, nil);
         if (result == nil) {
             result = nextCons;
             resultCursor = result;
@@ -213,14 +252,14 @@ fn mapEval(context: LispRuntimeContext, currentEnv: Cons, list: Cons): Cons {
         releaseSubGraph(context, result);
     }
 
-    return result;
+    return ok(context, result);
 }
 
-fn putNamedLambda(mem: AutoMemory, dict: RbTree, name: [byte], nativeFunction: (LispRuntimeContext, Cons, Cons) -> Cons, evalArgs: bool) {
+fn putNamedLambda(mem: AutoMemory, dict: RbTree, name: [byte], nativeFunction: (LispRuntimeContext, Cons, Cons) -> CallResult, evalArgs: bool) {
     dictPut(mem, dict, makeAtom(mem, name), makeRegularLambda(mem, nativeFunction, evalArgs, false));
 }
 
-fn putNamedTcoLambda(mem: AutoMemory, dict: RbTree, name: [byte], nativeFunction: (LispRuntimeContext, Cons, Cons) -> Cons, evalArgs: bool) {
+fn putNamedTcoLambda(mem: AutoMemory, dict: RbTree, name: [byte], nativeFunction: (LispRuntimeContext, Cons, Cons) -> CallResult, evalArgs: bool) {
      dictPut(mem, dict, makeAtom(mem, name), makeRegularLambda(mem, nativeFunction, evalArgs, true));
  }
 
@@ -228,15 +267,15 @@ const REGULAR_LAMBDA_CHECK_MASK = 1431655765; # 0b010101010101010101010101010101
 
 # returns regular function reference
 # or nil if passed cons does not represents regular function reference
-fn tryGetRegularFnRef(mayBeLambda: Cons): (LispRuntimeContext, Cons, Cons) -> Cons {
+fn tryGetRegularFnRef(mayBeLambda: Cons): (LispRuntimeContext, Cons, Cons) -> CallResult {
     if (getType(mayBeLambda) != CT_INT) return nil;
     val mayBeFnRef = cast<int>(mayBeLambda.left);
     val check = cast<int>(mayBeLambda.right) ^ REGULAR_LAMBDA_CHECK_MASK;
     if (mayBeFnRef != check) return nil;
-    return cast<(LispRuntimeContext, Cons, Cons) -> Cons>(mayBeFnRef);
+    return cast<(LispRuntimeContext, Cons, Cons) -> CallResult>(mayBeFnRef);
 }
 
-fn makeRegularLambda(mem: AutoMemory, nativeFunction: (LispRuntimeContext, Cons, Cons) -> Cons, evalArgs: bool, tco: bool): Cons {
+fn makeRegularLambda(mem: AutoMemory, nativeFunction: (LispRuntimeContext, Cons, Cons) -> CallResult, evalArgs: bool, tco: bool): Cons {
     val nativeFunctionAddress = cast<int>(nativeFunction);
     val nativeFunctionAddressCheck = nativeFunctionAddress ^ REGULAR_LAMBDA_CHECK_MASK;
     val lambda = makeCons(mem, cast<[void]>(nativeFunctionAddress), cast<[void]>(nativeFunctionAddressCheck), CT_INT);
@@ -247,10 +286,11 @@ fn makeRegularLambda(mem: AutoMemory, nativeFunction: (LispRuntimeContext, Cons,
 
 const USER_DEFINED_LAMBDA_CHECK_MASK = 858993459; # 0b00110011001100110011001100110011
 # ( (binds body) . (outerEnv . outerEnv^USER_DEFINED_LAMBDA_CHECK_MASK) )
-fn makeUserDefinedLambda(context: LispRuntimeContext, outerEnv: Cons, definition: Cons): Cons {
+fn makeUserDefinedLambda(context: LispRuntimeContext, outerEnv: Cons, definition: Cons): CallResult {
     val binds = car(definition);
     val body = cdar(definition);
     if (getType(cddr(definition)) != CT_NIL) {
+        # TODO may be throw?..
         println("must be exact two params - binds and body");
         return nil;
     }
@@ -265,7 +305,7 @@ fn makeUserDefinedLambda(context: LispRuntimeContext, outerEnv: Cons, definition
     val mem = context.mem;
     val check = makeNumber(mem, cast<int>(outerEnv) ^ USER_DEFINED_LAMBDA_CHECK_MASK);
 
-    return cons(mem, definition, cons(mem, outerEnv, check));
+    return ok(context, cons(mem, definition, cons(mem, outerEnv, check)));
 }
 
 fn isUserDefinedLambda(mayBeLambda: Cons): bool {
@@ -278,7 +318,7 @@ fn isUserDefinedLambda(mayBeLambda: Cons): bool {
     return cast<int>(mayBeOuterEnv) == (getInt(mayBeOuterEnvCheck) ^ USER_DEFINED_LAMBDA_CHECK_MASK);
 }
 
-fn evalUserDefinedLambda(context: LispRuntimeContext, env: Cons, lambda: Cons, args: Cons): Cons {
+fn evalUserDefinedLambda(context: LispRuntimeContext, env: Cons, lambda: Cons, args: Cons): CallResult {
     val outerEnv = cdar(lambda);
     val definition = car(lambda);
     val binds = car(definition);
@@ -293,7 +333,9 @@ fn evalUserDefinedLambda(context: LispRuntimeContext, env: Cons, lambda: Cons, a
         val bind = car(cursor);
         var arg: Cons;
         if (getType(argsCursor) == CT_LIST) {
-            arg = eval(context, env, car(argsCursor));
+            val evalResult = eval(context, env, car(argsCursor));
+            if (evalResult.err != nil) return evalResult;
+            arg = evalResult.ok;
             argsCursor = cdr(argsCursor);
         } else {
             arg = nil;
@@ -302,22 +344,26 @@ fn evalUserDefinedLambda(context: LispRuntimeContext, env: Cons, lambda: Cons, a
     }
     releaseSubGraph(context, lambdaEnv);
 
-    return cons(mem, body, lambdaEnv);
+    return ok(context, cons(mem, body, lambdaEnv));
 }
 
-fn callRegularLambda(context: LispRuntimeContext, nativeFunction: (LispRuntimeContext, Cons, Cons) -> Cons, evalArgs: bool, env: Cons, args: Cons): Cons {
+fn callRegularLambda(context: LispRuntimeContext, nativeFunction: (LispRuntimeContext, Cons, Cons) -> CallResult, evalArgs: bool, env: Cons, args: Cons): CallResult {
     val argsType = getType(args);
     if (argsType != CT_LIST && argsType != CT_NIL) {
+        # TODO may be throw?..
         print("list or nil expected as args");
         crash(5);
     }
 
     var actualArgs: Cons;
     if (evalArgs) {
-        actualArgs = mapEval(context, env, args);
+        val evalResult = mapEval(context, env, args);
+        if (evalResult.err != nil) return evalResult;
+        actualArgs = evalResult.ok;
     } else {
         actualArgs = args;
     }
+
     return nativeFunction(context, env, actualArgs);
 }
 

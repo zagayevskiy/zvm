@@ -168,7 +168,8 @@ class TypesProcessor(private val program: AstProgram) {
 
             is AstFunctionReturn -> ast.apply {
                 val enclosingFunction = findEnclosingFunction() ?: error("Return-statement can be used only inside a function.")
-                expression = expression.tryAutoPromoteTo(enclosingFunction.retType) ?: error("${expression} can't be auto promoted to function return type(${enclosingFunction.retType}).")
+                expression = expression.tryAutoPromoteTo(enclosingFunction.retType)
+                    ?: error("${enclosingFunction}: $expression can't be auto promoted to function return type(${enclosingFunction.retType}).")
             }
 
             is AstIfElse -> ast.apply {
