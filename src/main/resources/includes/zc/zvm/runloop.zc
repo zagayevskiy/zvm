@@ -10,109 +10,36 @@
 
 fn vmRunLoop(context: Context): int {
     val bytecodeSize = context.bytecodeSize;
+    val table = createOpcodesTable();
+    val offsettedTable = table + 128*sizeof<(Context) -> void>;
 
     while(context.ip < bytecodeSize) {
         val code = nextByte(context);
-
-        when(code) {
-            1 -> doCall(context);
-            2 -> {
-                if(context.callStack.top == 4) {
-                    when(context.operandsStack.top) {
-                        1 -> return popByte(context.operandsStack);
-                        4 -> return popInt(context.operandsStack);
-                        else -> crash(context.operandsStack.top);
-                    }
-                }
-                ret(context);
-            }
-            3 -> jmp(context);
-            4 -> jz(context);
-            5 -> jnz(context);
-            6 -> doCrash(context);
-            7 -> invoke(context);
-
-            10 -> popb(context);
-            11 -> dupb(context);
-            12 -> popi(context);
-            13 -> dupi(context);
-            14 -> pushfp(context);
-            15 -> addsp(context);
-            16 -> incspi(context);
-            17 -> decspi(context);
-            18 -> incspb(context);
-            19 -> decspb(context);
-            20 -> pushcp(context);
-
-            21 -> itob(context);
-            22 -> btoi(context);
-            23 -> itoj(context);
-            24 -> btoj(context);
-            25 -> stoj(context);
-
-            41 -> lstori(context);
-            42 -> lloadi(context);
-            43 -> mstori(context);
-            44 -> mloadi(context);
-            45 -> consti(context);
-            46 -> addi(context);
-            47 -> subi(context);
-            48 -> inci(context);
-            49 -> deci(context);
-            50 -> muli(context);
-            51 -> divi(context);
-            52 -> modi(context);
-            53 -> xori(context);
-            54 -> andi(context);
-            55 -> ori(context);
-            56 -> noti(context);
-            57 -> shli(context);
-            58 -> shri(context);
-            59 -> cmpi(context);
-            60 -> cmpic(context);
-            61 -> lessi(context);
-            62 -> leqi(context);
-            63 -> greati(context);
-            64 -> greqi(context);
-            65 -> eqi(context);
-            66 -> neqi(context);
-            67 -> rndi(context);
-            68 -> gloadi(context);
-            69 -> gstori(context);
-
-            -41 -> lstorb(context);
-            -42 -> lloadb(context);
-            -43 -> mstorb(context);
-            -44 -> mloadb(context);
-            -45 -> pushb(context);
-            -46 -> addb(context);
-            -47 -> subb(context);
-            -48 -> mulb(context);
-            -49 -> divb(context);
-            -50 -> modb(context);
-            -51 -> xorb(context);
-            -52 -> andb(context);
-            -53 -> orb(context);
-            -54 -> notb(context);
-            -55 -> cmpb(context);
-            -56 -> cmpbc(context);
-            -57 -> lessb(context);
-            -58 -> leqb(context);
-            -59 -> greatb(context);
-            -60 -> greqb(context);
-            -61 -> eqb(context);
-            -62 -> neqb(context);
-            -63 -> lnotb(context);
-            -64 -> gloadb(context);
-            -65 -> gstorb(context);
-
-            -10 -> doOut(context);
-            -11 -> doAlloc(context);
-            -12 -> doFree(context);
-            -13 -> memcp(context);
-            else -> crash(code);
-        }
+        val f = offsettedTable[code];
+        if (f != nil) {
+            f(context);
+        } else if (code == 2) {
+           if(context.callStack.top == 4) {
+               when(context.operandsStack.top) {
+                   sizeof<byte> -> {
+                       free(table);
+                       return popByte(context.operandsStack);
+                   }
+                   sizeof<int> -> {
+                       free(table);
+                       return popInt(context.operandsStack);
+                   }
+                   else -> crash(context.operandsStack.top);
+               }
+           }
+           ret(context);
+       } else {
+           println("unknown opcode");
+           crash(code);
+       }
     }
+
+    free(table);
     return 0;
 }
 
@@ -212,8 +139,8 @@ fn mloadi(context: Context) {
     pushInt(stack, cast<[int]>(offset + address)[0]);
 }
 
-fn gloadi(context: Context): int { return 0; }
-fn gstori(context: Context): int { return 0; }
+fn gloadi(context: Context) { return; }
+fn gstori(context: Context) { return; }
 
 fn lstorb(context: Context) {
     cast<[byte]>(peekStackFrame(context.callStack).framePointer)[nextInt(context)] = popByte(context.operandsStack);
@@ -348,7 +275,7 @@ fn neqi(context: Context) {
     val left = popInt(stack);
     pushByte(stack, cast<byte>(left != right));
 }
-fn rndi(context: Context): int {
+fn rndi(context: Context) {
     asm {"
         rndi
         ret
@@ -439,8 +366,8 @@ fn lnotb(context: Context) {
     val stack = context.operandsStack;
     pushByte(stack, cast<byte>(!popByte(stack)));
 }
-fn gloadb(context: Context): int { return 0; }
-fn gstorb(context: Context): int { return 0; }
+fn gloadb(context: Context) { return; }
+fn gstorb(context: Context) { return; }
 
 fn doOut(context: Context) {
     out(popInt(context.operandsStack));
@@ -517,3 +444,105 @@ fn compareInts(left: int, right: int): byte {
 }
 
 
+fn createOpcodesTable(): [(Context) -> void] {
+    val bytesSize = 256*sizeof<(Context) -> void>;
+    val table: [(Context) -> void] = alloc(bytesSize);
+    memset(table, bytesSize, 0);
+
+    table[1 + 128] = ::doCall;
+    table[3 + 128] = ::jmp;
+    table[4 + 128] = ::jz;
+    table[5 + 128] = ::jnz;
+    table[6 + 128] = ::doCrash;
+    table[7 + 128] = ::invoke;
+
+    table[10 + 128] = ::popb;
+    table[11 + 128] = ::dupb;
+    table[12 + 128] = ::popi;
+    table[13 + 128] = ::dupi;
+    table[14 + 128] = ::pushfp;
+    table[15 + 128] = ::addsp;
+    table[16 + 128] = ::incspi;
+    table[17 + 128] = ::decspi;
+    table[18 + 128] = ::incspb;
+    table[19 + 128] = ::decspb;
+    table[20 + 128] = ::pushcp;
+
+    table[21 + 128] = ::itob;
+    table[22 + 128] = ::btoi;
+    table[23 + 128] = ::itoj;
+    table[24 + 128] = ::btoj;
+    table[25 + 128] = ::stoj;
+
+    table[41 + 128] = ::lstori;
+    table[42 + 128] = ::lloadi;
+    table[43 + 128] = ::mstori;
+    table[44 + 128] = ::mloadi;
+    table[45 + 128] = ::consti;
+    table[46 + 128] = ::addi;
+    table[47 + 128] = ::subi;
+    table[48 + 128] = ::inci;
+    table[49 + 128] = ::deci;
+    table[50 + 128] = ::muli;
+    table[51 + 128] = ::divi;
+    table[52 + 128] = ::modi;
+    table[53 + 128] = ::xori;
+    table[54 + 128] = ::andi;
+    table[55 + 128] = ::ori;
+    table[56 + 128] = ::noti;
+    table[57 + 128] = ::shli;
+    table[58 + 128] = ::shri;
+    table[59 + 128] = ::cmpi;
+    table[60 + 128] = ::cmpic;
+    table[61 + 128] = ::lessi;
+    table[62 + 128] = ::leqi;
+    table[63 + 128] = ::greati;
+    table[64 + 128] = ::greqi;
+    table[65 + 128] = ::eqi;
+    table[66 + 128] = ::neqi;
+    table[67 + 128] = ::rndi;
+    table[68 + 128] = ::gloadi;
+    table[69 + 128] = ::gstori;
+
+    table[-41 + 128] = ::lstorb;
+    table[-42 + 128] = ::lloadb;
+    table[-43 + 128] = ::mstorb;
+    table[-44 + 128] = ::mloadb;
+    table[-45 + 128] = ::pushb;
+    table[-46 + 128] = ::addb;
+    table[-47 + 128] = ::subb;
+    table[-48 + 128] = ::mulb;
+    table[-49 + 128] = ::divb;
+    table[-50 + 128] = ::modb;
+    table[-51 + 128] = ::xorb;
+    table[-52 + 128] = ::andb;
+    table[-53 + 128] = ::orb;
+    table[-54 + 128] = ::notb;
+    table[-55 + 128] = ::cmpb;
+    table[-56 + 128] = ::cmpbc;
+    table[-57 + 128] = ::lessb;
+    table[-58 + 128] = ::leqb;
+    table[-59 + 128] = ::greatb;
+    table[-60 + 128] = ::greqb;
+    table[-61 + 128] = ::eqb;
+    table[-62 + 128] = ::neqb;
+    table[-63 + 128] = ::lnotb;
+    table[-64 + 128] = ::gloadb;
+    table[-65 + 128] = ::gstorb;
+
+    table[-10 + 128] = ::doOut;
+    table[-11 + 128] = ::doAlloc;
+    table[-12 + 128] = ::doFree;
+    table[-13 + 128] = ::memcp;
+#
+#    for (var i = 0; i < 256; i = i + 1) {
+#        printi(i);
+#        print("(");
+#        printi(i - 128);
+#        print(") = ::");
+#        printi(cast<int>(table[i]));
+#        endline();
+#    }
+
+    return table;
+}

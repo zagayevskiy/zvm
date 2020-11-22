@@ -201,7 +201,7 @@ class ByteCommandsGenerator(private val program: AstProgram, private val asmPars
     private fun generate(expression: AstExpr) {
         when (expression) {
             is AstFunctionReference -> {
-                commands.add(IntConst.instruction(expression.function.index.op))
+                commands.add(IntConst.instruction(expression.function.name.id))
             }
             is AstBinary -> generate(expression)
             is AstIdentifier -> error("All identifiers must be resolved before. Why $expression don't?")

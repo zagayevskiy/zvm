@@ -116,7 +116,7 @@ internal class TestVmIo : VmIo {
 
     override fun print(value: String) {
         printedField.add(value)
-        kotlin.io.print(value)
+        //kotlin.io.print(value)
     }
 
 }

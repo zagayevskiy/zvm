@@ -73,7 +73,7 @@ class AstStructDeclaration(val name: String, fieldsDeclarations: List<AstVarDecl
     val fieldsDeclarations by childList(fieldsDeclarations)
 }
 
-class AstDefinedFunction(val name: String, val index: Int, val args: List<AstFunctionArgument>, val retType: ZcType, body: Ast, enclosingScope: Scope)
+class AstDefinedFunction(val name: String, val args: List<AstFunctionArgument>, val retType: ZcType, body: Ast, enclosingScope: Scope)
     : TopLevelDeclaration(type = ZcType.Function(argTypes = args.map { it.type }, retType = retType)),
         FunctionScope by FunctionScopeDelegate(enclosingScope, args) {
     val body by child(body)

@@ -22,6 +22,12 @@ fn copy(src: [void], dst: [void], count: int) {
     "}
 }
 
+fn memset(mem: [void], bytesSize: int, value: byte) {
+    for (var i = 0; i < bytesSize; i = i + 1) {
+        cast<[byte]>(mem)[i] = value;
+    }
+}
+
 fn charAt(string: [byte], index: int): byte {
     return (string + sizeof<int>)[index];
 }

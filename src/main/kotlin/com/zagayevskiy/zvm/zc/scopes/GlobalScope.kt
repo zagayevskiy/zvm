@@ -32,7 +32,6 @@ class GlobalScope : BaseScope(null) {
 
         val function = AstDefinedFunction(
                 name = name,
-                index = functions.size,
                 args = args,
                 retType = retType,
                 body = body,
