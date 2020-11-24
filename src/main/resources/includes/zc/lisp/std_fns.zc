@@ -13,6 +13,44 @@ fn lispLambda(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
 fn lispThrow(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     return err(context, appendStackTrace(context, makeAtom(context.mem, "seed"), "throw", nil));
 }
+
+fn lispTryCatch(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
+    val tryBody = car(args);
+    val tryResult = eval(context, env, tryBody);
+
+    val catchClause = cdar(args);
+    print("catch clause:");
+    printCons(catchClause);
+    endline();
+    val catchWord = car(catchClause);
+    if (getType(catchWord) != CT_ATOM || orderStrings("catch*", getAtomName(catchWord)) != 0) {
+        print("catch* not found");
+        # TODO may be throw...
+        crash(10001);
+    }
+
+    val exceptionBindingAndCatchBody = cdr(catchClause);
+    val exceptionBinding = car(exceptionBindingAndCatchBody);
+    if (getType(exceptionBinding) != CT_ATOM) {
+        printCons(exceptionBinding);
+        print(" - exception binding recomended to be atom.");
+    }
+
+    if (tryResult.err != nil) {
+
+        val catchBody = cdar(exceptionBindingAndCatchBody);
+        val mem = context.mem;
+        val catchEnv = createEnv(mem, env);
+        retainSubGraph(context, catchEnv);
+        dictPut(mem, envDict(catchEnv), exceptionBinding, cast<Cons>(tryResult.err));
+        val catchResult = eval(context, env, catchBody);
+        releaseSubGraph(context, catchEnv);
+        return catchResult;
+    }
+
+    return tryResult;
+}
+
 #
 # (let*
 #       (key1 value1 key2 value2 ... keyN valueN)
@@ -148,7 +186,10 @@ fn lispOrdering(context: LispRuntimeContext, env: Cons, args: Cons, comparator: 
     retainSubGraph(context, retainedSubGraph);
     for (var argsCursor = cdr(args); getType(argsCursor) != CT_NIL; argsCursor = cdr(argsCursor)) {
         evalResult = eval(context, env, car(argsCursor));
-        if (evalResult.err != nil) return evalResult;
+        if (evalResult.err != nil) {
+            releaseSubGraph(context, retainedSubGraph);
+            return evalResult;
+        }
         val evaluated = evalResult.ok;
         if (!comparator(prev, evaluated)) {
             releaseSubGraph(context, retainedSubGraph);

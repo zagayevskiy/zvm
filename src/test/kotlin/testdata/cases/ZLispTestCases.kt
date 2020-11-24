@@ -7,6 +7,7 @@ import com.zagayevskiy.zvm.zlisp.compiler.ZLispCompiler
 internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
 
     init {
+        file("try-catch.lisp", "100500")
         oneLiner("""
             (def! f (fn* (x) x))
             (f 3)
