@@ -104,8 +104,10 @@ fn fillGlobalWithStandardFunctions(context: LispRuntimeContext) {
 
     putNamedLambda(mem, dict, "quote", ::lispQuote, false);
     putNamedLambda(mem, dict, "def!", ::lispDef, false);
+    putNamedLambda(mem, dict, "defun!", ::lispDefun, false);
     putNamedLambda(mem, dict, "panic!", ::lispPanic, true);
     putNamedLambda(mem, dict, "fn*", ::lispLambda, false);
+    putNamedLambda(mem, dict, "\*", ::lispLambda, false);
     putNamedTcoLambda(mem, dict, "let*", ::lispTcoLet, false);
 
     putNamedLambda(mem, dict, "eval", ::lispEval, true);

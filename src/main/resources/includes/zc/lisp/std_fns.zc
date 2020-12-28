@@ -14,9 +14,19 @@ fn lispEval(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
 fn lispDef(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     val key = car(args);
     val evalResult = eval(context, env, cdar(args));
-    if (evalResult.err != nil) return err(context, appendStackTrace(context, key, "evaluating def* value", evalResult.err));
+    if (evalResult.err != nil) return err(context, appendStackTrace(context, key, "evaluating def! value", evalResult.err));
     dictPut(context.mem, envDict(env), key, evalResult.ok);
     return evalResult;
+}
+
+
+# syntax sugar to write (defun! f (x) x) instead of (def! f (fn* (x) x))
+fn lispDefun(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
+    val name = car(args);
+    val lambda = makeUserDefinedLambda(context, env, cdr(args));
+    if (lambda.err != nil) return err(context, appendStackTrace(context, args, "evaluating defun! ", lambda.err));
+    dictPut(context.mem, envDict(env), name, lambda.ok);
+    return lambda;
 }
 
 fn lispLambda(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
