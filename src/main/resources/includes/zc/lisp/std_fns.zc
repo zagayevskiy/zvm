@@ -19,7 +19,6 @@ fn lispDef(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     return evalResult;
 }
 
-
 # syntax sugar to write (defun! f (x) x) instead of (def! f (fn* (x) x))
 fn lispDefun(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     val name = car(args);
@@ -385,4 +384,49 @@ fn lispMutReverseInPlace(context: LispRuntimeContext, unusedEnv: Cons, args: Con
     }
 
     return ok(context, prev);
+}
+
+fn lispMap(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
+    val mem = context.mem;
+    val atomMapper = makeAtom(mem, "_ mapper _");
+    val mapEnv = createEnv(mem, env);
+    dictPut(mem, envDict(mapEnv), atomMapper, cdar(args));
+
+    val argPlace = cons(mem, nil, nil);
+    val callTemplate = cons(mem, atomMapper, argPlace);
+
+    var result: Cons = nil;
+    var resultCursor: Cons = nil;
+
+    retainSubGraph(context, mapEnv);
+    retainSubGraph(context, callTemplate);
+
+    for (var cursor = car(args); getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
+        argPlace.left = car(cursor);
+        val evalResult = eval(context, mapEnv, callTemplate);
+        if (evalResult.err != nil) {
+            if (result != nil) {
+                releaseSubGraph(context, result);
+            }
+            releaseSubGraph(context, callTemplate);
+            releaseSubGraph(context, mapEnv);
+            return err(context, appendStackTrace(context, car(cursor), "at map", evalResult.err));
+        }
+        if (result == nil) {
+            result = cons(mem, evalResult.ok, nil);
+            resultCursor = result;
+            retainSubGraph(context, result);
+        } else {
+            resultCursor.right = cons(mem, evalResult.ok, nil);
+            resultCursor = resultCursor.right;
+        }
+    }
+
+    if (result != nil) {
+        releaseSubGraph(context, result);
+    }
+    releaseSubGraph(context, callTemplate);
+    releaseSubGraph(context, mapEnv);
+
+    return ok(context, result);
 }

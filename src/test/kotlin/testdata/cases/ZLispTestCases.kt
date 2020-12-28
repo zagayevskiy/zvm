@@ -113,6 +113,10 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
         oneLiner("(caddr (list (list (list 10 11) 20 30) 40 41))", "(30 . nil)")
         oneLiner("(cdadr (list 1 (list 2 3) 4 5))", "(3 . nil)")
 
+        oneLiner("""(map (list 0 1 2 3 4) (\* (x) (+ x 1)))""", "(1 . (2 . (3 . (4 . (5 . nil)))))")
+        oneLiner("""(map (list + - * / %) (\* (f) (f 1 1)))""", "(2 . (0 . (1 . (1 . (0 . nil)))))")
+        oneLiner("""(map (list + - * / %) (\* (f) (f 2 3)))""", "(5 . (-1 . (6 . (0 . (2 . nil)))))")
+
         oneLiner("(quote (+ 1 2 3))", "(+ . (1 . (2 . (3 . nil))))")
         oneLiner("(quote (T . T))", "(T . T)")
         oneLiner("(quote (nil . T))", "(nil . T)")

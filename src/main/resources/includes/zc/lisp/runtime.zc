@@ -131,6 +131,8 @@ fn fillGlobalWithStandardFunctions(context: LispRuntimeContext) {
     putNamedLambda(mem, dict, "cddar", ::lispCddar, true);
     putNamedLambda(mem, dict, "cdadr", ::lispCdadr, true);
     putNamedLambda(mem, dict, "cdddr", ::lispCdddr, true);
+
+    putNamedLambda(mem, dict, "map", ::lispMap, true);
 }
 
 fn heuristicGc(context: LispRuntimeContext) {
@@ -297,6 +299,7 @@ fn tryGetRegularFnRef(mayBeLambda: Cons): (LispRuntimeContext, Cons, Cons) -> Ca
     return cast<(LispRuntimeContext, Cons, Cons) -> CallResult>(mayBeFnRef);
 }
 
+# CT_INT = ( nativeFunctionAddress . nativeFunctionAddress^REGULAR_LAMBDA_CHECK_MASK )
 fn makeRegularLambda(mem: AutoMemory, nativeFunction: (LispRuntimeContext, Cons, Cons) -> CallResult, evalArgs: bool, tco: bool): Cons {
     val nativeFunctionAddress = cast<int>(nativeFunction);
     val nativeFunctionAddressCheck = nativeFunctionAddress ^ REGULAR_LAMBDA_CHECK_MASK;
