@@ -1,3 +1,16 @@
+fn lispEval(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
+    var result: CallResult = nil;
+    for (var cursor = args; getType(cursor) != CT_NIL; cursor = cdr(cursor)) {
+       result = eval(context, env, car(cursor));
+       if (result.err != nil) return err(context, appendStackTrace(context, car(cursor), "interpret eval", result.err));
+   }
+   if (result == nil) {
+       return ok(context, cons(context.mem, nil, env));
+   } else {
+       return result;
+   }
+}
+
 fn lispDef(context: LispRuntimeContext, env: Cons, args: Cons): CallResult {
     val key = car(args);
     val evalResult = eval(context, env, cdar(args));
@@ -19,9 +32,6 @@ fn lispTryCatch(context: LispRuntimeContext, env: Cons, args: Cons): CallResult 
     val tryResult = eval(context, env, tryBody);
 
     val catchClause = cdar(args);
-    print("catch clause:");
-    printCons(catchClause);
-    endline();
     val catchWord = car(catchClause);
     if (getType(catchWord) != CT_ATOM || orderStrings("catch*", getAtomName(catchWord)) != 0) {
         print("catch* not found");
@@ -33,7 +43,7 @@ fn lispTryCatch(context: LispRuntimeContext, env: Cons, args: Cons): CallResult 
     val exceptionBinding = car(exceptionBindingAndCatchBody);
     if (getType(exceptionBinding) != CT_ATOM) {
         printCons(exceptionBinding);
-        print(" - exception binding recomended to be atom.");
+        print(" - exception binding recommended to be atom.");
     }
 
     if (tryResult.err != nil) {

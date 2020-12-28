@@ -119,6 +119,13 @@ internal object ZLispTestCases : MutableList<VmTestCase> by mutableListOf() {
         oneLiner("(quote (T . nil))", "(T . nil)")
         oneLiner("(quote (T))", "(T . nil)")
 
+        oneLiner("(eval 200)", "200")
+        oneLiner("(eval (quote (+ 1 2 3 4)))", "10")
+        oneLiner("(eval (quote (list 1 2 3 4)))", "(1 . (2 . (3 . (4 . nil))))")
+        oneLiner("(eval 1 2 3 (quote (quote last)))", "last")
+        oneLiner("(eval (try* (throw! 1) (catch* ignored 2)))", "2")
+        oneLiner("(try* (eval 1 (throw! 2) 3) (catch* ignored 4))", "4")
+
         oneLiner("(def! x 10000)", "10000")
         oneLiner("(def! x (quote y))", "y")
         oneLiner("(def! f (fn* (x) x))", "lambda")
