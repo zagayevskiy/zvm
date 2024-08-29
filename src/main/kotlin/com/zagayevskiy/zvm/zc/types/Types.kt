@@ -7,7 +7,7 @@ sealed class ZcType(open val name: String, val sizeOf: Int) {
     object Byte : ZcType("byte", 1)
     object Boolean : ZcType("bool", 1)
     object Unknown : ZcType("unknown", 0)
-    data class Struct(val structName: String, private val fields: List<Field>) : ZcType("struct $structName", 4) {
+    data class Struct(val structName: String, val fields: List<Field>) : ZcType("struct $structName", 4) {
         val allocSize by lazy { fields.last().offset + fields.last().type.sizeOf }
 
         data class Field(val name: String, val type: ZcType, val offset: Int)
